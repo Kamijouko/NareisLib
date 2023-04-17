@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using RimWorld;
+using Verse;
 using HugsLib;
 
 namespace NazunaLib
@@ -15,11 +17,30 @@ namespace NazunaLib
         {
             base.DefsLoaded();
             ModStaticMethod.ThisMod = this;
+            LoadAndResolveAllPlanDefs();
+            ModStaticMethod.AllLevelsLoaded = true;
         }
 
-        public static int SortSouth()
+        public void LoadAndResolveAllPlanDefs()
         {
-
+            List<RenderPlanDef> list = DefDatabase<RenderPlanDef>.AllDefsListForReading;
+            if (list.NullOrEmpty())
+                return;
+            foreach (RenderPlanDef plan in list)
+            {
+                if (plan.plans.NullOrEmpty())
+                    continue;
+                foreach (MultiTexDef def in plan.plans)
+                {
+                    if (def.levels.NullOrEmpty() || ThisModData.DefAndKeyDatabase.ContainsKey(def.originalDef.defName))
+                        continue;
+                    foreach (TextureLevels level in def.levels)
+                    {
+                        level.GetAllGraphicDatas(def.path);
+                    }
+                    ThisModData.DefAndKeyDatabase.Add(def.originalDef.defName, def);
+                }
+            }
         }
     }
 }

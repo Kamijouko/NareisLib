@@ -11,6 +11,8 @@ namespace NazunaLib
 {
     public static class ModStaticMethod
     {
+        public static bool AllLevelsLoaded { get; set; } = false;
+
         public static string RootDir
         {
             get
@@ -20,7 +22,5 @@ namespace NazunaLib
         }
 
         public static ThisModBase ThisMod { get; set; } = null;
-
-        public static Dictionary<string, GraphicData> PawnTexLevelsDatabase { get; set; } = new Dictionary<string, GraphicData>();
     }
 }

@@ -9,8 +9,8 @@ using UnityEngine;
 
 namespace NazunaLib
 {
-    public class PawnRenderPlanDef : Def
+    public class RenderPlanDef : Def
     {
-        public List<RenderPlanDefSet> plans = new List<RenderPlanDefSet>();
+        public List<MultiTexDef> plans = new List<MultiTexDef>();
     }
 }

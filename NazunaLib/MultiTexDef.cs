@@ -25,5 +25,21 @@ namespace NazunaLib
 
         //指定图层以及贴图名
         public List<TextureLevels> levels = new List<TextureLevels>();
+
+
+
+        //xml里无需设定并且设定无效
+        public MultiTexEpoch cacheOfLevels = new MultiTexEpoch();
+
+        public override void ResolveReferences()
+        {
+            base.ResolveReferences();
+            if (levels.NullOrEmpty())
+                return;
+            foreach (TextureLevels level in levels)
+            {
+                cacheOfLevels.batches.Add(new MultiTexBatch(level.renderLayer, new List<string>()));
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Verse;
@@ -37,12 +38,12 @@ namespace NazunaLib
     }
 
 
-    //Pawn服装替换
+    //[已停用]Pawn服装替换
     [HarmonyPatch(typeof(PawnGraphicSet))]
     [HarmonyPatch("ResolveApparelGraphics")]
     public class DAL_BodyApparelHarmonyPatch
     {
-        [HarmonyAfter(new string[] { "rimworld.erdelf.alien_race.main" })]
+        /*[HarmonyAfter(new string[] { "rimworld.erdelf.alien_race.main" })]
         [HarmonyPriority(390)]
         static void Postfix(PawnGraphicSet __instance)
         {
@@ -259,7 +260,7 @@ namespace NazunaLib
                 }
             }
             
-        }
+        }*/
 
         //返回Pawn胸部类型
         private static BodyTypeDef ApparelBodyTypeFromBreastSize(List<DAL_PawnBreastInfo> list, string breastSize)
@@ -284,12 +285,12 @@ namespace NazunaLib
 
 
 
-    //Pawn身体类型修正
+    //[已停用]Pawn身体类型修正
     [HarmonyPatch(typeof(PawnGraphicSet))]
     [HarmonyPatch("ResolveAllGraphics")]
     public class DAL_BodyHarmonyPatch
     {
-        [HarmonyAfter(new string[] { "rimworld.erdelf.alien_race.main" })]
+        /*[HarmonyAfter(new string[] { "rimworld.erdelf.alien_race.main" })]
         [HarmonyPriority(380)]
         static void Postfix(PawnGraphicSet __instance)
         {
@@ -332,11 +333,6 @@ namespace NazunaLib
                         (__instance.pawn as Nazuna_Pawn).genderHasBeFixed = true;
                     }
 
-                    /*if ((__instance.pawn as Nazuna_Pawn).seireiSlot != null && (__instance.pawn as Nazuna_Pawn).seireiSlot.transfor > DAL_SeireiTransfor.Normal)
-                    {
-
-                    }
-                    else*/
                     if (true)
                     {
                         AlienPartGenerator.AlienComp comp = __instance.pawn.GetComp<AlienPartGenerator.AlienComp>();
@@ -361,10 +357,6 @@ namespace NazunaLib
                 }
                 else
                 {
-                    /*if ((__instance.pawn as Nazuna_Pawn).seireiSlot != null && (__instance.pawn as Nazuna_Pawn).seireiSlot.transfor > DAL_SeireiTransfor.Normal)
-                    {
-
-                    }*/
 
                     __instance.ResolveApparelGraphics();
                 }
@@ -377,7 +369,7 @@ namespace NazunaLib
                     comp.Fixed = true;
                 }
             }
-        }
+        }*/
 
         private static string BreastRandom(List<DAL_PawnBreastInfo> breastSizeList)
         {
@@ -428,12 +420,12 @@ namespace NazunaLib
 
 
 
-    //无动画底发修正
+    //[已停用]无动画底发修正
     [HarmonyPatch(typeof(PawnRenderer))]
     [HarmonyPatch("DrawHeadHair")]
     public class DAL_HairPatch
     {
-        static bool Prefix(PawnRenderer __instance, Vector3 rootLoc, float angle, Rot4 bodyFacing, RotDrawMode bodyDrawType, PawnRenderFlags flags, ref Pawn ___pawn)
+        /*static bool Prefix(PawnRenderer __instance, Vector3 rootLoc, float angle, Rot4 bodyFacing, RotDrawMode bodyDrawType, PawnRenderFlags flags, ref Pawn ___pawn)
         {
             DAL_CompHeadTurning compHeadTurning = __instance.graphics.pawn.GetComp<DAL_CompHeadTurning>();
             Rot4 headFacing = (compHeadTurning != null && !flags.FlagSet(PawnRenderFlags.Portrait) && compHeadTurning.Props.enable && compHeadTurning.init) ? compHeadTurning.headFacing : bodyFacing;
@@ -488,7 +480,7 @@ namespace NazunaLib
                 }
             }
             return true;
-        }
+        }*/
     }
 
 
@@ -567,9 +559,149 @@ namespace NazunaLib
             return (renderFlags.FlagSet(PawnRenderFlags.Portrait) ? comp.alienPortraitHeadGraphics.hairSetAverage : comp.alienHeadGraphics.hairSetAverage).MeshAt(headFacing);
         }
 
+        
 
+        //[已停用]将根据层设定的渲染位置将keyName分配到Comp的列表里存储
+        public static void SwitchTexToComp(TextureRenderLayer layer, string key, ref MultiRenderComp comp)
+        {
+            /*switch (layer)
+            {
+                case TextureRenderLayer.BehindTheBottomHair: comp.BehindTheBottomHair.Add(key); break;
+                case TextureRenderLayer.BottomHair: comp.BottomHair.Add(key); break;
 
-        //头发渲染修正（包括头部装备），使用prefix
+                case TextureRenderLayer.BehindTheShell: comp.BehindTheShell.Add(key); break;
+                case TextureRenderLayer.Shell: comp.Shell.Add(key); break;
+                case TextureRenderLayer.FrontOfShell: comp.FrontOfShell.Add(key); break;
+
+                case TextureRenderLayer.BehindTheBody: comp.BehindTheBody.Add(key); break;
+                case TextureRenderLayer.Body: comp.Body.Add(key); break;
+                case TextureRenderLayer.FrontOfBody: comp.FrontOfBody.Add(key); break;
+
+                case TextureRenderLayer.BehindTheApparel: comp.BehindTheApparel.Add(key); break;
+                case TextureRenderLayer.Apparel: comp.Apparel.Add(key); break;
+                case TextureRenderLayer.FrontOfApparel: comp.FrontOfApparel.Add(key); break;
+
+                case TextureRenderLayer.BehindTheHead: comp.BehindTheHead.Add(key); break;
+                case TextureRenderLayer.Head: comp.Head.Add(key); break;
+                case TextureRenderLayer.FrontOfHead: comp.FrontOfHead.Add(key); break;
+
+                case TextureRenderLayer.BehindTheMask: comp.BehindTheMask.Add(key); break;
+                case TextureRenderLayer.Mask: comp.Mask.Add(key); break;
+                case TextureRenderLayer.FrontOfMask: comp.FrontOfMask.Add(key); break;
+
+                case TextureRenderLayer.BehindTheHair: comp.BehindTheHair.Add(key); break;
+                case TextureRenderLayer.Hair: comp.Hair.Add(key); break;
+                case TextureRenderLayer.FrontOfHair: comp.FrontOfHair.Add(key); break;
+
+                case TextureRenderLayer.BehindTheHat: comp.BehindTheHat.Add(key); break;
+                case TextureRenderLayer.Hat: comp.Hat.Add(key); break;
+                case TextureRenderLayer.FrontOfHat: comp.FrontOfHat.Add(key); break;
+            }*/
+        }
+
+        //给所有Pawn添加多层渲染Comp，没有CompTick所以不存在性能问题
+        public static void AddComp(ref MultiRenderComp comp, ref Pawn pawn)
+        {
+            comp = (MultiRenderComp)Activator.CreateInstance(typeof(MultiRenderComp));
+            comp.parent = pawn;
+            Traverse p = Traverse.Create(pawn);
+            List<ThingComp> list = (List<ThingComp>)p.Field("comps").GetValue();
+            list.Add(comp);
+            p.Field("comps").SetValue(list);
+            comp.Initialize(new CompProperties(typeof(MultiRenderComp)));
+        }
+
+        //处理图层子方法
+        public static MultiTexEpoch ResolveMultiTexDef(string defName, ref MultiRenderComp comp)
+        {
+            MultiTexDef def = ThisModData.DefAndKeyDatabase[defName];
+            MultiTexEpoch epoch = def.cacheOfLevels;
+            foreach (TextureLevels level in def.levels)
+            {
+                string pre = level.prefix.RandomElementByWeight(x => level.preFixWeights[x]);
+                string keyName = level.preFixToTexFullname[pre].RandomElementByWeight(x => level.texWeights[Path.GetFileNameWithoutExtension(x)]);
+                keyName = Path.GetFileNameWithoutExtension(keyName);
+                epoch.batches.First(x => x.layer == level.renderLayer).keyList.Add(keyName);
+            }
+            return epoch;
+        }
+
+        //预处理Pawn的所有多层渲染数据
+        static void ResolveAllGraphicsPostfix(PawnGraphicSet __instance)
+        {
+            if (!ModStaticMethod.AllLevelsLoaded)
+                return;
+            Pawn pawn = __instance.pawn;
+            MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
+            if (comp == null)
+                AddComp(ref comp, ref pawn);
+
+            Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
+            HairDef hair = pawn.story.hairDef;
+            if (hair != null && ThisModData.DefAndKeyDatabase.ContainsKey(hair.defName))
+            {
+                string keyName = hair.defName;
+                if (!comp.storedData.ContainsKey(keyName))
+                    data.Add(keyName, ResolveMultiTexDef(keyName, ref comp));
+                else
+                    data.Add(keyName, comp.storedData[keyName]);
+            }
+            HeadTypeDef head = pawn.story.headType;
+            if (head != null && ThisModData.DefAndKeyDatabase.ContainsKey(head.defName))
+            {
+                string keyName = head.defName;
+                if (!comp.storedData.ContainsKey(keyName))
+                    data.Add(keyName, ResolveMultiTexDef(keyName, ref comp));
+                else
+                    data.Add(keyName, comp.storedData[keyName]);
+            }
+            BodyTypeDef body = pawn.story.bodyType;
+            if (body != null && ThisModData.DefAndKeyDatabase.ContainsKey(body.defName))
+            {
+                string keyName = body.defName;
+                if (!comp.storedData.ContainsKey(keyName))
+                    data.Add(keyName, ResolveMultiTexDef(keyName, ref comp));
+                else
+                    data.Add(keyName, comp.storedData[keyName]);
+            }
+            comp.storedData = data;
+        }
+
+        //预处理Pawn穿着的多层渲染服装
+        static void ResolveApparelGraphicsPostfix(PawnGraphicSet __instance)
+        {
+            Pawn pawn = __instance.pawn;
+            MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
+            if (comp == null)
+                AddComp(ref comp, ref pawn);
+
+            Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
+            using (List<Apparel>.Enumerator enumerator = __instance.pawn.apparel.WornApparel.GetEnumerator())
+            {
+                while (enumerator.MoveNext())
+                {
+                    if (ThisModData.DefAndKeyDatabase.ContainsKey(enumerator.Current.def.defName))
+                    {
+                        string keyName = enumerator.Current.def.defName;
+                        if (!comp.storedDataApparel.ContainsKey(keyName))
+                            data.Add(keyName, ResolveMultiTexDef(keyName, ref comp));
+                        else
+                            data.Add(keyName, comp.storedDataApparel[keyName]);
+                    }
+                }
+            }
+            comp.storedDataApparel = data;
+        }
+
+        //备用随机算法
+        public static string GetRandom(System.Random rand, Dictionary<string, int> list)
+        {
+            int i = rand.Next(list.Values.Max() + 1);
+            List<string> result = list.Keys.Where(x => list[x] >= i).ToList();
+            return result.RandomElement();
+        }
+
+        //[已停用]头发渲染修正（包括头部装备），使用prefix
         static bool DrawHairPatchPrefix(PawnRenderer __instance, Vector3 rootLoc, float angle, Rot4 bodyFacing, RotDrawMode bodyDrawType, PawnRenderFlags flags, ref Pawn ___pawn)
         {
             DAL_CompAnimated compAnimated = ___pawn.GetComp<DAL_CompAnimated>();
@@ -815,14 +947,23 @@ namespace NazunaLib
 
         }
 
-
-        //头发渲染修正（新）使用IL
-        public static IEnumerable<CodeInstruction> DrawHairPatchTranspiler(IEnumerable<CodeInstruction> instructions)
+        //BottomHair Prefix
+        static bool BehindAndTheBottomHairPrefix(PawnGraphicSet set, Vector3 onHeadLoc, Quaternion quat, PawnRenderFlags flags)
         {
-            MethodInfo Draw
+            return true;
         }
 
-        public static void DrawHeadBackHair
+        //BehindTheBottomHair 使用IL
+        public static IEnumerable<CodeInstruction> BehindTheBottomHairTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            MethodInfo drawHair
+        }
+
+        public static void BehindTheBottomHair(PawnGraphicSet set, Vector3 onHeadLoc, Quaternion quat, PawnRenderFlags flags)
+        {
+            
+        }
+
 
 
 
