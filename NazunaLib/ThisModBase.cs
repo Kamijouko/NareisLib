@@ -17,11 +17,14 @@ namespace NazunaLib
         {
             base.DefsLoaded();
             ModStaticMethod.ThisMod = this;
-            LoadAndResolveAllPlanDefs();
-            ModStaticMethod.AllLevelsLoaded = true;
+            if (!ModStaticMethod.AllLevelsLoaded)
+            {
+                LoadAndResolveAllPlanDefs();
+                ModStaticMethod.AllLevelsLoaded = true;
+            }
         }
 
-        public void LoadAndResolveAllPlanDefs()
+        public static void LoadAndResolveAllPlanDefs()
         {
             List<RenderPlanDef> list = DefDatabase<RenderPlanDef>.AllDefsListForReading;
             if (list.NullOrEmpty())
@@ -30,16 +33,19 @@ namespace NazunaLib
             {
                 if (plan.plans.NullOrEmpty())
                     continue;
+                string planDef = plan.defName;
+                Dictionary<string, MultiTexDef> data = new Dictionary<string, MultiTexDef>();
                 foreach (MultiTexDef def in plan.plans)
                 {
-                    if (def.levels.NullOrEmpty() || ThisModData.DefAndKeyDatabase.ContainsKey(def.originalDef.defName))
+                    if (def.levels.NullOrEmpty() || data.ContainsKey(def.originalDef))
                         continue;
                     foreach (TextureLevels level in def.levels)
                     {
                         level.GetAllGraphicDatas(def.path);
                     }
-                    ThisModData.DefAndKeyDatabase.Add(def.originalDef.defName, def);
+                    data[def.originalDef] = def;
                 }
+                ThisModData.DefAndKeyDatabase[planDef] = data;
             }
         }
     }

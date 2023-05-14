@@ -9,10 +9,9 @@ namespace NazunaLib
     public enum RenderClass : byte
     {
         None,
-        Hair,
-        Head,
-        Body,
-        Apparel,
-        equipment
+        Normal,
+        Hand,
+        Equipment,
+        Hediff
     }
 }

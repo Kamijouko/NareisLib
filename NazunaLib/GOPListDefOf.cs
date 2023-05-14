@@ -9,8 +9,8 @@ using RimWorld;
 namespace NazunaLib
 {
     [DefOf]
-    public class DAL_GOPListDefOf
+    public class GOPListDefOf
     {
-        public static DAL_GameObjectPlanListDef DAL_GOPList;
+        //public static GameObjectPlanListDef DAL_GOPList;
     }
 }

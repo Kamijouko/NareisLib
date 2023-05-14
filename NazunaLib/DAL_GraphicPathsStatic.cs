@@ -26,7 +26,7 @@ namespace NazunaLib
 				{
 					return list[0].graphicPaths.FirstOrDefault(delegate (GraphicPaths gp)
 					{
-						List<LifeStageDef> lifeStageDefs = gp.lifeStageDefs;
+						List<LifeStageDef> lifeStageDefs = null;
 						return lifeStageDefs != null && lifeStageDefs.Contains(lifeStageDef);
 					}) ?? list[0].graphicPaths.First<GraphicPaths>();
 				}
@@ -43,7 +43,7 @@ namespace NazunaLib
 					}
 					return lgp.FirstOrDefault(delegate (GraphicPaths gp)
 					{
-						List<LifeStageDef> lifeStageDefs = gp.lifeStageDefs;
+						List<LifeStageDef> lifeStageDefs = null;
 						return lifeStageDefs != null && lifeStageDefs.Contains(lifeStageDef);
 					}) ?? lgp.First<GraphicPaths>();
 				}
@@ -64,7 +64,7 @@ namespace NazunaLib
 		{
 			return list.FirstOrDefault(delegate (GraphicPaths gp)
 			{
-				List<LifeStageDef> lifeStageDefs = gp.lifeStageDefs;
+				List<LifeStageDef> lifeStageDefs = null;
 				return lifeStageDefs != null && lifeStageDefs.Contains(lifeStageDef);
 			}) ?? list.First<GraphicPaths>();
 		}

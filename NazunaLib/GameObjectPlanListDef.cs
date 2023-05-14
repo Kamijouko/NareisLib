@@ -7,7 +7,7 @@ using Verse;
 
 namespace NazunaLib
 {
-    public class DAL_GameObjectPlanListDef : Def
+    public class GameObjectPlanListDef : Def
     {
         public List<DAL_GameObjectPlanDef> gameObjectPlanList = new List<DAL_GameObjectPlanDef>();
     }

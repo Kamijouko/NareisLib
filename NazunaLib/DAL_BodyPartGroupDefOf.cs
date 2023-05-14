@@ -11,6 +11,6 @@ namespace NazunaLib
     [DefOf]
     public class DAL_BodyPartGroupDefOf
     {
-        public static BodyPartGroupDef FullCoverage;
+        //public static BodyPartGroupDef FullCoverage;
     }
 }

@@ -13,8 +13,10 @@ namespace NazunaLib
     {
         public static void InitGameObjectToList()
         {
-            initialized = false;
-            DAL_GameObjectPlanListDef def = DAL_GOPListDefOf.DAL_GOPList;
+            /*initialized = false;
+            GameObjectPlanListDef def = GOPListDefOf.DAL_GOPList;
+            if (def == null || (def != null && def.gameObjectPlanList.NullOrEmpty()))
+                return;
             foreach (DAL_GameObjectPlanDef plan in def.gameObjectPlanList)
             {
                 string path = Path.Combine(ModLister.GetActiveModWithIdentifier("NazunaReiLib.kamijouko").RootDir.ToString(), "Assets");
@@ -30,7 +32,7 @@ namespace NazunaLib
                 }
                 pack.Unload(false);
             }
-            initialized = true;
+            initialized = true;*/
         }
 
         public static bool Initialized

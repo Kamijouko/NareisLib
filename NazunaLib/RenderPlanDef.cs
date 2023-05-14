@@ -11,6 +11,7 @@ namespace NazunaLib
 {
     public class RenderPlanDef : Def
     {
+        public List<string> races = new List<string>();
         public List<MultiTexDef> plans = new List<MultiTexDef>();
     }
 }

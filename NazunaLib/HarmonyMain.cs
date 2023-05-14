@@ -15,6 +15,9 @@ using Verse.AI.Group;
 using System.Reflection;
 using Verse.AI;
 using RimWorld.Planet;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using UnityEngine.UIElements.Experimental;
 
 namespace NazunaLib
 {
@@ -23,7 +26,7 @@ namespace NazunaLib
     {
         static HarmonyMain()
         {
-            var harmonyInstance = new Harmony("cloud.Rimworld.NazunaLib.mod");
+            var harmonyInstance = new Harmony("NazunaReiLib.kamijouko");
 
             //harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "DrawPawnBody", null, null), null, null, new HarmonyMethod(typeof(DAL_PawnAndApparelPatch), "DrawBodyPatchTranspiler", null), null);
 
@@ -31,7 +34,14 @@ namespace NazunaLib
 
             //harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "RenderPawnInternal", null, null), null, null, new HarmonyMethod(typeof(DAL_PawnAndApparelPatch), "DrawHeadPatchTranspiler", null), null);
 
-            //harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "DrawHeadHair", null, null), new HarmonyMethod(typeof(DAL_PawnAndApparelPatch), "DrawHairPatchPrefix", null), null, null, null);
+            //harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "DrawHeadHair", null, null), new HarmonyMethod(typeof(DAL_PawnAndApparelPatch), "DrawHairPatchPrefix", null), null, null, null);         
+
+            
+            harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveAllGraphics", null, null), null, null, null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveAllGraphicsFinalizer", null));
+            harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveApparelGraphics", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveHairGraphicsPostfix", null), null, null);
+            harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveApparelGraphics", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveApparelGraphicsPostfix", null), null, null);
+
+            harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "DrawPawnBody", null, null), new HarmonyMethod(typeof(PawnRenderPatchs), "DrawPawnBodyPrefix", null), null, null, null);
 
             //harmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
         }
@@ -39,8 +49,8 @@ namespace NazunaLib
 
 
     //[已停用]Pawn服装替换
-    [HarmonyPatch(typeof(PawnGraphicSet))]
-    [HarmonyPatch("ResolveApparelGraphics")]
+    //[HarmonyPatch(typeof(PawnGraphicSet))]
+    //[HarmonyPatch("ResolveApparelGraphics")]
     public class DAL_BodyApparelHarmonyPatch
     {
         /*[HarmonyAfter(new string[] { "rimworld.erdelf.alien_race.main" })]
@@ -286,8 +296,8 @@ namespace NazunaLib
 
 
     //[已停用]Pawn身体类型修正
-    [HarmonyPatch(typeof(PawnGraphicSet))]
-    [HarmonyPatch("ResolveAllGraphics")]
+    //[HarmonyPatch(typeof(PawnGraphicSet))]
+    //[HarmonyPatch("ResolveAllGraphics")]
     public class DAL_BodyHarmonyPatch
     {
         /*[HarmonyAfter(new string[] { "rimworld.erdelf.alien_race.main" })]
@@ -421,8 +431,8 @@ namespace NazunaLib
 
 
     //[已停用]无动画底发修正
-    [HarmonyPatch(typeof(PawnRenderer))]
-    [HarmonyPatch("DrawHeadHair")]
+    //[HarmonyPatch(typeof(PawnRenderer))]
+    //[HarmonyPatch("DrawHeadHair")]
     public class DAL_HairPatch
     {
         /*static bool Prefix(PawnRenderer __instance, Vector3 rootLoc, float angle, Rot4 bodyFacing, RotDrawMode bodyDrawType, PawnRenderFlags flags, ref Pawn ___pawn)
@@ -486,7 +496,52 @@ namespace NazunaLib
 
 
 
-    public class DAL_PawnAndApparelPatch
+
+
+    //初始化后加载资源全靠它！！！（已暂时停用）
+    //[HarmonyPatch(typeof(UIRoot_Entry))]
+    //[HarmonyPatch("DoMainMenu")]
+    public class InitialModPatch
+    {
+        /*static bool Prefix(UIRoot_Entry __instance)
+        {
+            if (!ModStaticMethod.AllLevelsLoaded)
+            {
+                LoadAndResolveAllPlanDefs();
+                ModStaticMethod.AllLevelsLoaded = true;
+            }
+            return true;
+        }
+
+        public static void LoadAndResolveAllPlanDefs()
+        {
+            List<RenderPlanDef> list = DefDatabase<RenderPlanDef>.AllDefsListForReading;
+            if (list.NullOrEmpty())
+                return;
+            foreach (RenderPlanDef plan in list)
+            {
+                if (plan.plans.NullOrEmpty())
+                    continue;
+                string planDef = plan.defName;
+                Dictionary<string, MultiTexDef> data = new Dictionary<string, MultiTexDef>();
+                foreach (MultiTexDef def in plan.plans)
+                {
+                    if (def.levels.NullOrEmpty() || data.ContainsKey(def.originalDef))
+                        continue;
+                    foreach (TextureLevels level in def.levels)
+                    {
+                        level.GetAllGraphicDatas(def.path);
+                    }
+                    data[def.originalDef] = def;
+                }
+                ThisModData.DefAndKeyDatabase[planDef] = data;
+            }
+        }*/
+    }
+
+
+
+    public class PawnRenderPatchs
     {
         //子方法组
         private static bool ShellFullyCoversHead(PawnRenderFlags flags, PawnRenderer render)
@@ -545,7 +600,7 @@ namespace NazunaLib
             return material;
         }
 
-        public static Mesh GetPawnHairMesh(PawnRenderFlags renderFlags, Pawn pawn, Rot4 headFacing, PawnGraphicSet graphics, DAL_GraphicInfo g = null)
+        /*public static Mesh GetPawnHairMesh(PawnRenderFlags renderFlags, Pawn pawn, Rot4 headFacing, PawnGraphicSet graphics, DAL_GraphicInfo g = null)
         {
             AlienPartGenerator.AlienComp comp = pawn.GetComp<AlienPartGenerator.AlienComp>();
             if (comp == null)
@@ -557,7 +612,7 @@ namespace NazunaLib
                 return new GraphicMeshSet(1.5f * g.meshSize).MeshAt(headFacing);
             }
             return (renderFlags.FlagSet(PawnRenderFlags.Portrait) ? comp.alienPortraitHeadGraphics.hairSetAverage : comp.alienHeadGraphics.hairSetAverage).MeshAt(headFacing);
-        }
+        }*/
 
         
 
@@ -599,6 +654,8 @@ namespace NazunaLib
             }*/
         }
 
+
+
         //给所有Pawn添加多层渲染Comp，没有CompTick所以不存在性能问题
         public static void AddComp(ref MultiRenderComp comp, ref Pawn pawn)
         {
@@ -608,90 +665,401 @@ namespace NazunaLib
             List<ThingComp> list = (List<ThingComp>)p.Field("comps").GetValue();
             list.Add(comp);
             p.Field("comps").SetValue(list);
-            comp.Initialize(new CompProperties(typeof(MultiRenderComp)));
+            comp.Initialize(new MultiRenderCompProperties());
         }
 
-        //处理图层子方法
-        public static MultiTexEpoch ResolveMultiTexDef(string defName, ref MultiRenderComp comp)
+
+        //处理defName所指定的MultiTexDef，
+        //对其属性levels里所存储的所有TextureLevels都根据指定的权重随机一个贴图的名称，
+        //并将名称记录进一个从其属性cacheOfLevels得来的MultiTexEpoch中所对应渲染图层的MultiTexBatch的名称列表里，
+        //最终返回这个MultiTexEpoch
+        public static MultiTexEpoch ResolveMultiTexDef(MultiTexDef def, out Dictionary<string, TextureLevels> data, bool isOwnerable = false)
         {
-            MultiTexDef def = ThisModData.DefAndKeyDatabase[defName];
+            //Log.Warning(plan+","+defName);
             MultiTexEpoch epoch = def.cacheOfLevels;
+            data = new Dictionary<string, TextureLevels>();
             foreach (TextureLevels level in def.levels)
             {
                 string pre = level.prefix.RandomElementByWeight(x => level.preFixWeights[x]);
-                string keyName = level.preFixToTexFullname[pre].RandomElementByWeight(x => level.texWeights[Path.GetFileNameWithoutExtension(x)]);
-                keyName = Path.GetFileNameWithoutExtension(keyName);
-                epoch.batches.First(x => x.layer == level.renderLayer).keyList.Add(keyName);
+                string keyName = level.preFixToTexName[pre].RandomElementByWeight(x => level.texWeights[x]);
+
+                if (!epoch.batches.Exists(x => x.keyName == keyName))
+                    epoch.batches.Add(new MultiTexBatch(def.defName, keyName, level.renderLayer, new List<string>(), level.renderSwitch));
+                epoch.batches.First(x => x.keyName == keyName).keyList.Add(keyName);
+
+                level.keyName = keyName;
+                if (level.patternSets != null)
+                    level.patternSets.keyName = keyName;
+                data[keyName] = level;
             }
+            /*if (isOwnerable)
+            {
+                foreach (MultiTexBatch batch in epoch.batches)
+                {
+                    batch.keyListSouth = batch.keyList;
+                    batch.keyListEast = batch.keyList;
+                    batch.keyListNorth = batch.keyList;
+                    batch.keyListWest = batch.keyList;
+                    if (batch.keyList.Count() > 1)
+                    {
+                        batch.keyListSouth.Sort((i, j) => ThisModData.TexLevelsDatabase[i].drawOffsetSouth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetSouth.Value.y));
+                        batch.keyListEast.Sort((i, j) => ThisModData.TexLevelsDatabase[i].drawOffsetEast.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetEast.Value.y));
+                        batch.keyListNorth.Sort((i, j) => ThisModData.TexLevelsDatabase[i].drawOffsetNorth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetNorth.Value.y));
+                        batch.keyListWest.Sort((i, j) => ThisModData.TexLevelsDatabase[i].drawOffsetWest.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetWest.Value.y));
+                    }
+                }
+            }*/
             return epoch;
         }
 
-        //预处理Pawn的所有多层渲染数据
-        static void ResolveAllGraphicsPostfix(PawnGraphicSet __instance)
-        {
-            if (!ModStaticMethod.AllLevelsLoaded)
-                return;
-            Pawn pawn = __instance.pawn;
-            MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
-            if (comp == null)
-                AddComp(ref comp, ref pawn);
 
-            Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
-            HairDef hair = pawn.story.hairDef;
-            if (hair != null && ThisModData.DefAndKeyDatabase.ContainsKey(hair.defName))
-            {
-                string keyName = hair.defName;
-                if (!comp.storedData.ContainsKey(keyName))
-                    data.Add(keyName, ResolveMultiTexDef(keyName, ref comp));
-                else
-                    data.Add(keyName, comp.storedData[keyName]);
-            }
-            HeadTypeDef head = pawn.story.headType;
-            if (head != null && ThisModData.DefAndKeyDatabase.ContainsKey(head.defName))
-            {
-                string keyName = head.defName;
-                if (!comp.storedData.ContainsKey(keyName))
-                    data.Add(keyName, ResolveMultiTexDef(keyName, ref comp));
-                else
-                    data.Add(keyName, comp.storedData[keyName]);
-            }
-            BodyTypeDef body = pawn.story.bodyType;
-            if (body != null && ThisModData.DefAndKeyDatabase.ContainsKey(body.defName))
-            {
-                string keyName = body.defName;
-                if (!comp.storedData.ContainsKey(keyName))
-                    data.Add(keyName, ResolveMultiTexDef(keyName, ref comp));
-                else
-                    data.Add(keyName, comp.storedData[keyName]);
-            }
-            comp.storedData = data;
+        //从comp的storedData里获取TextureLevels数据，用于处理读取存档时从已有的storedData字典中得到的epoch
+        public static Dictionary<string, TextureLevels> GetLevelsDictFromEpoch(MultiTexEpoch epoch)
+        {
+            return epoch.batches.ToDictionary(k => k.keyName, v => ResolveKeyNameForLevel(ThisModData.TexLevelsDatabase[v.keyName], v.keyName));
+        }
+        //上方法的子方法，为获取到的TextureLevels进行赋值操作
+        public static TextureLevels ResolveKeyNameForLevel(TextureLevels level, string key)
+        {
+            level.keyName = key;
+            if (level.patternSets != null)
+                level.patternSets.keyName = key;
+            return level;
         }
 
-        //预处理Pawn穿着的多层渲染服装
-        static void ResolveApparelGraphicsPostfix(PawnGraphicSet __instance)
+
+
+        [CompilerGenerated]
+		[StructLayout(LayoutKind.Auto)]
+		private struct AlienAddonClass
+		{
+			public Pawn pawn;
+			public Rot4 rotation;
+			public bool isPortrait;
+			public bool isInvisible;
+			public Vector3 vector;
+			public Vector3 headOffset;
+			public Quaternion quat;
+			public PawnRenderFlags renderFlags;
+		}
+
+
+        //预处理Pawn身体的多层渲染数据，只会在pawn出现或生成时执行一次，在整体预处理方法中最后执行（因为原方法的顺序）
+        static void ResolveAllGraphicsFinalizer(PawnGraphicSet __instance)
         {
+            if (!ModStaticMethod.AllLevelsLoaded || ThisModData.DefAndKeyDatabase.NullOrEmpty())
+                return;
             Pawn pawn = __instance.pawn;
+            string race = pawn.def.defName;
+            RenderPlanDef def = DefDatabase<RenderPlanDef>.AllDefs.FirstOrDefault(x => x.races.Contains(race));
+            if (def == null)
+                return;
+            string plan = def.defName;
+            
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 AddComp(ref comp, ref pawn);
 
+            List<string> cachedOverride = new List<string>();
+            Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
+            Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
+            HeadTypeDef head = pawn.story.headType;
+            if (head != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(head.defName))
+            {
+                string keyName = head.defName;
+                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][keyName];
+                if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(keyName))
+                {
+                    Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                    data[keyName] = ResolveMultiTexDef(multidef, out cachedData);
+                    cachedGraphicData[keyName] = cachedData;
+                }
+                else
+                {
+                    data[keyName] = comp.storedDataBody[keyName];
+                    cachedGraphicData[keyName] = GetLevelsDictFromEpoch(data[keyName]);
+                }
+                if (!multidef.renderOriginTex)
+                    cachedOverride.Add("Head");
+            }
+            BodyTypeDef body = pawn.story.bodyType;
+            if (body != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(body.defName))
+            {
+                string keyName = body.defName;
+                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][keyName];
+                if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(keyName))
+                {
+                    Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                    data[keyName] = ResolveMultiTexDef(multidef, out cachedData);
+                    cachedGraphicData[keyName] = cachedData;
+                }
+                else
+                {
+                    data[keyName] = comp.storedDataBody[keyName];
+                    cachedGraphicData[keyName] = GetLevelsDictFromEpoch(data[keyName]);
+                }
+                if (!multidef.renderOriginTex)
+                    cachedOverride.Add("Body");
+            }
+            string hand = comp.Props.handDefName;
+            if (hand != "" && ThisModData.DefAndKeyDatabase[plan].ContainsKey(hand))
+            {
+                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][hand];
+                if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(hand))
+                {
+                    Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                    data[hand] = ResolveMultiTexDef(multidef, out cachedData);
+                    cachedGraphicData[hand] = cachedData;
+                }
+                else
+                {
+                    data[hand] = comp.storedDataBody[hand];
+                    cachedGraphicData[hand] = GetLevelsDictFromEpoch(data[hand]);
+                }
+            }
+            comp.cachedOverrideBody = cachedOverride;
+            comp.cachedBodyGraphicData = cachedGraphicData;
+            comp.storedDataBody = data;
+            comp.ResolveAllLayerBatch();
+            comp.PrefixResolved = true;
+        }
+
+        //预处理Pawn的头发，在发型变换时会执行
+        static void ResolveHairGraphicsPostfix(PawnGraphicSet __instance)
+        {
+            if (!ModStaticMethod.AllLevelsLoaded || ThisModData.DefAndKeyDatabase.NullOrEmpty())
+                return;
+            Pawn pawn = __instance.pawn;
+            string race = pawn.def.defName;
+            RenderPlanDef def = DefDatabase<RenderPlanDef>.AllDefs.FirstOrDefault(x => x.races.Contains(race));
+            if (def == null)
+                return;
+            string plan = def.defName;
+            MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
+            if (comp == null)
+                AddComp(ref comp, ref pawn);
+
+            List<string> cachedOverride = new List<string>();
+            Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
+            Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
+            HairDef hair = pawn.story.hairDef;
+            if (hair != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(hair.defName))
+            {
+                string keyName = hair.defName;
+                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][keyName];
+                if (comp.storedDataHair.NullOrEmpty() || !comp.storedDataHair.ContainsKey(keyName))
+                {
+                    Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                    data[keyName] = ResolveMultiTexDef(multidef, out cachedData);
+                    cachedGraphicData[keyName] = cachedData;
+                }
+                else
+                {
+                    data[keyName] = comp.storedDataHair[keyName];
+                    cachedGraphicData[keyName] = GetLevelsDictFromEpoch(data[keyName]);
+                }
+                if (!multidef.renderOriginTex)
+                    cachedOverride.Add("Hair");
+            }
+            comp.cachedOverrideHair = cachedOverride;
+            comp.cachedHairGraphicData = cachedGraphicData;
+            comp.storedDataHair = data;
+            if (comp.PrefixResolved)
+                comp.ResolveAllLayerBatch();
+        }
+
+        //预处理Pawn穿着的多层渲染服装，在服装变换时会执行
+        static void ResolveApparelGraphicsPostfix(PawnGraphicSet __instance)
+        {
+            if (!ModStaticMethod.AllLevelsLoaded || ThisModData.DefAndKeyDatabase.NullOrEmpty())
+                return;
+            Pawn pawn = __instance.pawn;
+            string race = pawn.def.defName;
+            RenderPlanDef def = DefDatabase<RenderPlanDef>.AllDefs.FirstOrDefault(x => x.races.Contains(race));
+            if (def == null)
+                return;
+            string plan = def.defName;
+            MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
+            if (comp == null)
+                AddComp(ref comp, ref pawn);
+
+            List<string> cachedOverride = new List<string>();
+            Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
             Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
             using (List<Apparel>.Enumerator enumerator = __instance.pawn.apparel.WornApparel.GetEnumerator())
             {
                 while (enumerator.MoveNext())
                 {
-                    if (ThisModData.DefAndKeyDatabase.ContainsKey(enumerator.Current.def.defName))
+                    if (ThisModData.DefAndKeyDatabase[plan].ContainsKey(enumerator.Current.def.defName))
                     {
                         string keyName = enumerator.Current.def.defName;
-                        if (!comp.storedDataApparel.ContainsKey(keyName))
-                            data.Add(keyName, ResolveMultiTexDef(keyName, ref comp));
+                        MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][keyName];
+                        if (comp.storedDataApparel.NullOrEmpty() || !comp.storedDataApparel.ContainsKey(keyName))
+                        {
+                            Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                            data[keyName] = ResolveMultiTexDef(multidef, out cachedData);
+                            cachedGraphicData[keyName] = cachedData;
+                        }
                         else
-                            data.Add(keyName, comp.storedDataApparel[keyName]);
+                        {
+                            data[keyName] = comp.storedDataApparel[keyName];
+                            cachedGraphicData[keyName] = GetLevelsDictFromEpoch(data[keyName]);
+                        }
+                        if (!multidef.renderOriginTex)
+                            cachedOverride.Add(keyName);
                     }
                 }
             }
+            comp.cachedOverrideApparel = cachedOverride;
+            comp.cachedApparelGraphicData = cachedGraphicData;
             comp.storedDataApparel = data;
+            if (comp.PrefixResolved)
+                comp.ResolveAllLayerBatch();
         }
+
+
+        //BottomHair BottomShell Body Prefix
+        static bool DrawPawnBodyPrefix(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags)
+        {
+            //Log.Warning(___pawn.Name + " flags: DrawNow = " + flags.FlagSet(PawnRenderFlags.DrawNow).ToStringSafe());
+            MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
+            if (comp == null)
+                return true;
+            if (!comp.PrefixResolved)
+                __instance.graphics.ResolveAllGraphics();
+
+            Dictionary<int, List<string>> curDirection = comp.GetDataOfDirection(facing);
+            if (curDirection.NullOrEmpty())
+                return true;
+
+            Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
+            Vector3 vector = rootLoc;
+            vector.y += 0.003f;
+            Vector3 loc = vector;
+            loc.y += 0.001f;
+            Mesh bodyMesh = null;
+            Mesh hairMesh = null;
+            Mesh headMesh = null;
+            if (___pawn.RaceProps.Humanlike)
+            {
+                bodyMesh = HumanlikeMeshPoolUtility.GetHumanlikeBodySetForPawn(___pawn).MeshAt(facing);
+                headMesh = HumanlikeMeshPoolUtility.GetHumanlikeHeadSetForPawn(___pawn).MeshAt(facing);
+                hairMesh = HumanlikeMeshPoolUtility.GetHumanlikeHairSetForPawn(___pawn).MeshAt(facing);/*__instance.graphics.HairMeshSet.MeshAt(facing);*/
+            }
+            else
+                bodyMesh = __instance.graphics.nakedGraphic.MeshAt(facing);
+
+            List<int> renderLayers = new List<int>() { (int)TextureRenderLayer.BottomHair, (int)TextureRenderLayer.BottomShell}; 
+            
+            foreach (int level in renderLayers)
+            {
+                if (curDirection.ContainsKey(level))
+                {
+                    foreach (string keyName in curDirection[level])
+                    {
+                        if (comp.cachedAllGraphicData[keyName] != null && comp.cachedAllGraphicData[keyName].CanRender(___pawn, keyName))
+                        {
+                            TextureLevels data = comp.cachedAllGraphicData[keyName];
+                            Mesh mesh = null;
+                            Vector3 offset = Vector3.zero;
+                            if (___pawn.RaceProps.Humanlike)
+                            {
+                                switch (data.meshType)
+                                {
+                                    case "Body": 
+                                        mesh = bodyMesh; 
+                                        break;
+                                    case "Head": 
+                                        mesh = headMesh; 
+                                        offset = quat * __instance.BaseHeadOffsetAt(facing);
+                                        break;
+                                    case "Hair": 
+                                        mesh = hairMesh;
+                                        offset = quat * __instance.BaseHeadOffsetAt(facing);
+                                        break;
+                                }
+                            }
+                            else
+                                mesh = bodyMesh;
+                            int pattern = 0;
+                            if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
+                                pattern = comp.cachedRandomGraphicPattern[keyName];
+                            Vector3 pos = vector + offset + data.DrawOffsetForRot(facing);
+                            Material mat = data.GetGraphic(keyName, pattern).MatAt(facing, null);
+                            GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
+                        }
+                    }
+                }
+            }
+
+            int layer = (int)TextureRenderLayer.Body;
+            if (curDirection.ContainsKey(layer))
+            {
+                foreach (string keyName in curDirection[layer])
+                {
+                    TextureLevels data = comp.cachedAllGraphicData[keyName];
+                    Mesh mesh = null;
+                    Vector3 offset = Vector3.zero;
+                    if (___pawn.RaceProps.Humanlike)
+                    {
+                        switch (data.meshType)
+                        {
+                            case "Body":
+                                mesh = bodyMesh;
+                                break;
+                            case "Head":
+                                mesh = headMesh;
+                                offset = quat * __instance.BaseHeadOffsetAt(facing);
+                                break;
+                            case "Hair":
+                                mesh = hairMesh;
+                                offset = quat * __instance.BaseHeadOffsetAt(facing);
+                                break;
+                        }
+                    }
+                    else
+                        mesh = bodyMesh;
+                    int pattern = 0;
+                    if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
+                        pattern = comp.cachedRandomGraphicPattern[keyName];
+                    string condition = "";
+                    if (bodyDrawType == RotDrawMode.Rotting && data.hasRotting)
+                        condition = "Rotting";
+                    if (bodyDrawType == RotDrawMode.Dessicated && data.hasDessicated)
+                        condition = "Dessicated";
+                    Vector3 pos = vector + offset + data.DrawOffsetForRot(facing);
+                    Material mat = data.GetGraphic(keyName, pattern, condition).MatAt(facing, null);
+                    GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
+                }
+                if (!comp.GetAllOverrideData.NullOrEmpty() && comp.GetAllOverrideData.Contains("Body"))
+                {
+                    if (ModsConfig.IdeologyActive && __instance.graphics.bodyTattooGraphic != null && bodyDrawType != RotDrawMode.Dessicated && (facing != Rot4.North || ___pawn.style.BodyTattoo.visibleNorth))
+                    {
+                        GenDraw.DrawMeshNowOrLater(__instance.GetBodyOverlayMeshSet().MeshAt(facing), loc, quat, __instance.graphics.bodyTattooGraphic.MatAt(facing, null), flags.FlagSet(PawnRenderFlags.DrawNow));
+                    }
+                    return false;
+                }  
+            }
+
+            return true;
+        }
+
+        static void DrawPawnBodyFinalizer(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags)
+        {
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
 
         //备用随机算法
         public static string GetRandom(System.Random rand, Dictionary<string, int> list)
@@ -751,14 +1119,14 @@ namespace NazunaLib
                 {
                     Vector3 loc = onHeadLoc;
                     loc.y -= 0.001447876f;
-                    GenDraw.DrawMeshNowOrLater(GetPawnHairMesh(flags, ___pawn, headFacing, __instance.graphics), loc, quat, __instance.graphics.faceTattooGraphic.MatAt(headFacing, (Thing)null), flags.FlagSet(PawnRenderFlags.DrawNow));
+                    GenDraw.DrawMeshNowOrLater(__instance.graphics.HairMeshSet.MeshAt(headFacing), loc, quat, __instance.graphics.faceTattooGraphic.MatAt(headFacing, (Thing)null), flags.FlagSet(PawnRenderFlags.DrawNow));
                 }
 
                 //画胡子
                 if (!notRendBeard && bodyDrawType != RotDrawMode.Dessicated && (!flags.FlagSet(PawnRenderFlags.HeadStump) && __instance.graphics.pawn.style != null) && __instance.graphics.pawn.style.beardDef != null)
                 {
                     Vector3 loc = OffsetBeardLocationForCrownType(__instance.graphics.pawn.story.headType, headFacing, onHeadLoc, __instance.graphics.pawn) + __instance.graphics.pawn.style.beardDef.GetOffset(__instance.graphics.pawn.story.headType, headFacing);
-                    Mesh mesh = GetPawnHairMesh(flags, ___pawn, headFacing, __instance.graphics);
+                    Mesh mesh = __instance.graphics.HairMeshSet.MeshAt(headFacing);
                     Material mat = __instance.graphics.BeardMatAt(headFacing, flags.FlagSet(PawnRenderFlags.Portrait), flags.FlagSet(PawnRenderFlags.Cache));
                     if (mat != null)
                     {
@@ -794,7 +1162,7 @@ namespace NazunaLib
                             {
                                 if (g.isbaseHair)
                                 {
-                                    mesh = GetPawnHairMesh(flags, ___pawn, headFacing, __instance.graphics, g);
+                                    mesh = __instance.graphics.HairMeshSet.MeshAt(headFacing);
                                     mat = HairMatAt(headFacing, g.graphic, __instance.graphics, flags.FlagSet(PawnRenderFlags.Portrait), flags.FlagSet(PawnRenderFlags.Cache));
                                     if (mat != null)
                                     {
@@ -813,7 +1181,7 @@ namespace NazunaLib
                         {
                             if (!g.isbaseHair)
                             {
-                                mesh = GetPawnHairMesh(flags, ___pawn, headFacing, __instance.graphics, g);
+                                mesh = __instance.graphics.HairMeshSet.MeshAt(headFacing);
                                 mat = HairMatAt(headFacing, g.graphic, __instance.graphics, flags.FlagSet(PawnRenderFlags.Portrait), flags.FlagSet(PawnRenderFlags.Cache));
                                 if (mat != null)
                                 {
@@ -831,7 +1199,7 @@ namespace NazunaLib
                         DAL_BaseHairDef baseHair = DefDatabase<DAL_BaseHairDef>.AllDefsListForReading.FirstOrDefault(x => x.hairDefName == defname);
                         if (baseHair != null)
                         {
-                            Mesh mesh3 = GetPawnHairMesh(flags, ___pawn, headFacing, __instance.graphics);
+                            Mesh mesh3 = __instance.graphics.HairMeshSet.MeshAt(headFacing);
 
                             Graphic baseHairGraphic = GraphicDatabase.Get<Graphic_Multi>(baseHair.baseTexPath, ShaderDatabase.Transparent, Vector2.one, __instance.graphics.pawn.story.HairColor);
                             Material baseMat = HairMatAt(headFacing, baseHairGraphic, __instance.graphics, flags.FlagSet(PawnRenderFlags.Portrait), flags.FlagSet(PawnRenderFlags.Cache));
@@ -850,7 +1218,7 @@ namespace NazunaLib
                         }
 
                         //画原版头发
-                        Mesh mesh = GetPawnHairMesh(flags, ___pawn, headFacing, __instance.graphics);
+                        Mesh mesh = __instance.graphics.HairMeshSet.MeshAt(headFacing);
                         Material mat = HairMatAt(headFacing, __instance.graphics.hairGraphic, __instance.graphics, flags.FlagSet(PawnRenderFlags.Portrait), flags.FlagSet(PawnRenderFlags.Cache));
                         if (mat != null)
                         {
@@ -889,7 +1257,7 @@ namespace NazunaLib
                             comp.apparelGraphicList.Sort((x, y) => x.yOffSet.CompareTo(y.yOffSet));
                             foreach (DAL_GraphicInfo g in comp.apparelGraphicList)
                             {
-                                mesh = GetPawnHairMesh(flags, __instance.graphics.pawn, headFacing, __instance.graphics, g);
+                                mesh = __instance.graphics.HairMeshSet.MeshAt(headFacing);
                                 mat = g.graphic.MatAt(headfacing, null);
                                 Vector3 Loc = onHeadLoc;
                                 Loc.y = Loc.y + g.yOffSet;
@@ -900,7 +1268,7 @@ namespace NazunaLib
                         else
                         {
                             Material original = apparelRecord.graphic.MatAt(headfacing, null);
-                            mesh = GetPawnHairMesh(flags, __instance.graphics.pawn, headFacing, __instance.graphics);
+                            mesh = __instance.graphics.HairMeshSet.MeshAt(headFacing);
                             mat = flags.FlagSet(PawnRenderFlags.Cache) ? original : OverrideMaterialIfNeeded(original, __instance.graphics.pawn, __instance, flags.FlagSet(PawnRenderFlags.Portrait));
                             GenDraw.DrawMeshNowOrLater(mesh, onHeadLoc, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                         }
@@ -923,7 +1291,7 @@ namespace NazunaLib
                             comp.apparelGraphicList.Sort((x, y) => x.yOffSet.CompareTo(y.yOffSet));
                             foreach (DAL_GraphicInfo g in comp.apparelGraphicList)
                             {
-                                mesh = GetPawnHairMesh(flags, __instance.graphics.pawn, headFacing, __instance.graphics, g);
+                                mesh = __instance.graphics.HairMeshSet.MeshAt(headFacing);
                                 mat = g.graphic.MatAt(bodyFacing, null);
                                 Vector3 Loc = loc;
                                 Loc.y = Loc.y + g.yOffSet;
@@ -933,7 +1301,7 @@ namespace NazunaLib
                         else
                         {
                             Material original = apparelRecord.graphic.MatAt(bodyFacing, (Thing)null);
-                            mesh = GetPawnHairMesh(flags, __instance.graphics.pawn, headFacing, __instance.graphics);
+                            mesh = __instance.graphics.HairMeshSet.MeshAt(headFacing);
                             mat = flags.FlagSet(PawnRenderFlags.Cache) ? original : OverrideMaterialIfNeeded(original, __instance.graphics.pawn, __instance, flags.FlagSet(PawnRenderFlags.Portrait));
                             GenDraw.DrawMeshNowOrLater(mesh, loc, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                         }
@@ -947,23 +1315,7 @@ namespace NazunaLib
 
         }
 
-        //BottomHair Prefix
-        static bool BehindAndTheBottomHairPrefix(PawnGraphicSet set, Vector3 onHeadLoc, Quaternion quat, PawnRenderFlags flags)
-        {
-            return true;
-        }
-
-        //BehindTheBottomHair 使用IL
-        public static IEnumerable<CodeInstruction> BehindTheBottomHairTranspiler(IEnumerable<CodeInstruction> instructions)
-        {
-            MethodInfo drawHair
-        }
-
-        public static void BehindTheBottomHair(PawnGraphicSet set, Vector3 onHeadLoc, Quaternion quat, PawnRenderFlags flags)
-        {
-            
-        }
-
+        
 
 
 
@@ -995,7 +1347,7 @@ namespace NazunaLib
 
                     yield return new CodeInstruction(OpCodes.Ldarg_S, 0);//render
 
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(DAL_PawnAndApparelPatch), "DrawBodyTranPatch", null, null));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(PawnRenderPatchs), "DrawBodyTranPatch", null, null));
 
                     yield return new CodeInstruction(OpCodes.Stloc_3, null);
                 }
@@ -1123,7 +1475,7 @@ namespace NazunaLib
 
                     yield return new CodeInstruction(OpCodes.Ldarg_S, 0);//render
 
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(DAL_PawnAndApparelPatch), "DrawApparelTranPatch", null, null));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(PawnRenderPatchs), "DrawApparelTranPatch", null, null));
                     //i = i + 44;
                     i = instructionList.FirstIndexOf(x => x.OperandIs(drawMeshNowOrLaterInfo) && instructionList[instructionList.IndexOf(x) + 3].OperandIs(renderAsPackInfo));
                 }
@@ -1174,7 +1526,7 @@ namespace NazunaLib
 
 
         //头部渲染修正，使用IL
-        public static IEnumerable<CodeInstruction> DrawHeadPatchTranspiler(IEnumerable<CodeInstruction> instructions)
+        /*public static IEnumerable<CodeInstruction> DrawHeadPatchTranspiler(IEnumerable<CodeInstruction> instructions)
         {
             MethodInfo baseHeadOffsetAtInfo = AccessTools.Method(typeof(PawnRenderer), "BaseHeadOffsetAt", null, null);
             MethodInfo drawMeshNowOrLaterInfo = AccessTools.Method(typeof(GenDraw), "DrawMeshNowOrLater", new Type[] { typeof(Mesh), typeof(Vector3), typeof(Quaternion), typeof(Material), typeof(bool) }, null);
@@ -1200,7 +1552,7 @@ namespace NazunaLib
 
                     yield return new CodeInstruction(OpCodes.Ldarg_S, 5);//bodyDrawType
 
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(DAL_PawnAndApparelPatch), "DrawHeadTranPatch", null, null));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(PawnRenderPatchs), "DrawHeadTranPatch", null, null));
 
                     yield return new CodeInstruction(OpCodes.Stloc_S, 6);
 
@@ -1329,7 +1681,7 @@ namespace NazunaLib
                 material = pgs.flasher.GetDamagedMat(material);
             }
             return material;
-        }
+        }*/
 
 
     }
@@ -1337,8 +1689,8 @@ namespace NazunaLib
 
 
 
-    [HarmonyPatch(typeof(Pawn_ApparelTracker))]
-    [HarmonyPatch("ApparelTrackerTick")]
+    //[HarmonyPatch(typeof(Pawn_ApparelTracker))]
+    //[HarmonyPatch("ApparelTrackerTick")]
     public class DAL_ApparelTickPatch
     {
         static void Postfix(Pawn_ApparelTracker __instance)
@@ -1356,8 +1708,8 @@ namespace NazunaLib
 
 
     //动画Pawn动画渲染框架核心修正
-    [HarmonyPatch(typeof(PawnRenderer))]
-    [HarmonyPatch("GetBlitMeshUpdatedFrame")]
+    //[HarmonyPatch(typeof(PawnRenderer))]
+    //[HarmonyPatch("GetBlitMeshUpdatedFrame")]
     public class DAL_PawnAnimatedPatch
     {
         static bool Prefix(PawnRenderer __instance, PawnTextureAtlasFrameSet frameSet, Rot4 rotation, PawnDrawMode drawMode, ref Pawn ___pawn, ref Mesh __result)
@@ -1385,8 +1737,8 @@ namespace NazunaLib
 
 
     //初始化AB包加载
-    [HarmonyPatch(typeof(Root))]
-    [HarmonyPatch("CheckGlobalInit")]
+    //[HarmonyPatch(typeof(Root))]
+    //[HarmonyPatch("CheckGlobalInit")]
     public class DAL_GameObjectPrefabLoadPatch
     {
         static void Postfix()
@@ -1417,8 +1769,8 @@ namespace NazunaLib
 
 
     //交流时转头 暂停维护
-    [HarmonyPatch(typeof(Pawn_InteractionsTracker))]
-    [HarmonyPatch("TryInteractWith")]
+    //[HarmonyPatch(typeof(Pawn_InteractionsTracker))]
+    //[HarmonyPatch("TryInteractWith")]
     public class DAL_InteractionHeadTurningPatch
     {
         static void Postfix(Pawn ___pawn, Pawn recipient, InteractionDef intDef)
@@ -1478,8 +1830,8 @@ namespace NazunaLib
 
 
     //Pawn表情死亡检测 暂停维护
-    [HarmonyPatch(typeof(Pawn_HealthTracker))]
-    [HarmonyPatch("SetDead")]
+    //[HarmonyPatch(typeof(Pawn_HealthTracker))]
+    //[HarmonyPatch("SetDead")]
     public class DAL_PawnExpressionDeadPatch
     {
         static bool Prefix(Pawn_HealthTracker __instance, Pawn ___pawn)
@@ -1528,8 +1880,8 @@ namespace NazunaLib
 
 
     //Pawn表情Damage检测 暂停维护
-    [HarmonyPatch(typeof(Pawn))]
-    [HarmonyPatch("PostApplyDamage")]
+    //[HarmonyPatch(typeof(Pawn))]
+    //[HarmonyPatch("PostApplyDamage")]
     //[HarmonyPatch(new Type[] { })]
     public class DAL_PawnExpressionDamagePatch
     {
@@ -1570,8 +1922,8 @@ namespace NazunaLib
 
 
     //Pawn表情Job变换检测 暂停维护
-    [HarmonyPatch(typeof(Pawn_JobTracker))]
-    [HarmonyPatch("StartJob")]
+    //[HarmonyPatch(typeof(Pawn_JobTracker))]
+    //[HarmonyPatch("StartJob")]
     //[HarmonyPatch(new Type[] { })]
     public class DAL_PawnExpressionJobPatch
     {
@@ -1613,8 +1965,8 @@ namespace NazunaLib
 
 
     //Pawn表情Need变换检测 暂停维护
-    [HarmonyPatch(typeof(Need))]
-    [HarmonyPatch("SetInitialLevel")]
+    //[HarmonyPatch(typeof(Need))]
+    //[HarmonyPatch("SetInitialLevel")]
     public class DAL_PawnExpressionNeedPatch
     {
         static void Postfix(Need __instance, Pawn ___pawn)
@@ -1650,9 +2002,9 @@ namespace NazunaLib
 
 
     //Pawn表情Verb变换检测 暂停维护
-    [HarmonyPatch(typeof(Verb))]
-    [HarmonyPatch("TryStartCastOn")]
-    [HarmonyPatch(new Type[] { typeof(LocalTargetInfo), typeof(LocalTargetInfo), typeof(bool), typeof(bool), typeof(bool) })]
+    //[HarmonyPatch(typeof(Verb))]
+    //[HarmonyPatch("TryStartCastOn")]
+    //[HarmonyPatch(new Type[] { typeof(LocalTargetInfo), typeof(LocalTargetInfo), typeof(bool), typeof(bool), typeof(bool) })]
     public class DAL_PawnExpressionVerbPatch
     {
         static void Postfix(bool __result, Verb __instance)
@@ -1691,8 +2043,8 @@ namespace NazunaLib
 
 
     //Pawn表情Hediff变换检测 暂停维护
-    [HarmonyPatch(typeof(Hediff))]
-    [HarmonyPatch("PostMake")]
+    //[HarmonyPatch(typeof(Hediff))]
+    //[HarmonyPatch("PostMake")]
     public class DAL_PawnExpressionHediffPatch
     {
         static void Postfix(Hediff __instance)
@@ -1728,8 +2080,8 @@ namespace NazunaLib
 
 
     //Pawn表情Thought变换检测 暂停维护
-    [HarmonyPatch(typeof(Thought))]
-    [HarmonyPatch("Init")]
+    //[HarmonyPatch(typeof(Thought))]
+    //[HarmonyPatch("Init")]
     public class DAL_PawnExpressionThoughtPatch
     {
         static void Postfix(Thought __instance)

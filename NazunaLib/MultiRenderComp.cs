@@ -11,113 +11,192 @@ namespace NazunaLib
 {
     public class MultiRenderComp : ThingComp
     {
-        /*public List<string> BehindTheBottomHair = new List<string>();
-        public List<string> BottomHair = new List<string>();
+        //存储当前Pawn身体，发型，服装的层渲染数据，key为pawn需要替换或者添加图像的部件的defName，value为存储需要渲染的图像的名称列表以及在哪个层渲染的信息
+        public Dictionary<string, MultiTexEpoch> storedDataBody, storedDataHair, storedDataApparel = new Dictionary<string, MultiTexEpoch>();
 
-        public List<string> BehindTheShell = new List<string>();
-        public List<string> Shell = new List<string>();
-        public List<string> FrontOfShell = new List<string>();
+        //用于缓存每次处理完的所有层数据,方向为正面，侧面，背面，反侧面，key为TextureRenderLayer转为整数值，value为经y轴排序后的贴图名字列表
+        public Dictionary<int, List<string>> cachedDataSouth, cachedDataEast, cachedDataNorth, cachedDataWest = new Dictionary<int, List<string>>();
 
-        public List<string> BehindTheBody = new List<string>();
-        public List<string> Body = new List<string>();
-        public List<string> FrontOfBody = new List<string>();
+        //用于缓存已经初始化了的身体，头发，服装的TextureLevels，第一个key为原部位的defName，第二个key为从multiTexBatch读取的贴图名称，value为其对应的TextureLevels
+        public Dictionary<string, Dictionary<string, TextureLevels>> cachedBodyGraphicData, cachedHairGraphicData, cachedApparelGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
 
-        public List<string> BehindTheApparel = new List<string>();
-        public List<string> Apparel = new List<string>();
-        public List<string> FrontOfApparel = new List<string>();
+        //用于缓存以上三个dict的总和并，key为从multiTexBatch读取的贴图名称，value为其对应的TextureLevels
+        public Dictionary<string, TextureLevels> cachedAllGraphicData = new Dictionary<string, TextureLevels>();
 
-        public List<string> BehindTheHead = new List<string>();
-        public List<string> Head = new List<string>();
-        public List<string> FrontOfHead = new List<string>();
+        //用于缓存具有随机状态的贴图的当前的pattern，key为此贴图的贴图名称（不带任何前缀和后缀），value为此贴图目前应使用的pattern序号
+        public Dictionary<string, int> cachedRandomGraphicPattern = new Dictionary<string, int>();
 
-        public List<string> BehindTheMask = new List<string>();
-        public List<string> Mask = new List<string>();
-        public List<string> FrontOfMask = new List<string>();
+        //用于缓存是否需要覆盖原部位的层名称列表,其中身体使用Body，头部使用Head，头发使用Hair来表示，其余覆盖部位用其defName表示
+        public List<string> cachedOverrideBody, cachedOverrideApparel, cachedOverrideHair = new List<string>();
 
-        public List<string> BehindTheHair = new List<string>();
-        public List<string> Hair = new List<string>();
-        public List<string> FrontOfHair = new List<string>();
+        public int timeTickLineIndex = 0;
+        public TextureLevelRandomPatternSet[] patternLine = new TextureLevelRandomPatternSet[] { };
 
-        public List<string> BehindTheHat = new List<string>();
-        public List<string> Hat = new List<string>();
-        public List<string> FrontOfHat = new List<string>();*/
+        public bool PrefixResolved { get; set; } = false;
 
-        public Dictionary<string, MultiTexEpoch> storedData = new Dictionary<string, MultiTexEpoch>();
 
-        public Dictionary<string, MultiTexEpoch> storedDataApparel = new Dictionary<string, MultiTexEpoch>();
+        public MultiRenderCompProperties Props
+        {
+            get
+            {
+                return (MultiRenderCompProperties)props;
+            }
+        }
 
         public List<MultiTexBatch> GetAllBatch
         {
             get
             {
-                return storedData.Values.Concat(storedDataApparel.Values).SelectMany(x => x.batches).ToList();
+                return storedDataBody.Values.Concat(storedDataApparel.Values).Concat(storedDataHair.Values).SelectMany(x => x.batches).ToList();
             }
         }
 
-        public List<Material> GetSouthSortedMats(TextureRenderLayer layer)
+        public Dictionary<string, TextureLevels> GetAllGraphicDataDict
         {
-            Rot4 s = Rot4.South;
-            List<string> keys = GetAllBatch.Where(x => x.layer == layer).SelectMany(x => x.keyList).Distinct().ToList();
-            keys.Sort((a, b) => ThisModData.TexLevelsDatabase[a].DrawOffsetForRot(s).y.CompareTo(ThisModData.TexLevelsDatabase[b].DrawOffsetForRot(s).y));
-            List<Material> graphics = keys.Select(x => ThisModData.TexLevelsDatabase[x].Graphic.MatAt(s)).ToList();
-            return graphics;
+            get
+            {
+                return cachedAllGraphicData;
+            }
         }
 
-        public List<Material> GetEastSortedMats(TextureRenderLayer layer)
+        public List<string> GetAllOverrideData
         {
-            Rot4 e = Rot4.East;
-            List<string> keys = GetAllBatch.Where(x => x.layer == layer).SelectMany(x => x.keyList).Distinct().ToList();
-            keys.Sort((a, b) => ThisModData.TexLevelsDatabase[a].DrawOffsetForRot(e).y.CompareTo(ThisModData.TexLevelsDatabase[b].DrawOffsetForRot(e).y));
-            List<Material> graphics = keys.Select(x => ThisModData.TexLevelsDatabase[x].Graphic.MatAt(e)).ToList();
-            return graphics;
+            get
+            {
+                return cachedOverrideBody.Concat(cachedOverrideHair).Concat(cachedOverrideApparel).ToList();
+            }
         }
 
-        public List<Material> GetNorthSortedMats(TextureRenderLayer layer)
+
+
+        public override void CompTick()
         {
-            Rot4 n = Rot4.North;
-            List<string> keys = GetAllBatch.Where(x => x.layer == layer).SelectMany(x => x.keyList).Distinct().ToList();
-            keys.Sort((a, b) => ThisModData.TexLevelsDatabase[a].DrawOffsetForRot(n).y.CompareTo(ThisModData.TexLevelsDatabase[b].DrawOffsetForRot(n).y));
-            List<Material> graphics = keys.Select(x => ThisModData.TexLevelsDatabase[x].Graphic.MatAt(n)).ToList();
-            return graphics;
+            base.CompTick();
+
+            //根据初始化的randomPattern队列来执行随机变换，每次random执行后向队列添加下次random的值，并且将cachedActionTimeOfTicks作为时间轴进行排序
+            //随机出的pattern值被保存在cachedTandomGraphicPattern字典中，通过贴图名称查询
+            //实验性质，可能会导致卡顿
+            int tick = Find.TickManager.TicksGame;
+            if (!patternLine.NullOrEmpty() && tick >= patternLine[timeTickLineIndex].cachedActionTimeOfTicks)
+            {
+                TextureLevelRandomPatternSet set = patternLine[timeTickLineIndex];
+                cachedRandomGraphicPattern[set.keyName] = set.cachedPattern;
+                set.RandomNextIntervalAndPattern();
+                patternLine.Append(set);
+                patternLine.SortStable((i, j) => i.cachedActionTimeOfTicks.CompareTo(j.cachedActionTimeOfTicks));
+                timeTickLineIndex++;
+            }
         }
+
+
+        //根据方向获取comp存储的keyName的Dict
+        public Dictionary<int, List<string>> GetDataOfDirection(Rot4 facing)
+        {
+            switch (facing.AsInt)
+            {
+                case 2: return cachedDataSouth;
+                case 1: return cachedDataEast;
+                case 3: return cachedDataWest;
+                case 0: return cachedDataNorth;
+                default: return null;
+            }
+        }
+
+
+        //对MultiTexEpoch所有的MultiTexBatch的Layer，针对每个方向进行分类和排序，并记入缓存
+        public void ResolveAllLayerBatch()
+        {
+            List<MultiTexBatch> list = GetAllBatch;
+            Log.Warning("batch:" + list.Count().ToString());
+            Dictionary<int, List<string>> dataSouth = new Dictionary<int, List<string>>();
+            Dictionary<int, List<string>> dataEast = new Dictionary<int, List<string>>();
+            Dictionary<int, List<string>> dataNorth = new Dictionary<int, List<string>>();
+            foreach (MultiTexBatch batch in list)
+            {
+                if (batch.renderSwitch.x != 0)
+                {
+                    if (dataSouth.NullOrEmpty() || !dataSouth.ContainsKey((int)batch.layer))
+                        dataSouth[(int)batch.layer] = new List<string>();
+                    dataSouth[(int)batch.layer] = dataSouth[(int)batch.layer].Concat(batch.keyList).ToList();
+                }
+                if (batch.renderSwitch.y != 0)
+                {
+                    TextureRenderLayer layer = batch.layer;
+                    if (batch.layer == TextureRenderLayer.BottomHair)
+                        layer = TextureRenderLayer.Hair;
+                    if (batch.layer == TextureRenderLayer.HandOne)
+                        layer = TextureRenderLayer.HandTwo;
+                    if (dataEast.NullOrEmpty() || !dataEast.ContainsKey((int)batch.layer))
+                        dataEast[(int)layer] = new List<string>();
+                    dataEast[(int)layer] = dataEast[(int)layer].Concat(batch.keyList).ToList();
+                }
+                if (batch.renderSwitch.z != 0)
+                {
+                    TextureRenderLayer layer = batch.layer;
+                    if (batch.layer == TextureRenderLayer.BottomHair)
+                        layer = TextureRenderLayer.Hair;
+                    if (batch.layer == TextureRenderLayer.BottomShell)
+                        layer = TextureRenderLayer.FaceMask;
+                    if (batch.layer == TextureRenderLayer.FaceMask)
+                        layer = TextureRenderLayer.BottomShell;
+                    if (batch.layer == TextureRenderLayer.Hair)
+                        layer = TextureRenderLayer.BottomHair;
+                    if (!dataNorth.NullOrEmpty() || !dataNorth.ContainsKey((int)batch.layer))
+                        dataNorth[(int)layer] = new List<string>();
+                    dataNorth[(int)layer] = dataNorth[(int)layer].Concat(batch.keyList).ToList();
+                }
+            }
+            cachedDataSouth = dataSouth;
+            cachedDataEast = dataEast;
+            cachedDataWest = dataEast;
+            cachedDataNorth = dataNorth;
+
+            
+            foreach (TextureRenderLayer t in cachedDataSouth.Keys)
+            {
+                if (cachedDataSouth[(int)t].Count() > 1)
+                    cachedDataSouth[(int)t].Sort((i, j) => ThisModData.TexLevelsDatabase[i].drawOffsetSouth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetSouth.Value.y));
+            }
+            foreach (TextureRenderLayer t in cachedDataEast.Keys)
+            {
+                if (cachedDataEast[(int)t].Count() > 1)
+                    cachedDataEast[(int)t].Sort((i, j) => ThisModData.TexLevelsDatabase[i].drawOffsetEast.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetEast.Value.y));
+                if (cachedDataWest[(int)t].Count() > 1)
+                    cachedDataWest[(int)t].Sort((i, j) => ThisModData.TexLevelsDatabase[i].drawOffsetWest.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetWest.Value.y));
+            }
+            foreach (TextureRenderLayer t in cachedDataNorth.Keys)
+            {
+                if (cachedDataNorth[(int)t].Count() > 1)
+                    cachedDataNorth[(int)t].Sort((i, j) => -ThisModData.TexLevelsDatabase[i].drawOffsetNorth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetNorth.Value.y));
+            }
+
+            cachedAllGraphicData = cachedBodyGraphicData.Concat(cachedHairGraphicData).Concat(cachedApparelGraphicData).SelectMany(x => x.Value).ToDictionary(k => k.Key, v => v.Value);
+
+
+            //初始化randomPattern队列
+            patternLine = cachedAllGraphicData.Values.Where(x => x.patternSets != null && x.patternSets.texList.Contains(x.keyName)).Select(x => x.patternSets).ToArray();
+            if (patternLine.Length > 1)
+                patternLine.SortStable((i, j) => i.RandomNextIntervalAndPattern().CompareTo(j.RandomNextIntervalAndPattern()));
+            cachedRandomGraphicPattern.Clear();
+            timeTickLineIndex = 0;
+
+            Log.Warning("south:" + cachedDataSouth.Count().ToString());
+            Log.Warning("east:" + cachedDataEast.Count().ToString());
+            Log.Warning("north:" + cachedDataNorth.Count().ToString());
+            Log.Warning("AllGraphicData:" + GetAllGraphicDataDict.Count().ToString());
+            Log.Warning("levels:" + ThisModData.TexLevelsDatabase.Count().ToString());
+            Log.Warning("plans:" + ThisModData.DefAndKeyDatabase.Count().ToString());
+        }
+
 
 
         public override void PostExposeData()
         {
             base.PostExposeData();
             GetAllBatch.Where(x => x.layer == TextureRenderLayer.Apparel).SelectMany(x => x.keyList).Distinct().ToList().Sort((x, y) => ThisModData.TexLevelsDatabase[x].DrawOffsetForRot(Rot4.South).y.CompareTo(ThisModData.TexLevelsDatabase[y].DrawOffsetForRot(Rot4.South).y));
-            Scribe_Collections.Look<string, MultiTexEpoch>(ref storedData, "storedData", LookMode.Value, LookMode.Deep);
+            Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataBody, "storedData", LookMode.Value, LookMode.Deep);
+            Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataHair, "storedDataHair", LookMode.Value, LookMode.Deep);
             Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataApparel, "storedDataApparel", LookMode.Value, LookMode.Deep);
-            /*Scribe_Collections.Look<string>(ref BehindTheBottomHair, "BehindTheBottomHair", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref BottomHair, "BottomHair", LookMode.Value, Array.Empty<object>());
-
-            Scribe_Collections.Look<string>(ref BehindTheShell, "BehindTheShell", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref Shell, "Shell", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref FrontOfShell, "FrontOfShell", LookMode.Value, Array.Empty<object>());
-
-            Scribe_Collections.Look<string>(ref BehindTheBody, "BehindTheBody", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref Body, "Body", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref FrontOfBody, "FrontOfBody", LookMode.Value, Array.Empty<object>());
-
-            Scribe_Collections.Look<string>(ref BehindTheApparel, "BehindTheApparel", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref Apparel, "Apparel", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref FrontOfApparel, "FrontOfApparel", LookMode.Value, Array.Empty<object>());
-
-            Scribe_Collections.Look<string>(ref BehindTheHead, "BehindTheHead", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref Head, "Head", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref FrontOfHead, "FrontOfHead", LookMode.Value, Array.Empty<object>());
-
-            Scribe_Collections.Look<string>(ref BehindTheMask, "BehindTheMask", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref Mask, "Mask", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref FrontOfMask, "FrontOfMask", LookMode.Value, Array.Empty<object>());
-
-            Scribe_Collections.Look<string>(ref BehindTheHair, "BehindTheHair", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref Hair, "Hair", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref FrontOfHair, "FrontOfHair", LookMode.Value, Array.Empty<object>());
-
-            Scribe_Collections.Look<string>(ref BehindTheHat, "BehindTheHat", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref Hat, "Hat", LookMode.Value, Array.Empty<object>());
-            Scribe_Collections.Look<string>(ref FrontOfHat, "FrontOfHat", LookMode.Value, Array.Empty<object>());*/
         }
     }
 }

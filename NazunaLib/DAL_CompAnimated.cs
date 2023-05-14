@@ -232,7 +232,7 @@ namespace NazunaLib
 
 		private bool ApparelCoveredBodyAddon(Pawn pawn, BodyPartRecord part)
 		{
-			if (pawn.apparel.WornApparel?.Any(x => x.def.apparel.CoversBodyPart(part) && x.def.apparel.bodyPartGroups.Contains(DAL_BodyPartGroupDefOf.FullCoverage)) == true)
+			if (pawn.apparel.WornApparel?.Any(x => x.def.apparel.CoversBodyPart(part)/* && x.def.apparel.bodyPartGroups.Contains(DAL_BodyPartGroupDefOf.FullCoverage)*/) == true)
 			{
 				return true;
 			}

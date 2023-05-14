@@ -187,7 +187,7 @@ namespace NazunaLib
                     {
                         continue;
                     }
-                    if (data.corwnType != null && (alienComp == null || alienComp.crownType != data.corwnType))
+                    if (data.corwnType != null && (alienComp == null/* || alienComp.crownType != data.corwnType*/))
                     {
                         continue;
                     }
@@ -227,7 +227,7 @@ namespace NazunaLib
                     {
                         continue;
                     }
-                    if (data.corwnType != null && (alienComp == null || alienComp.crownType != data.corwnType))
+                    if (data.corwnType != null && (alienComp == null/* || alienComp.crownType != data.corwnType*/))
                     {
                         continue;
                     }
@@ -263,7 +263,7 @@ namespace NazunaLib
                     {
                         continue;
                     }
-                    if (data.corwnType != null && (alienComp == null || alienComp.crownType != data.corwnType))
+                    if (data.corwnType != null && (alienComp == null/* || alienComp.crownType != data.corwnType*/))
                     {
                         continue;
                     }

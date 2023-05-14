@@ -11,14 +11,14 @@ namespace NazunaLib
 {
     public class MultiTexDef : Def
     {
-        //渲染的部位类型
+        //渲染的部位类型(暂时不使用)
         public RenderClass renderClass = RenderClass.None;
         
         //基于渲染的Def
-        public Def originalDef;
+        public string originalDef;
 
         //是否渲染原层级的贴图
-        public bool rendOriginTex = false;
+        public bool renderOriginTex = false;
 
         //贴图文件夹所在路径
         public string path = "";
@@ -34,12 +34,7 @@ namespace NazunaLib
         public override void ResolveReferences()
         {
             base.ResolveReferences();
-            if (levels.NullOrEmpty())
-                return;
-            foreach (TextureLevels level in levels)
-            {
-                cacheOfLevels.batches.Add(new MultiTexBatch(level.renderLayer, new List<string>()));
-            }
+            cacheOfLevels.originalDef = originalDef;
         }
     }
 }
