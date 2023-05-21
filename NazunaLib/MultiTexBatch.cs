@@ -18,7 +18,7 @@ namespace NazunaLib
 
         public TextureRenderLayer layer = TextureRenderLayer.None;
 
-        public List<string> keyList = new List<string>();
+        //public List<string> keyList = new List<string>();
 
         //public List<string> keyListSouth = new List<string>();
         //public List<string> keyListEast = new List<string>();
@@ -28,12 +28,12 @@ namespace NazunaLib
         public Vector3 renderSwitch = Vector3.one;
         public IntVec3 saveRenderSwitch;
 
-        public MultiTexBatch(string def, string key, TextureRenderLayer la, List<string> list, Vector3 r)
+        public MultiTexBatch(string def, string key, TextureRenderLayer la, Vector3 r/*, List<string> list*/)
         {
             multiTexDefName = def;
             keyName = key;
             layer = la;
-            keyList = list;
+            //keyList = list;
             renderSwitch = r;
         }
 
@@ -42,7 +42,7 @@ namespace NazunaLib
             Scribe_Values.Look<string>(ref multiTexDefName, "multiTexDefNamr", "", false);
             Scribe_Values.Look<string>(ref keyName, "keyName", "", false);
             Scribe_Values.Look<TextureRenderLayer>(ref layer, "layer", TextureRenderLayer.None, false);
-            Scribe_Collections.Look<string>(ref keyList, "keyList", LookMode.Value, Array.Empty<object>());
+            //Scribe_Collections.Look<string>(ref keyList, "keyList", LookMode.Value, Array.Empty<object>());
 
             saveRenderSwitch = new IntVec3(renderSwitch);
             Scribe_Values.Look<IntVec3>(ref saveRenderSwitch, "saveRenderSwitch", IntVec3.Invalid, false);

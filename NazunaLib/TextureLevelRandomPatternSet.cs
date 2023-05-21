@@ -11,14 +11,13 @@ namespace NazunaLib
 {
     public class TextureLevelRandomPatternSet
     {
-        public string keyName = "";
-
         public List<string> texList = new List<string>();
 
         public int patterns = 1;
 
         public Vector2Int timeIntervalOfTicks = new Vector2Int(1200, 1800);
 
+        public string keyName = "";
         public int cachedPattern = 1;
         public int cachedActionTimeOfTicks = 0;
 

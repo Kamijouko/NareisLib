@@ -35,6 +35,9 @@ namespace NazunaLib
         //可选参数，渲染时使用的Mesh类型，有Hair，Head和Body三种（注意大小写）非Humanlike的pawn只有Body
         public string meshType = "Body";
 
+        //可选参数，渲染时使用的Mesh大小，为zero时不会识别，默认为zero
+        public Vector2 meshSize = Vector2.zero;
+
         //可选参数，区分性别，在文件名的“_方向”之前添加“_性别”，目前只支持"_Male"和"_Female"
         public bool hasGender = false;
         public bool renderMale = false;
@@ -58,6 +61,9 @@ namespace NazunaLib
         //可选参数，该贴图是否有骨架版本
         public bool hasDessicated = false;
 
+        //可选参数，如果该贴图为手部层，则这个选项控制Hand层和HandTwo层是否绘制在shell层下方
+        public bool handDrawBehindShell = true;
+
         //可选参数，x、y、z分别表示正面侧面和背面，为1时会被渲染，为0时会被忽略
         public Vector3 renderSwitch = Vector3.one;
 
@@ -67,6 +73,12 @@ namespace NazunaLib
         //可选参数，针对某张贴图的特定名称设定权重（不带文件格式后缀）
         public Dictionary<string, int> weightOfTheName = new Dictionary<string, int>();
 
+        //可选参数，当前层是否为袖子
+        public bool isSleeve = false;
+        //可选参数，和上方参数联动，当前袖子对应哪个手部的贴图，填入贴图名称（不带前后缀）
+        public List<string> sleeveTexList = new List<string>();
+        //可选参数，设置袖子是否在shell层下方
+        public bool sleeveDrawBehindShell = true;
 
         //默认的权重（在未设定权重的情况下所有贴图的权重均为1）常数，无法更改
         public const int normalWaight = 1;

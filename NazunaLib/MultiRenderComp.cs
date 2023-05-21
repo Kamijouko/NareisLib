@@ -20,7 +20,10 @@ namespace NazunaLib
         //用于缓存已经初始化了的身体，头发，服装的TextureLevels，第一个key为原部位的defName，第二个key为从multiTexBatch读取的贴图名称，value为其对应的TextureLevels
         public Dictionary<string, Dictionary<string, TextureLevels>> cachedBodyGraphicData, cachedHairGraphicData, cachedApparelGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
 
-        //用于缓存以上三个dict的总和并，key为从multiTexBatch读取的贴图名称，value为其对应的TextureLevels
+        //用于缓存上面三个dict为一个
+        public Dictionary<string, Dictionary<string, TextureLevels>> cachedAllOriginalDefForGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
+
+        //用于缓存以上三个dict的总和，key为从multiTexBatch读取的贴图名称，value为其对应的TextureLevels
         public Dictionary<string, TextureLevels> cachedAllGraphicData = new Dictionary<string, TextureLevels>();
 
         //用于缓存具有随机状态的贴图的当前的pattern，key为此贴图的贴图名称（不带任何前缀和后缀），value为此贴图目前应使用的pattern序号
@@ -28,6 +31,12 @@ namespace NazunaLib
 
         //用于缓存是否需要覆盖原部位的层名称列表,其中身体使用Body，头部使用Head，头发使用Hair来表示，其余覆盖部位用其defName表示
         public List<string> cachedOverrideBody, cachedOverrideApparel, cachedOverrideHair = new List<string>();
+
+        //用于缓存当前pawn的race关联的RenderPlanDef
+        public string cachedRenderPlanDefName = "";
+
+        //用于缓存当前手对应的持有装备角度
+        public float holdEquipmentAngle = 0f;
 
         public int timeTickLineIndex = 0;
         public TextureLevelRandomPatternSet[] patternLine = new TextureLevelRandomPatternSet[] { };
@@ -59,7 +68,15 @@ namespace NazunaLib
             }
         }
 
-        public List<string> GetAllOverrideData
+        public Dictionary<string, Dictionary<string, TextureLevels>> GetAllOriginalDefForGraphicDataDict
+        {
+            get
+            {
+                return cachedAllOriginalDefForGraphicData;
+            }
+        }
+
+        public List<string> GetAllHideOriginalDefData
         {
             get
             {
@@ -117,7 +134,7 @@ namespace NazunaLib
                 {
                     if (dataSouth.NullOrEmpty() || !dataSouth.ContainsKey((int)batch.layer))
                         dataSouth[(int)batch.layer] = new List<string>();
-                    dataSouth[(int)batch.layer] = dataSouth[(int)batch.layer].Concat(batch.keyList).ToList();
+                    dataSouth[(int)batch.layer].Add(batch.keyName);
                 }
                 if (batch.renderSwitch.y != 0)
                 {
@@ -128,7 +145,7 @@ namespace NazunaLib
                         layer = TextureRenderLayer.HandTwo;
                     if (dataEast.NullOrEmpty() || !dataEast.ContainsKey((int)batch.layer))
                         dataEast[(int)layer] = new List<string>();
-                    dataEast[(int)layer] = dataEast[(int)layer].Concat(batch.keyList).ToList();
+                    dataEast[(int)layer].Add(batch.keyName);
                 }
                 if (batch.renderSwitch.z != 0)
                 {
@@ -143,7 +160,7 @@ namespace NazunaLib
                         layer = TextureRenderLayer.BottomHair;
                     if (!dataNorth.NullOrEmpty() || !dataNorth.ContainsKey((int)batch.layer))
                         dataNorth[(int)layer] = new List<string>();
-                    dataNorth[(int)layer] = dataNorth[(int)layer].Concat(batch.keyList).ToList();
+                    dataNorth[(int)layer].Add(batch.keyName);
                 }
             }
             cachedDataSouth = dataSouth;
@@ -170,7 +187,8 @@ namespace NazunaLib
                     cachedDataNorth[(int)t].Sort((i, j) => -ThisModData.TexLevelsDatabase[i].drawOffsetNorth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetNorth.Value.y));
             }
 
-            cachedAllGraphicData = cachedBodyGraphicData.Concat(cachedHairGraphicData).Concat(cachedApparelGraphicData).SelectMany(x => x.Value).ToDictionary(k => k.Key, v => v.Value);
+            cachedAllOriginalDefForGraphicData = cachedBodyGraphicData.Concat(cachedHairGraphicData).Concat(cachedApparelGraphicData).ToDictionary(k => k.Key, v => v.Value);
+            cachedAllGraphicData = cachedAllOriginalDefForGraphicData.SelectMany(x => x.Value).ToDictionary(k => k.Key, v => v.Value);
 
 
             //初始化randomPattern队列
@@ -193,7 +211,7 @@ namespace NazunaLib
         public override void PostExposeData()
         {
             base.PostExposeData();
-            GetAllBatch.Where(x => x.layer == TextureRenderLayer.Apparel).SelectMany(x => x.keyList).Distinct().ToList().Sort((x, y) => ThisModData.TexLevelsDatabase[x].DrawOffsetForRot(Rot4.South).y.CompareTo(ThisModData.TexLevelsDatabase[y].DrawOffsetForRot(Rot4.South).y));
+            //GetAllBatch.Where(x => x.layer == TextureRenderLayer.Apparel).SelectMany(x => x.keyList).Distinct().ToList().Sort((x, y) => ThisModData.TexLevelsDatabase[x].DrawOffsetForRot(Rot4.South).y.CompareTo(ThisModData.TexLevelsDatabase[y].DrawOffsetForRot(Rot4.South).y));
             Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataBody, "storedData", LookMode.Value, LookMode.Deep);
             Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataHair, "storedDataHair", LookMode.Value, LookMode.Deep);
             Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataApparel, "storedDataApparel", LookMode.Value, LookMode.Deep);

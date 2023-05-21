@@ -18,6 +18,8 @@ using RimWorld.Planet;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using UnityEngine.UIElements.Experimental;
+using Verse.Noise;
+using Mono.Cecil.Cil;
 
 namespace NazunaLib
 {
@@ -684,10 +686,11 @@ namespace NazunaLib
                 string keyName = level.preFixToTexName[pre].RandomElementByWeight(x => level.texWeights[x]);
 
                 if (!epoch.batches.Exists(x => x.keyName == keyName))
-                    epoch.batches.Add(new MultiTexBatch(def.defName, keyName, level.renderLayer, new List<string>(), level.renderSwitch));
-                epoch.batches.First(x => x.keyName == keyName).keyList.Add(keyName);
+                    epoch.batches.Add(new MultiTexBatch(def.defName, keyName, level.renderLayer, level.renderSwitch));
+                //epoch.batches.First(x => x.keyName == keyName).keyList.Add(keyName);
 
                 level.keyName = keyName;
+                level.originalDef = epoch.originalDef;
                 if (level.patternSets != null)
                     level.patternSets.keyName = keyName;
                 data[keyName] = level;
@@ -759,6 +762,7 @@ namespace NazunaLib
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 AddComp(ref comp, ref pawn);
+            comp.cachedRenderPlanDefName = plan;
 
             List<string> cachedOverride = new List<string>();
             Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
@@ -918,7 +922,7 @@ namespace NazunaLib
         }
 
 
-        //BottomHair BottomShell Body Prefix
+        //BottomOverlay BottomHair BottomShell BodyPrefix
         static bool DrawPawnBodyPrefix(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags)
         {
             //Log.Warning(___pawn.Name + " flags: DrawNow = " + flags.FlagSet(PawnRenderFlags.DrawNow).ToStringSafe());
@@ -934,9 +938,7 @@ namespace NazunaLib
 
             Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
             Vector3 vector = rootLoc;
-            vector.y += 0.003f;
-            Vector3 loc = vector;
-            loc.y += 0.001f;
+            vector.y += 0.006687258f;/*原身体为0.008687258f，反映精度为0.0003f*/
             Mesh bodyMesh = null;
             Mesh hairMesh = null;
             Mesh headMesh = null;
@@ -949,7 +951,7 @@ namespace NazunaLib
             else
                 bodyMesh = __instance.graphics.nakedGraphic.MeshAt(facing);
 
-            List<int> renderLayers = new List<int>() { (int)TextureRenderLayer.BottomHair, (int)TextureRenderLayer.BottomShell}; 
+            List<int> renderLayers = new List<int>() { (int)TextureRenderLayer.BottomOverlay, (int)TextureRenderLayer.BottomHair, (int)TextureRenderLayer.BottomShell}; 
             
             foreach (int level in renderLayers)
             {
@@ -962,18 +964,159 @@ namespace NazunaLib
                             TextureLevels data = comp.cachedAllGraphicData[keyName];
                             Mesh mesh = null;
                             Vector3 offset = Vector3.zero;
+                            if (data.meshSize != Vector2.zero)
+                            {
+                                mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                                switch (data.meshType)
+                                {
+                                    case "Head": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
+                                    case "Hair": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
+                                }
+                            }
+                            else
+                            {
+                                if (___pawn.RaceProps.Humanlike)
+                                {
+                                    switch (data.meshType)
+                                    {
+                                        case "Body": mesh = bodyMesh; break;
+                                        case "Head":
+                                            mesh = headMesh;
+                                            offset = quat * __instance.BaseHeadOffsetAt(facing);
+                                            break;
+                                        case "Hair":
+                                            mesh = hairMesh;
+                                            offset = quat * __instance.BaseHeadOffsetAt(facing);
+                                            break;
+                                    }
+                                }
+                                else
+                                    mesh = bodyMesh;
+                            }
+                            int pattern = 0;
+                            if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
+                                pattern = comp.cachedRandomGraphicPattern[keyName];
+                            string condition = "";
+                            if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
+                                condition = "Rotting";
+                            if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
+                                condition = "Dessicated";
+                            Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                            dataOffset.y *= 0.0001f;
+                            Vector3 pos = vector + offset + dataOffset;
+                            Material mat = data.GetGraphic(keyName, pattern, condition).MatAt(facing, null);
+                            GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
+                        }
+                    }
+                }
+            }
+
+            if (!curDirection.ContainsKey((int)TextureRenderLayer.Body) && !curDirection.ContainsKey((int)TextureRenderLayer.Apparel))
+                return true;
+
+            return false;
+        }
+
+
+        //下面补丁的子方法
+        public static Material OverrideMaterialIfNeeded(PawnRenderer instance, Material original, Pawn pawn, bool portrait = false)
+        {
+            Material baseMat = (!portrait && pawn.IsInvisible()) ? InvisibilityMatPool.GetInvisibleMat(original) : original;
+            return instance.graphics.flasher.GetDamagedMat(baseMat);
+        }
+
+        //Body HandOne Hand HandTwo Apparel(除了shell层) BodyFinalizer
+        static void DrawPawnBodyFinalizer(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags, bool __result)
+        {
+            MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
+            if (comp == null)
+                return;
+            if (!comp.PrefixResolved)
+                __instance.graphics.ResolveAllGraphics();
+
+            Dictionary<int, List<string>> curDirection = comp.GetDataOfDirection(facing);
+            if (curDirection.NullOrEmpty())
+                return;
+
+            Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
+            Vector3 vector = rootLoc;
+            vector.y += 0.008687258f;
+            Vector3 loc = vector;
+            loc.y += 0.0014478763f;
+            Mesh bodyMesh = null;
+            Mesh hairMesh = null;
+            Mesh headMesh = null;
+            if (___pawn.RaceProps.Humanlike)
+            {
+                bodyMesh = HumanlikeMeshPoolUtility.GetHumanlikeBodySetForPawn(___pawn).MeshAt(facing);
+                headMesh = HumanlikeMeshPoolUtility.GetHumanlikeHeadSetForPawn(___pawn).MeshAt(facing);
+                hairMesh = HumanlikeMeshPoolUtility.GetHumanlikeHairSetForPawn(___pawn).MeshAt(facing);
+            }
+            else
+                bodyMesh = __instance.graphics.nakedGraphic.MeshAt(facing);
+
+
+            //如果原方法未执行且并不具有多层身体或者不隐藏原身体
+            if (!__result 
+                && (!curDirection.ContainsKey((int)TextureRenderLayer.Body) 
+                    || (!comp.GetAllHideOriginalDefData.NullOrEmpty() 
+                        && !comp.GetAllHideOriginalDefData.Contains("Body"))))
+            {
+                Material bodyMat;
+                PawnGraphicSet pawnSet = __instance.graphics;
+                if (bodyDrawType == RotDrawMode.Fresh)
+                {
+                    if (___pawn.Dead && pawnSet.corpseGraphic != null)
+                        bodyMat = pawnSet.corpseGraphic.MatAt(facing, null);
+                    else
+                        bodyMat = pawnSet.nakedGraphic.MatAt(facing, null);
+                }
+                else if (bodyDrawType == RotDrawMode.Rotting || pawnSet.dessicatedGraphic == null)
+                    bodyMat = pawnSet.rottingGraphic.MatAt(facing, null);
+                else
+                    bodyMat = pawnSet.dessicatedGraphic.MatAt(facing, null);
+                Material material = (___pawn.RaceProps.IsMechanoid && ___pawn.Faction != null && ___pawn.Faction != Faction.OfMechanoids) 
+                    ? __instance.graphics.GetOverlayMat(bodyMat, ___pawn.Faction.MechColor) 
+                    : bodyMat;
+                Material mat = flags.FlagSet(PawnRenderFlags.Cache) ? material : OverrideMaterialIfNeeded(material, ___pawn, __instance, flags.FlagSet(PawnRenderFlags.Portrait));
+                GenDraw.DrawMeshNowOrLater(bodyMesh, vector, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
+            }
+
+            List<int> renderLayers;
+            if (__result)
+                renderLayers = new List<int>() { (int)TextureRenderLayer.HandOne, (int)TextureRenderLayer.Hand, (int)TextureRenderLayer.HandTwo };
+            else
+                renderLayers = new List<int>() { (int)TextureRenderLayer.Body, (int)TextureRenderLayer.HandOne, (int)TextureRenderLayer.Hand, (int)TextureRenderLayer.HandTwo };
+            foreach (int level in renderLayers)
+            {
+                if (curDirection.ContainsKey(level))
+                {
+                    foreach (string keyName in curDirection[level])
+                    {
+                        TextureLevels data = comp.cachedAllGraphicData[keyName];
+                        Mesh mesh = null;
+                        Vector3 offset = Vector3.zero;
+                        if (data.meshSize != Vector2.zero)
+                        {
+                            mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                            switch (data.meshType)
+                            {
+                                case "Head": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
+                                case "Hair": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
+                            }
+                        }
+                        else
+                        {
                             if (___pawn.RaceProps.Humanlike)
                             {
                                 switch (data.meshType)
                                 {
-                                    case "Body": 
-                                        mesh = bodyMesh; 
-                                        break;
-                                    case "Head": 
-                                        mesh = headMesh; 
+                                    case "Body": mesh = bodyMesh; break;
+                                    case "Head":
+                                        mesh = headMesh;
                                         offset = quat * __instance.BaseHeadOffsetAt(facing);
                                         break;
-                                    case "Hair": 
+                                    case "Hair":
                                         mesh = hairMesh;
                                         offset = quat * __instance.BaseHeadOffsetAt(facing);
                                         break;
@@ -981,82 +1124,461 @@ namespace NazunaLib
                             }
                             else
                                 mesh = bodyMesh;
-                            int pattern = 0;
-                            if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
-                                pattern = comp.cachedRandomGraphicPattern[keyName];
-                            Vector3 pos = vector + offset + data.DrawOffsetForRot(facing);
-                            Material mat = data.GetGraphic(keyName, pattern).MatAt(facing, null);
-                            GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
+                        }
+                        int pattern = 0;
+                        if (data.isSleeve)
+                        {
+                            string handKeyName = data.sleeveTexList.FirstOrDefault(x => comp.cachedRandomGraphicPattern.Keys.Contains(x));
+                            if (handKeyName != null)
+                                pattern = comp.cachedRandomGraphicPattern[handKeyName];
+                            else
+                                continue;
+                        }  
+                        else if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
+                            pattern = comp.cachedRandomGraphicPattern[keyName];
+                        string condition = "";
+                        if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
+                            condition = "Rotting";
+                        if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
+                            condition = "Dessicated";
+                        Vector3 handOffset = Vector3.zero;
+                        if (data.handDrawBehindShell && !data.isSleeve)
+                        {
+                            if (level == (int)TextureRenderLayer.Hand || level == (int)TextureRenderLayer.HandTwo)
+                                handOffset.y = (__instance.graphics.apparelGraphics.Count + 1) * 0.0028957527f;
+                        }
+                        else if (data.sleeveDrawBehindShell && data.isSleeve)
+                        {
+                            handOffset.y = (__instance.graphics.apparelGraphics.Count + 2) * 0.0028957527f;
+                        }
+                        else
+                        {
+                            if (facing != Rot4.North)
+                                handOffset.y = 0.014478763f;
+                            else
+                                handOffset.y = 0.011583012f;
+                        }
+                        Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                        dataOffset.y *= 0.0001f;
+                        Vector3 pos = vector + offset + dataOffset + handOffset;
+                        Material material = data.GetGraphic(keyName, pattern, condition).MatAt(facing, null);
+                        Material mat = (___pawn.RaceProps.IsMechanoid 
+                            && ___pawn.Faction != null 
+                            && ___pawn.Faction != Faction.OfMechanoids) ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor) : material;
+                        GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
+                    }
+                }
+            }
+            vector.y += 0.0028957527f;
+
+            if (!__result && flags.FlagSet(PawnRenderFlags.Clothes) && curDirection.ContainsKey((int)TextureRenderLayer.Apparel))
+            {
+                for (int i = 0; i < __instance.graphics.apparelGraphics.Count; i++)
+                {
+                    ApparelGraphicRecord apparel = __instance.graphics.apparelGraphics[i];
+                    if ((apparel.sourceApparel.def.apparel.shellRenderedBehindHead || apparel.sourceApparel.def.apparel.LastLayer != ApparelLayerDefOf.Shell)
+                        && !PawnRenderer.RenderAsPack(apparel.sourceApparel)
+                        && apparel.sourceApparel.def.apparel.LastLayer != ApparelLayerDefOf.Overhead
+                        && apparel.sourceApparel.def.apparel.LastLayer != ApparelLayerDefOf.EyeCover)
+                    {
+                        //如果当前服装的def没在需要被隐藏的列表里的话
+                        if (!comp.GetAllHideOriginalDefData.NullOrEmpty() && !comp.GetAllHideOriginalDefData.Contains(apparel.sourceApparel.def.defName))
+                        {
+                            //先画此服装
+                            Material apparelMAt = (___pawn.RaceProps.IsMechanoid && ___pawn.Faction != null && ___pawn.Faction != Faction.OfMechanoids)
+                                ? __instance.graphics.GetOverlayMat(apparel.graphic.MatAt(facing, null), ___pawn.Faction.MechColor)
+                                : apparel.graphic.MatAt(facing, null);
+                            Material material = flags.FlagSet(PawnRenderFlags.Cache)
+                                ? apparelMAt
+                                : OverrideMaterialIfNeeded(__instance, apparelMAt, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
+
+                            GenDraw.DrawMeshNowOrLater(bodyMesh, vector, quat, material, flags.FlagSet(PawnRenderFlags.DrawNow));
+                        }
+
+                        //如果是需要多层的服装的话
+                        if (!comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparel.sourceApparel.def.defName))
+                        {
+                            foreach (string keyName in curDirection[(int)TextureRenderLayer.Apparel])
+                            {
+                                if (comp.GetAllOriginalDefForGraphicDataDict[apparel.sourceApparel.def.defName].ContainsKey(keyName))
+                                {
+                                    TextureLevels data = comp.cachedAllGraphicData[keyName];
+                                    Mesh mesh = null;
+                                    Vector3 offset = Vector3.zero;
+                                    if (data.meshSize != Vector2.zero)
+                                    {
+                                        mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                                        switch (data.meshType)
+                                        {
+                                            case "Head": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
+                                            case "Hair": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (___pawn.RaceProps.Humanlike)
+                                        {
+                                            switch (data.meshType)
+                                            {
+                                                case "Body": mesh = bodyMesh; break;
+                                                case "Head":
+                                                    mesh = headMesh;
+                                                    offset = quat * __instance.BaseHeadOffsetAt(facing);
+                                                    break;
+                                                case "Hair":
+                                                    mesh = hairMesh;
+                                                    offset = quat * __instance.BaseHeadOffsetAt(facing);
+                                                    break;
+                                            }
+                                        }
+                                        else
+                                            mesh = bodyMesh;
+                                    }
+                                    int pattern = 0;
+                                    if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
+                                        pattern = comp.cachedRandomGraphicPattern[keyName];
+                                    string condition = "";
+                                    if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
+                                        condition = "Rotting";
+                                    if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
+                                        condition = "Dessicated";
+                                    Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                                    dataOffset.y *= 0.0001f;
+                                    Vector3 pos = vector + offset + dataOffset;
+                                    Material material = data.GetGraphic(keyName, pattern, condition).MatAt(facing, null);
+                                    Material mat = (___pawn.RaceProps.IsMechanoid && ___pawn.Faction != null && ___pawn.Faction != Faction.OfMechanoids)
+                                        ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor)
+                                        : material;
+                                    Material apparelMat = flags.FlagSet(PawnRenderFlags.Cache)
+                                        ? mat
+                                        : OverrideMaterialIfNeeded(__instance, mat, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
+                                    GenDraw.DrawMeshNowOrLater(mesh, pos, quat, apparelMat, flags.FlagSet(PawnRenderFlags.DrawNow));
+                                }
+                            }
+                        }
+                        vector.y += 0.0028957527f;
+                    }
+                }
+            }
+            if (ModsConfig.IdeologyActive && __instance.graphics.bodyTattooGraphic != null && bodyDrawType != RotDrawMode.Dessicated && (facing != Rot4.North || ___pawn.style.BodyTattoo.visibleNorth))
+            {
+                GenDraw.DrawMeshNowOrLater(__instance.GetBodyOverlayMeshSet().MeshAt(facing), loc, quat, __instance.graphics.bodyTattooGraphic.MatAt(facing, null), flags.FlagSet(PawnRenderFlags.DrawNow));
+            }
+        }
+
+
+        //Apparel(Shell层) ApparelPrefix 
+        static bool DrawBodyApparelPrefix(PawnRenderer __instance, Pawn ___pawn, Vector3 shellLoc, Vector3 utilityLoc, Mesh bodyMesh, float angle, Rot4 bodyFacing, PawnRenderFlags flags)
+        {
+            bool patchResult = true;
+            
+            MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
+            if (comp == null)
+                return true;
+            if (!comp.PrefixResolved)
+                __instance.graphics.ResolveAllGraphics();
+
+            Dictionary<int, List<string>> curDirection = comp.GetDataOfDirection(bodyFacing);
+            if (curDirection.NullOrEmpty())
+                return true;
+
+            List<ApparelGraphicRecord> apparelGraphics = __instance.graphics.apparelGraphics;
+            bool hasMultiTexApparel = !comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() 
+                && apparelGraphics.Exists(x => x.sourceApparel.def.apparel.LastLayer == ApparelLayerDefOf.Shell 
+                    && !x.sourceApparel.def.apparel.shellRenderedBehindHead 
+                    && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(x.sourceApparel.def.defName));
+
+            if (curDirection.ContainsKey((int)TextureRenderLayer.Apparel) && hasMultiTexApparel)
+            {
+                patchResult = false;
+
+                Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
+                Mesh hairMesh = null;
+                Mesh headMesh = null;
+                if (___pawn.RaceProps.Humanlike)
+                {
+                    headMesh = HumanlikeMeshPoolUtility.GetHumanlikeHeadSetForPawn(___pawn).MeshAt(bodyFacing);
+                    hairMesh = HumanlikeMeshPoolUtility.GetHumanlikeHairSetForPawn(___pawn).MeshAt(bodyFacing);
+                }
+
+                for (int i = 0; i < apparelGraphics.Count; i++)
+                {
+                    ApparelGraphicRecord apparel = apparelGraphics[i];
+                    //如果是shell服装的话
+                    if (apparel.sourceApparel.def.apparel.LastLayer == ApparelLayerDefOf.Shell && !apparel.sourceApparel.def.apparel.shellRenderedBehindHead)
+                    {
+                        //如果当前服装的def没在需要被隐藏的列表里的话
+                        if (!comp.GetAllHideOriginalDefData.NullOrEmpty() && !comp.GetAllHideOriginalDefData.Contains(apparel.sourceApparel.def.defName))
+                        {
+                            //先画此服装
+                            Material apparelMat = apparel.graphic.MatAt(bodyFacing, null);
+                            Material material = flags.FlagSet(PawnRenderFlags.Cache)
+                                ? apparelMat
+                                : OverrideMaterialIfNeeded(__instance, apparelMat, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
+                            Vector3 loc = shellLoc;
+                            if (apparel.sourceApparel.def.apparel.shellCoversHead)
+                                loc.y += 0.0028957527f;
+                            GenDraw.DrawMeshNowOrLater(bodyMesh, loc, quat, material, flags.FlagSet(PawnRenderFlags.DrawNow));
+                        }
+
+                        //如果是多层服装的话
+                        if (comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparel.sourceApparel.def.defName))
+                        {
+                            foreach (string keyName in curDirection[(int)TextureRenderLayer.Apparel])
+                            {
+                                if (comp.GetAllOriginalDefForGraphicDataDict[apparel.sourceApparel.def.defName].ContainsKey(keyName))
+                                {
+                                    TextureLevels data = comp.cachedAllGraphicData[keyName];
+                                    Mesh mesh = null;
+                                    Vector3 loc = shellLoc;
+                                    if (apparel.sourceApparel.def.apparel.shellCoversHead)
+                                        loc.y += 0.0028957527f;
+                                    Vector3 offset = Vector3.zero;
+                                    if (data.meshSize != Vector2.zero)
+                                    {
+                                        mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(bodyFacing);
+                                        switch (data.meshType)
+                                        {
+                                            case "Head": offset = quat * __instance.BaseHeadOffsetAt(bodyFacing); break;
+                                            case "Hair": offset = quat * __instance.BaseHeadOffsetAt(bodyFacing); break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (___pawn.RaceProps.Humanlike)
+                                        {
+                                            switch (data.meshType)
+                                            {
+                                                case "Body": mesh = bodyMesh; break;
+                                                case "Head":
+                                                    mesh = headMesh;
+                                                    offset = quat * __instance.BaseHeadOffsetAt(bodyFacing);
+                                                    break;
+                                                case "Hair":
+                                                    mesh = hairMesh;
+                                                    offset = quat * __instance.BaseHeadOffsetAt(bodyFacing);
+                                                    break;
+                                            }
+                                        }
+                                        else
+                                            mesh = bodyMesh;
+                                    }
+                                    int pattern = 0;
+                                    if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
+                                        pattern = comp.cachedRandomGraphicPattern[keyName];
+                                    Vector3 dataOffset = data.DrawOffsetForRot(bodyFacing);
+                                    dataOffset.y *= 0.0001f;
+                                    Vector3 pos = loc + offset + dataOffset;
+                                    Material material = data.GetGraphic(keyName, pattern).MatAt(bodyFacing, null);
+                                    Material mat = flags.FlagSet(PawnRenderFlags.Cache)
+                                        ? material
+                                : OverrideMaterialIfNeeded(__instance, material, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
+                                    GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
+                                }
+                            }
+                        }
+                    }
+
+                    //渲染背包/工具层
+                    if (PawnRenderer.RenderAsPack(apparel.sourceApparel))
+                    {
+                        Material material2 = apparel.graphic.MatAt(bodyFacing, null);
+                        material2 = (flags.FlagSet(PawnRenderFlags.Cache) ? material2 : OverrideMaterialIfNeeded(material2, ___pawn, __instance, flags.FlagSet(PawnRenderFlags.Portrait)));
+                        if (apparel.sourceApparel.def.apparel.wornGraphicData != null)
+                        {
+                            Vector2 vector = apparel.sourceApparel.def.apparel.wornGraphicData.BeltOffsetAt(bodyFacing, ___pawn.story.bodyType);
+                            Vector2 vector2 = apparel.sourceApparel.def.apparel.wornGraphicData.BeltScaleAt(bodyFacing, ___pawn.story.bodyType);
+                            Matrix4x4 matrix = Matrix4x4.Translate(utilityLoc) * Matrix4x4.Rotate(quat) * Matrix4x4.Translate(new Vector3(vector.x, 0f, vector.y)) * Matrix4x4.Scale(new Vector3(vector2.x, 1f, vector2.y));
+                            GenDraw.DrawMeshNowOrLater(bodyMesh, matrix, material2, flags.FlagSet(PawnRenderFlags.DrawNow));
+                        }
+                        else
+                        {
+                            GenDraw.DrawMeshNowOrLater(bodyMesh, shellLoc, quat, material2, flags.FlagSet(PawnRenderFlags.DrawNow));
                         }
                     }
                 }
             }
+            return patchResult;
+        }
 
-            int layer = (int)TextureRenderLayer.Body;
+
+        //Head RenderPawnInternalTranspiler
+        public static IEnumerable<CodeInstruction> RenderPawnInternalHeadPatchTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            MethodInfo drawMeshNowOrLater = AccessTools.Method(typeof(GenDraw), "DrawMeshNowOrLater", null, null);
+            FieldInfo pawn = AccessTools.Field(typeof(PawnRenderer), "pawn");
+            MethodInfo renderPawnInternalHeadTranPatch = AccessTools.Method(typeof(PawnRenderPatchs), "RenderPawnInternalHeadTranPatch", null, null);
+            List<CodeInstruction> instructionList = instructions.ToList<CodeInstruction>();
+            int num;
+            for (int i = 0; i < instructionList.Count; i = num + 1)
+            {
+                CodeInstruction instruction = instructionList[i];
+                //将其插入到绘制头部贴图的DrawMeshNowOrLater前一行，并跳过原方法
+                if (instruction.OperandIs(drawMeshNowOrLater))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldloc_3);//headYOffset
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_S, 4);//bodyDrawType
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_3);//facing
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);//this.
+
+                    yield return new CodeInstruction(OpCodes.Ldfld, pawn);//pawn
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);//PawnRenderer instance
+
+                    yield return new CodeInstruction(OpCodes.Call, renderPawnInternalHeadTranPatch);
+                }
+                //yield return instruction;
+                num = i;
+            }
+            yield break;
+        }
+
+        public static void RenderPawnInternalHeadTranPatch(Mesh headMesh, Vector3 loc, Quaternion quat, Material headMat, bool drawNow, Vector3 headYOffset, RotDrawMode bodyDrawType, Rot4 facing, Pawn pawn, PawnRenderer instance)
+        {
+            MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
+            if (comp == null)
+                return;
+            if (!comp.PrefixResolved)
+                instance.graphics.ResolveAllGraphics();
+
+            Dictionary<int, List<string>> curDirection = comp.GetDataOfDirection(facing);
+            if (curDirection.NullOrEmpty())
+                return;
+
+            int layer = (int)TextureRenderLayer.Head;
+
+            //是否绘制原head贴图
+            if (!curDirection.ContainsKey(layer)
+                    || (!comp.GetAllHideOriginalDefData.NullOrEmpty()
+                        && !comp.GetAllHideOriginalDefData.Contains("Head")))
+            {
+                GenDraw.DrawMeshNowOrLater(headMesh, loc, quat, headMat, drawNow);
+            }
+
+            //绘制多层贴图
             if (curDirection.ContainsKey(layer))
             {
+                Mesh bodyMesh = null;
+                Mesh hairMesh = null;
+                if (pawn.RaceProps.Humanlike)
+                {
+                    bodyMesh = HumanlikeMeshPoolUtility.GetHumanlikeBodySetForPawn(pawn).MeshAt(facing);
+                    hairMesh = HumanlikeMeshPoolUtility.GetHumanlikeHairSetForPawn(pawn).MeshAt(facing);
+                }
+                else
+                    bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
+
                 foreach (string keyName in curDirection[layer])
                 {
                     TextureLevels data = comp.cachedAllGraphicData[keyName];
                     Mesh mesh = null;
                     Vector3 offset = Vector3.zero;
-                    if (___pawn.RaceProps.Humanlike)
+                    if (data.meshSize != Vector2.zero)
                     {
+                        mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
                         switch (data.meshType)
                         {
-                            case "Body":
-                                mesh = bodyMesh;
-                                break;
-                            case "Head":
-                                mesh = headMesh;
-                                offset = quat * __instance.BaseHeadOffsetAt(facing);
-                                break;
-                            case "Hair":
-                                mesh = hairMesh;
-                                offset = quat * __instance.BaseHeadOffsetAt(facing);
-                                break;
+                            case "Head": offset = quat * instance.BaseHeadOffsetAt(facing); break;
+                            case "Hair": offset = quat * instance.BaseHeadOffsetAt(facing); break;
                         }
                     }
                     else
-                        mesh = bodyMesh;
+                    {
+                        if (pawn.RaceProps.Humanlike)
+                        {
+                            switch (data.meshType)
+                            {
+                                case "Body": mesh = bodyMesh; break;
+                                case "Head":
+                                    mesh = headMesh;
+                                    offset = quat * instance.BaseHeadOffsetAt(facing);
+                                    break;
+                                case "Hair":
+                                    mesh = hairMesh;
+                                    offset = quat * instance.BaseHeadOffsetAt(facing);
+                                    break;
+                            }
+                        }
+                        else
+                            mesh = bodyMesh;
+                    }
                     int pattern = 0;
-                    if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
+                    if (data.isSleeve)
+                    {
+                        string handKeyName = data.sleeveTexList.FirstOrDefault(x => comp.cachedRandomGraphicPattern.Keys.Contains(x));
+                        if (handKeyName != null)
+                            pattern = comp.cachedRandomGraphicPattern[handKeyName];
+                        else
+                            continue;
+                    }
+                    else if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
                         pattern = comp.cachedRandomGraphicPattern[keyName];
                     string condition = "";
-                    if (bodyDrawType == RotDrawMode.Rotting && data.hasRotting)
+                    if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
                         condition = "Rotting";
-                    if (bodyDrawType == RotDrawMode.Dessicated && data.hasDessicated)
+                    if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
                         condition = "Dessicated";
-                    Vector3 pos = vector + offset + data.DrawOffsetForRot(facing);
-                    Material mat = data.GetGraphic(keyName, pattern, condition).MatAt(facing, null);
-                    GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
+                    Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                    dataOffset.y *= 0.0001f;
+                    Vector3 pos = headYOffset + offset + dataOffset;
+                    Material material = data.GetGraphic(keyName, pattern, condition).MatAt(facing, null);
+                    Material mat = (pawn.RaceProps.IsMechanoid
+                        && pawn.Faction != null
+                        && pawn.Faction != Faction.OfMechanoids) ? instance.graphics.GetOverlayMat(material, pawn.Faction.MechColor) : material;
+                    GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, drawNow);
                 }
-                if (!comp.GetAllOverrideData.NullOrEmpty() && comp.GetAllOverrideData.Contains("Body"))
-                {
-                    if (ModsConfig.IdeologyActive && __instance.graphics.bodyTattooGraphic != null && bodyDrawType != RotDrawMode.Dessicated && (facing != Rot4.North || ___pawn.style.BodyTattoo.visibleNorth))
-                    {
-                        GenDraw.DrawMeshNowOrLater(__instance.GetBodyOverlayMeshSet().MeshAt(facing), loc, quat, __instance.graphics.bodyTattooGraphic.MatAt(facing, null), flags.FlagSet(PawnRenderFlags.DrawNow));
-                    }
-                    return false;
-                }  
             }
-
-            return true;
         }
 
-        static void DrawPawnBodyFinalizer(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags)
+
+        //
+        public static IEnumerable<CodeInstruction> DrawHeadHairPatchTranspiler(IEnumerable<CodeInstruction> instructions)
         {
+            MethodInfo drawMeshNowOrLater = AccessTools.Method(typeof(GenDraw), "DrawMeshNowOrLater", null, null);
+            FieldInfo pawn = AccessTools.Field(typeof(PawnRenderer), "pawn");
+            MethodInfo drawHeadHairHeadTranPatch = AccessTools.Method(typeof(PawnRenderPatchs), "DrawHeadHairHeadTranPatch", null, null);
+            List<CodeInstruction> instructionList = instructions.ToList<CodeInstruction>();
+            int num;
+            for (int i = 0; i < instructionList.Count; i = num + 1)
+            {
+                CodeInstruction instruction = instructionList[i];
+                if (instruction.OperandIs(drawMeshNowOrLater) && instructionList[i - 37].opcode == OpCodes.Ldloc_2)
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);//rootLoc vector
 
+                    yield return new CodeInstruction(OpCodes.Ldloc_S, 5);//headfacing
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);//this.
+
+                    yield return new CodeInstruction(OpCodes.Ldfld, pawn);//pawn
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);//PawnRenderer instance
+
+                    yield return new CodeInstruction(OpCodes.Call, drawHeadHairHeadTranPatch);
+                }
+                yield return instruction;
+                num = i;
+            }
+            yield break;
         }
 
+        public static void DrawHeadHairHeadTranPatch(Mesh mesh, Vector3 loc, Quaternion quat, Material mat, bool drawNow, Vector3 vector, Rot4 facing, Pawn pawn, PawnRenderer instance)
+        {
+            MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
+            if (comp == null)
+                return;
+            if (!comp.PrefixResolved)
+                instance.graphics.ResolveAllGraphics();
 
+            Dictionary<int, List<string>> curDirection = comp.GetDataOfDirection(facing);
+            if (curDirection.NullOrEmpty())
+                return;
 
-
-
-
-
-
-
+            int layer = (int)TextureRenderLayer.Head;
+        }
 
 
 
@@ -1068,6 +1590,10 @@ namespace NazunaLib
             List<string> result = list.Keys.Where(x => list[x] >= i).ToList();
             return result.RandomElement();
         }
+
+
+
+
 
         //[已停用]头发渲染修正（包括头部装备），使用prefix
         static bool DrawHairPatchPrefix(PawnRenderer __instance, Vector3 rootLoc, float angle, Rot4 bodyFacing, RotDrawMode bodyDrawType, PawnRenderFlags flags, ref Pawn ___pawn)
@@ -1314,9 +1840,6 @@ namespace NazunaLib
             }
 
         }
-
-        
-
 
 
         //身体(包括穿在身体上的衣服)渲染修正，使用IL
