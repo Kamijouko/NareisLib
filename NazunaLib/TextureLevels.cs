@@ -61,6 +61,9 @@ namespace NazunaLib
         //可选参数，该贴图是否有骨架版本
         public bool hasDessicated = false;
 
+        //可选参数，该贴图是否有断头版本
+        public bool hasStump = false;
+
         //可选参数，如果该贴图为手部层，则这个选项控制Hand层和HandTwo层是否绘制在shell层下方
         public bool handDrawBehindShell = true;
 
@@ -229,6 +232,7 @@ namespace NazunaLib
             key = key.Replace("_Female", "");
             key = key.Replace("_Rotting", "");
             key = key.Replace("_Dessicated", "");
+            key = key.Replace("_Stump", "");
             return key;
         }
 

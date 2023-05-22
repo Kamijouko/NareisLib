@@ -658,7 +658,7 @@ namespace NazunaLib
 
 
 
-        //给所有Pawn添加多层渲染Comp，没有CompTick所以不存在性能问题
+        //给所有Pawn添加多层渲染Comp，CompTick有触发条件所以不存在性能问题
         public static void AddComp(ref MultiRenderComp comp, ref Pawn pawn)
         {
             comp = (MultiRenderComp)Activator.CreateInstance(typeof(MultiRenderComp));
@@ -729,22 +729,6 @@ namespace NazunaLib
                 level.patternSets.keyName = key;
             return level;
         }
-
-
-
-        [CompilerGenerated]
-		[StructLayout(LayoutKind.Auto)]
-		private struct AlienAddonClass
-		{
-			public Pawn pawn;
-			public Rot4 rotation;
-			public bool isPortrait;
-			public bool isInvisible;
-			public Vector3 vector;
-			public Vector3 headOffset;
-			public Quaternion quat;
-			public PawnRenderFlags renderFlags;
-		}
 
 
         //预处理Pawn身体的多层渲染数据，只会在pawn出现或生成时执行一次，在整体预处理方法中最后执行（因为原方法的顺序）
@@ -1402,6 +1386,23 @@ namespace NazunaLib
         }
 
 
+
+        //下面转释器方法的子方法，用于覆盖隐形贴图和受伤贴图等，特定用于头部
+        public static Material GetHeadOverrideMat(Material mat, PawnRenderer instance, bool portrait = false, bool allowOverride = true)
+        {
+            Material material = mat;
+            if (material != null && allowOverride)
+            {
+                if (!portrait && instance.graphics.pawn.IsInvisible())
+                {
+                    material = InvisibilityMatPool.GetInvisibleMat(material);
+                }
+                material = instance.graphics.flasher.GetDamagedMat(material);
+            }
+            return material;
+        }
+
+
         //Head RenderPawnInternalTranspiler
         public static IEnumerable<CodeInstruction> RenderPawnInternalHeadPatchTranspiler(IEnumerable<CodeInstruction> instructions)
         {
@@ -1418,9 +1419,11 @@ namespace NazunaLib
                 {
                     yield return new CodeInstruction(OpCodes.Ldloc_3);//headYOffset
 
-                    yield return new CodeInstruction(OpCodes.Ldarg_S, 4);//bodyDrawType
+                    yield return new CodeInstruction(OpCodes.Ldarg_S, 5);//bodyDrawType
 
-                    yield return new CodeInstruction(OpCodes.Ldarg_3);//facing
+                    yield return new CodeInstruction(OpCodes.Ldarg_S, 4);//facing
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_S, 6);//flags
 
                     yield return new CodeInstruction(OpCodes.Ldarg_0);//this.
 
@@ -1436,7 +1439,7 @@ namespace NazunaLib
             yield break;
         }
 
-        public static void RenderPawnInternalHeadTranPatch(Mesh headMesh, Vector3 loc, Quaternion quat, Material headMat, bool drawNow, Vector3 headYOffset, RotDrawMode bodyDrawType, Rot4 facing, Pawn pawn, PawnRenderer instance)
+        public static void RenderPawnInternalHeadTranPatch(Mesh headMesh, Vector3 loc, Quaternion quat, Material headMat, bool drawNow, Vector3 headYOffset, RotDrawMode bodyDrawType, Rot4 facing, PawnRenderFlags flags, Pawn pawn, PawnRenderer instance)
         {
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
@@ -1506,17 +1509,16 @@ namespace NazunaLib
                             mesh = bodyMesh;
                     }
                     int pattern = 0;
-                    if (data.isSleeve)
+                    if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
+                        pattern = comp.cachedRandomGraphicPattern[keyName];
+                    string condition = "";
+                    if (flags.FlagSet(PawnRenderFlags.HeadStump))
                     {
-                        string handKeyName = data.sleeveTexList.FirstOrDefault(x => comp.cachedRandomGraphicPattern.Keys.Contains(x));
-                        if (handKeyName != null)
-                            pattern = comp.cachedRandomGraphicPattern[handKeyName];
+                        if (data.hasStump)
+                            condition = "Stump";
                         else
                             continue;
                     }
-                    else if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
-                        pattern = comp.cachedRandomGraphicPattern[keyName];
-                    string condition = "";
                     if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
                         condition = "Rotting";
                     if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
@@ -1525,31 +1527,52 @@ namespace NazunaLib
                     dataOffset.y *= 0.0001f;
                     Vector3 pos = headYOffset + offset + dataOffset;
                     Material material = data.GetGraphic(keyName, pattern, condition).MatAt(facing, null);
-                    Material mat = (pawn.RaceProps.IsMechanoid
-                        && pawn.Faction != null
-                        && pawn.Faction != Faction.OfMechanoids) ? instance.graphics.GetOverlayMat(material, pawn.Faction.MechColor) : material;
+                    Material mat = GetHeadOverrideMat(material, instance, flags.FlagSet(PawnRenderFlags.Portrait), !flags.FlagSet(PawnRenderFlags.Cache));
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, drawNow);
                 }
             }
         }
 
 
+        //下面的转释器方法的子方法，用于覆盖隐形贴图和效果贴图等，特定用于头发
+        public static Material GetHairOverrideMat(Material mat, PawnRenderer instance, bool portrait = false, bool cached = true)
+        {
+            Material material = mat;
+            if (!portrait && instance.graphics.pawn.IsInvisible())
+            {
+                material = InvisibilityMatPool.GetInvisibleMat(material);
+            }
+            if (!cached)
+            {
+                return instance.graphics.flasher.GetDamagedMat(material);
+            }
+            return material;
+        }
+
         //
         public static IEnumerable<CodeInstruction> DrawHeadHairPatchTranspiler(IEnumerable<CodeInstruction> instructions)
         {
             MethodInfo drawMeshNowOrLater = AccessTools.Method(typeof(GenDraw), "DrawMeshNowOrLater", null, null);
             FieldInfo pawn = AccessTools.Field(typeof(PawnRenderer), "pawn");
-            MethodInfo drawHeadHairHeadTranPatch = AccessTools.Method(typeof(PawnRenderPatchs), "DrawHeadHairHeadTranPatch", null, null);
+            MethodInfo drawHeadHairHeadTranPatch = AccessTools.Method(typeof(PawnRenderPatchs), "DrawHeadHairHairTranPatch", null, null);
             List<CodeInstruction> instructionList = instructions.ToList<CodeInstruction>();
             int num;
             for (int i = 0; i < instructionList.Count; i = num + 1)
             {
                 CodeInstruction instruction = instructionList[i];
+                if (instructionList[i - 2].opcode == OpCodes.Ldloc_S && instructionList[i - 2].OperandIs(6) && instructionList[i - 3].OperandIs(drawMeshNowOrLater))
+                {
+
+                }
+
+
                 if (instruction.OperandIs(drawMeshNowOrLater) && instructionList[i - 37].opcode == OpCodes.Ldloc_2)
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_1);//rootLoc vector
 
                     yield return new CodeInstruction(OpCodes.Ldloc_S, 5);//headfacing
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_S, 7);//flags
 
                     yield return new CodeInstruction(OpCodes.Ldarg_0);//this.
 
@@ -1565,7 +1588,12 @@ namespace NazunaLib
             yield break;
         }
 
-        public static void DrawHeadHairHeadTranPatch(Mesh mesh, Vector3 loc, Quaternion quat, Material mat, bool drawNow, Vector3 vector, Rot4 facing, Pawn pawn, PawnRenderer instance)
+        public static void DrawHeadHairFaceMaskTranPatch()
+        {
+
+        }
+
+        public static void DrawHeadHairHairTranPatch(Mesh hairMesh, Vector3 loc, Quaternion quat, Material hairMat, bool drawNow, Vector3 vector, Rot4 facing, PawnRenderFlags flags, Pawn pawn, PawnRenderer instance)
         {
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
@@ -1577,7 +1605,75 @@ namespace NazunaLib
             if (curDirection.NullOrEmpty())
                 return;
 
-            int layer = (int)TextureRenderLayer.Head;
+            int layer = (int)TextureRenderLayer.Hair;
+            //是否绘制原头发贴图
+            if (!curDirection.ContainsKey(layer)
+                    || (!comp.GetAllHideOriginalDefData.NullOrEmpty()
+                        && !comp.GetAllHideOriginalDefData.Contains("Head")))
+            {
+                GenDraw.DrawMeshNowOrLater(hairMesh, loc, quat, hairMat, drawNow);
+            }
+
+            //绘制多层头发贴图
+            if (curDirection.ContainsKey(layer))
+            {
+                Vector3 hairYOffset = vector;
+                hairYOffset.y += 0.028957527f;
+                Mesh bodyMesh = null;
+                Mesh headMesh = null;
+                if (pawn.RaceProps.Humanlike)
+                {
+                    bodyMesh = HumanlikeMeshPoolUtility.GetHumanlikeBodySetForPawn(pawn).MeshAt(facing);
+                    headMesh = HumanlikeMeshPoolUtility.GetHumanlikeHeadSetForPawn(pawn).MeshAt(facing);
+                }
+                else
+                    bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
+
+                foreach (string keyName in curDirection[layer])
+                {
+                    TextureLevels data = comp.cachedAllGraphicData[keyName];
+                    Mesh mesh = null;
+                    Vector3 offset = Vector3.zero;
+                    if (data.meshSize != Vector2.zero)
+                    {
+                        mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                        switch (data.meshType)
+                        {
+                            case "Head": offset = quat * instance.BaseHeadOffsetAt(facing); break;
+                            case "Hair": offset = quat * instance.BaseHeadOffsetAt(facing); break;
+                        }
+                    }
+                    else
+                    {
+                        if (pawn.RaceProps.Humanlike)
+                        {
+                            switch (data.meshType)
+                            {
+                                case "Body": mesh = bodyMesh; break;
+                                case "Head":
+                                    mesh = headMesh;
+                                    offset = quat * instance.BaseHeadOffsetAt(facing);
+                                    break;
+                                case "Hair":
+                                    mesh = hairMesh;
+                                    offset = quat * instance.BaseHeadOffsetAt(facing);
+                                    break;
+                            }
+                        }
+                        else
+                            mesh = bodyMesh;
+                    }
+                    int pattern = 0;
+                    if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
+                        pattern = comp.cachedRandomGraphicPattern[keyName];
+                    Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                    dataOffset.y *= 0.0001f;
+                    Vector3 pos = hairYOffset + offset + dataOffset;
+                    Material material = data.GetGraphic(keyName, pattern).MatAt(facing, null);
+                    Material mat = GetHairOverrideMat(material, instance, flags.FlagSet(PawnRenderFlags.Portrait), !flags.FlagSet(PawnRenderFlags.Cache));
+                    GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, drawNow);
+                }
+            }
         }
 
 
@@ -2211,26 +2307,26 @@ namespace NazunaLib
 
 
 
-
+    //（已停用）
     //[HarmonyPatch(typeof(Pawn_ApparelTracker))]
     //[HarmonyPatch("ApparelTrackerTick")]
     public class DAL_ApparelTickPatch
     {
         static void Postfix(Pawn_ApparelTracker __instance)
         {
-            foreach (Apparel apparel in __instance.WornApparel)
+            /*foreach (Apparel apparel in __instance.WornApparel)
             {
                 if (apparel.GetComp<DAL_CompAnimated>()?.DALProps.customFrameList?.Exists(x => x.isOverlay) == true)
                 {
                     apparel.GetComp<DAL_CompAnimated>().PostDraw();
                 }
-            }
+            }*/
         }
     }
 
 
 
-    //动画Pawn动画渲染框架核心修正
+    //动画Pawn动画渲染框架核心修正（已停用）
     //[HarmonyPatch(typeof(PawnRenderer))]
     //[HarmonyPatch("GetBlitMeshUpdatedFrame")]
     public class DAL_PawnAnimatedPatch
@@ -2259,7 +2355,7 @@ namespace NazunaLib
 
 
 
-    //初始化AB包加载
+    //初始化AB包加载（暂时停用）
     //[HarmonyPatch(typeof(Root))]
     //[HarmonyPatch("CheckGlobalInit")]
     public class DAL_GameObjectPrefabLoadPatch
