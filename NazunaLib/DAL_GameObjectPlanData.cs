@@ -12,8 +12,6 @@ namespace NareisLib
     {
         public string name = "";
 
-        public DAL_TypeOfObjectGraph type = DAL_TypeOfObjectGraph.Thing;
-
         public bool canHolding = false;
 
         public bool canAiming = false;
