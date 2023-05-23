@@ -7,7 +7,7 @@ using UnityEngine;
 using Verse;
 using RimWorld;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public static class ModStaticMethod
     {

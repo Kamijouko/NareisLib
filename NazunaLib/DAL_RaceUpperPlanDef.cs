@@ -7,7 +7,7 @@ using Verse;
 using RimWorld;
 using UnityEngine;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class DAL_RaceUpperPlanDef : Def
     {

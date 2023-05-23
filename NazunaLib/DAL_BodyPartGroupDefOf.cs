@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using RimWorld;
 using Verse;
 
-namespace NazunaLib
+namespace NareisLib
 {
     [DefOf]
     public class DAL_BodyPartGroupDefOf

@@ -8,7 +8,7 @@ using UnityEngine;
 using Verse;
 
 
-namespace NazunaLib
+namespace NareisLib
 {
     public sealed class DAL_DynamicGameObjectManager : IExposable
     {

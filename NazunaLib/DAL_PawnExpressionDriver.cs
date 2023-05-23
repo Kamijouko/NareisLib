@@ -10,7 +10,7 @@ using System.IO;
 using AlienRace;
 using System.Collections;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public abstract class DAL_PawnExpressionDriver : IExposable
     {

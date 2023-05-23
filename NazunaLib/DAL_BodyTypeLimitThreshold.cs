@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class DAL_BodyTypeLimitThreshold
     {

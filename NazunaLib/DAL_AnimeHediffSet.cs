@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using RimWorld;
 using Verse;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class DAL_AnimeHediffSet
     {

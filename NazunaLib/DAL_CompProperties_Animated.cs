@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Verse;
 //using CompAnimated;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class DAL_CompProperties_Animated : CompProperties
     {

@@ -7,7 +7,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class DAL_ApparelForDifferentRace
     {

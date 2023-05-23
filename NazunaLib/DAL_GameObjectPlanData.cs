@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Verse;
 using UnityEngine;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class DAL_GameObjectPlanData
     {

@@ -7,7 +7,7 @@ using Verse;
 using RimWorld;
 using UnityEngine;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class DAL_PawnExpressionDriver_Nature : DAL_PawnExpressionDriver
     {

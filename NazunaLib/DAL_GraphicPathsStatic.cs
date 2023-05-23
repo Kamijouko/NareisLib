@@ -8,7 +8,7 @@ using Verse;
 using AlienRace;
 using UnityEngine;
 
-namespace NazunaLib
+namespace NareisLib
 {
 	public static class DAL_GraphicPathsStatic
 	{

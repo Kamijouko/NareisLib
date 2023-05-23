@@ -8,7 +8,7 @@ using Verse;
 using AlienRace;
 using UnityEngine;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class DAL_AlienRaceThingDef : ThingDef_AlienRace
     {

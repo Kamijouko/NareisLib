@@ -7,7 +7,7 @@ using Verse;
 using RimWorld;
 using UnityEngine;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class MultiRenderComp : ThingComp
     {

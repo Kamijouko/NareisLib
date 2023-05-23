@@ -7,7 +7,7 @@ using RimWorld;
 using Verse;
 using HugsLib;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class ThisModBase : ModBase
     {

@@ -11,7 +11,7 @@ using HugsLib;
 using AlienRace;
 using AlienRace.ExtendedGraphics;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class TextureLevels : GraphicData
     {
@@ -138,18 +138,19 @@ namespace NazunaLib
             //处理当prefix列表为空的时候，就使用原GraphicData的texPath路径
             if (prefix.NullOrEmpty())
             {
-                if (texPath == null)
-                    return;
                 string tmpKeyName = "singleLevel" + ThisModData.TmpLevelID;
+                if (texPath == null)
+                    texPath = tmpKeyName;
+                else
+                    tmpKeyName = ResolveKeyName(Path.GetFileNameWithoutExtension(texPath));
+
                 if (!ThisModData.TexLevelsDatabase.Keys.Contains(tmpKeyName))
                 {
-                    prefix.Add(tmpKeyName);
-                    //GraphicData data = this;
-                    preFixToTexName[tmpKeyName] = new string[] { tmpKeyName };
-                    ResolvePrefixWeights(tmpKeyName);
-                    ResolveSingleTexWeights(tmpKeyName);
+                    //preFixToTexName["NullPrefix"] = new string[] { tmpKeyName };
+                    //ResolveSingleTexWeights(tmpKeyName);
                     ThisModData.TexLevelsDatabase.Add(tmpKeyName, this);
-                    ThisModData.TmpLevelID++;
+                    if (texPath != null)
+                        ThisModData.TmpLevelID++;
                 }
                 return;
             }
@@ -160,17 +161,21 @@ namespace NazunaLib
             string[] names = new string[] { };
 
             //处理prefix对应的图层的全名并且赋予它prefix预设权重列表所对应的权重
-            foreach (string pre in prefix)
+            if (!prefix.NullOrEmpty())
             {
-                string[] fullName = Directory.GetFiles(folderAbsDir, pre + "*");
-                if (fullName.Length > 0)
+                foreach (string pre in prefix)
                 {
-                    string[] resolvedName = fullName.Select(x => ResolveKeyNameGenderAndDrict(Path.GetFileNameWithoutExtension(x))).Distinct().ToArray();
-                    preFixToTexName[pre] = resolvedName;
-                    names = names.Concat(resolvedName).ToArray();
-                    ResolvePrefixWeights(pre);
+                    string[] fullName = Directory.GetFiles(folderAbsDir, pre + "*");
+                    if (fullName.Length > 0)
+                    {
+                        string[] resolvedName = fullName.Select(x => ResolveKeyName(Path.GetFileNameWithoutExtension(x))).Distinct().ToArray();
+                        preFixToTexName[pre] = resolvedName;
+                        names = names.Concat(resolvedName).ToArray();
+                        ResolvePrefixWeights(pre);
+                    }
                 }
             }
+            
 
             //处理路径全名为不带后缀的名称，并且如果有针对特定名称列表的话就给特定名称赋予权重
             if (names.Length > 0)
@@ -178,7 +183,7 @@ namespace NazunaLib
                 foreach (string name in names)
                 {
                     //Log.Warning(name);
-                    if (!ThisModData.TexLevelsDatabase.Keys.Contains(name))
+                    if (!ThisModData.TexLevelsDatabase.ContainsKey(name))
                     {
                         //GraphicData data = this;
                         texPath = Path.Combine(folderPath, name);
@@ -218,7 +223,7 @@ namespace NazunaLib
         }
 
         //去掉贴图名称中的额外信息
-        public static string ResolveKeyNameGenderAndDrict(string key)
+        public static string ResolveKeyName(string key)
         {
             key = key.Replace("_south", "");
             key = key.Replace("_east", "");

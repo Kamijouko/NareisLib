@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Verse;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public static class DAL_DynamicGameObjectPrefabManager
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public enum DAL_PawnExpressionCrossRenderFlags : byte
     {

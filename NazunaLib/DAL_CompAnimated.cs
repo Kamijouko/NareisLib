@@ -11,7 +11,7 @@ using UnityEngine;
 using System.IO;
 //using CompAnimated;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class DAL_CompAnimated : ThingComp
 	{

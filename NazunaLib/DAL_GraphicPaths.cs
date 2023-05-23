@@ -7,7 +7,7 @@ using RimWorld;
 using Verse;
 using AlienRace;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class DAL_GraphicPaths
     {

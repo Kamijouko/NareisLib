@@ -7,7 +7,7 @@ using RimWorld;
 using Verse;
 using UnityEngine;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class DAL_GraphicInfo : IComparer<DAL_GraphicInfo>
     {

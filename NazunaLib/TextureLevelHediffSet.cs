@@ -7,7 +7,7 @@ using Verse;
 using RimWorld;
 using AlienRace.ExtendedGraphics;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class TextureLevelHediffSet
     {

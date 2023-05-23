@@ -7,7 +7,7 @@ using Verse;
 using RimWorld;
 using UnityEngine;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public static class DAL_WorldCurrent
     {

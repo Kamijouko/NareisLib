@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Verse;
 using RimWorld;
 
-namespace NazunaLib
+namespace NareisLib
 {
     public class TextureLevelJobSet
     {
