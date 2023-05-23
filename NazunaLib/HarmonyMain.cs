@@ -45,6 +45,11 @@ namespace NareisLib
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveApparelGraphics", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveApparelGraphicsPostfix", null), null, null);
 
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "DrawPawnBody", null, null), new HarmonyMethod(typeof(PawnRenderPatchs), "DrawPawnBodyPrefix", null), null, null, null);
+            harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "DrawPawnBody", null, null), null, null, null, new HarmonyMethod(typeof(PawnRenderPatchs), "DrawPawnBodyFinalizer", null));
+            harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "DrawBodyApparel", null, null), new HarmonyMethod(typeof(PawnRenderPatchs), "DrawBodyApparelPrefix", null), null, null, null);
+            harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "RenderPawnInternal", null, null), null, null, new HarmonyMethod(typeof(PawnRenderPatchs), "RenderPawnInternalHeadPatchTranspiler", null), null);
+            harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "DrawHeadHair", null, null), null, null, new HarmonyMethod(typeof(PawnRenderPatchs), "DrawHeadHairPatchTranspiler", null), null);
+            harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "RenderPawnInternal", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "RenderPawnInternalPostfix", null), null, null);
 
             //harmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
         }
@@ -917,18 +922,19 @@ namespace NareisLib
 
 
         //BottomOverlay BottomHair BottomShell BodyPrefix
-        static bool DrawPawnBodyPrefix(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags)
+        static bool DrawPawnBodyPrefix(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags, ref bool __state)
         {
             //Log.Warning(___pawn.Name + " flags: DrawNow = " + flags.FlagSet(PawnRenderFlags.DrawNow).ToStringSafe());
+            __state = false;
             MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
             if (comp == null)
-                return true;
+                return __state = true;
             if (!comp.PrefixResolved)
                 __instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<string>> curDirection = comp.GetDataOfDirection(facing);
             if (curDirection.NullOrEmpty())
-                return true;
+                return __state = true;
 
             Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
             Vector3 vector = rootLoc;
@@ -1006,9 +1012,9 @@ namespace NareisLib
             }
 
             if (!curDirection.ContainsKey((int)TextureRenderLayer.Body) && !curDirection.ContainsKey((int)TextureRenderLayer.Apparel))
-                return true;
+                __state = true;
 
-            return false;
+            return __state;
         }
 
 
@@ -1020,7 +1026,7 @@ namespace NareisLib
         }
 
         //Body HandOne Hand HandTwo Apparel(除了shell层) DrawPawnBodyFinalizer
-        static void DrawPawnBodyFinalizer(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags, bool __result)
+        static void DrawPawnBodyFinalizer(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags, bool __state)
         {
             MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
             if (comp == null)
@@ -1051,7 +1057,7 @@ namespace NareisLib
 
 
             //如果原方法未执行且并不具有多层身体或者不隐藏原身体
-            if (!__result 
+            if (!__state
                 && (!curDirection.ContainsKey((int)TextureRenderLayer.Body) 
                     || (!comp.GetAllHideOriginalDefData.NullOrEmpty() 
                         && !comp.GetAllHideOriginalDefData.Contains("Body"))))
@@ -1077,7 +1083,7 @@ namespace NareisLib
             }
 
             List<int> renderLayers;
-            if (__result)
+            if (__state)
                 renderLayers = new List<int>() { (int)TextureRenderLayer.HandOne, (int)TextureRenderLayer.Hand, (int)TextureRenderLayer.HandTwo };
             else
                 renderLayers = new List<int>() { (int)TextureRenderLayer.Body, (int)TextureRenderLayer.HandOne, (int)TextureRenderLayer.Hand, (int)TextureRenderLayer.HandTwo };
@@ -1165,7 +1171,7 @@ namespace NareisLib
             }
             vector.y += 0.0028957527f;
 
-            if (!__result && flags.FlagSet(PawnRenderFlags.Clothes) && curDirection.ContainsKey((int)TextureRenderLayer.Apparel))
+            if (!__state && flags.FlagSet(PawnRenderFlags.Clothes) && curDirection.ContainsKey((int)TextureRenderLayer.Apparel))
             {
                 for (int i = 0; i < __instance.graphics.apparelGraphics.Count; i++)
                 {
@@ -1417,7 +1423,7 @@ namespace NareisLib
         //Head RenderPawnInternalTranspiler
         public static IEnumerable<CodeInstruction> RenderPawnInternalHeadPatchTranspiler(IEnumerable<CodeInstruction> instructions)
         {
-            MethodInfo drawMeshNowOrLater = AccessTools.Method(typeof(GenDraw), "DrawMeshNowOrLater", null, null);
+            MethodInfo drawMeshNowOrLater = AccessTools.Method(typeof(GenDraw), "DrawMeshNowOrLater", new Type[] { typeof(Mesh), typeof(Vector3), typeof(Quaternion), typeof(Material), typeof(bool) }, null);
             FieldInfo pawn = AccessTools.Field(typeof(PawnRenderer), "pawn");
             MethodInfo renderPawnInternalHeadTranPatch = AccessTools.Method(typeof(PawnRenderPatchs), "RenderPawnInternalHeadTranPatch", null, null);
             List<CodeInstruction> instructionList = instructions.ToList<CodeInstruction>();
@@ -1467,9 +1473,8 @@ namespace NareisLib
             int layer = (int)TextureRenderLayer.Head;
 
             //是否绘制原head贴图
-            if (!curDirection.ContainsKey(layer)
-                    || (!comp.GetAllHideOriginalDefData.NullOrEmpty()
-                        && !comp.GetAllHideOriginalDefData.Contains("Head")))
+            if (!curDirection.ContainsKey(layer) 
+                || (!comp.GetAllHideOriginalDefData.NullOrEmpty() && !comp.GetAllHideOriginalDefData.Contains("Head")))
             {
                 GenDraw.DrawMeshNowOrLater(headMesh, loc, quat, headMat, drawNow);
             }
@@ -1565,7 +1570,7 @@ namespace NareisLib
         //FaceMask Hair HeadMask Hat DrawHeadHairTranspiler
         public static IEnumerable<CodeInstruction> DrawHeadHairPatchTranspiler(IEnumerable<CodeInstruction> instructions)
         {
-            MethodInfo drawMeshNowOrLater = AccessTools.Method(typeof(GenDraw), "DrawMeshNowOrLater", null, null);
+            MethodInfo drawMeshNowOrLater = AccessTools.Method(typeof(GenDraw), "DrawMeshNowOrLater", new Type[] { typeof(Mesh), typeof(Vector3), typeof(Quaternion), typeof(Material), typeof(bool) }, null);
             FieldInfo pawn = AccessTools.Field(typeof(PawnRenderer), "pawn");
             MethodInfo drawHeadHairHeadTranPatch = AccessTools.Method(typeof(PawnRenderPatchs), "DrawHeadHairHairTranPatch", null, null);
             MethodInfo drawHeadHairFaceMaskTranPatch = AccessTools.Method(typeof(PawnRenderPatchs), "DrawHeadHairFaceMaskTranPatch", null, null);
@@ -1577,7 +1582,7 @@ namespace NareisLib
             for (int i = 0; i < instructionList.Count; i = num + 1)
             {
                 CodeInstruction instruction = instructionList[i];
-                if (instructionList[i - 2].opcode == OpCodes.Ldloc_S && instructionList[i - 2].OperandIs(6) && instructionList[i - 3].OperandIs(drawMeshNowOrLater))
+                if (i > 500 && instructionList[i - 2].opcode == OpCodes.Ldloc_S && instructionList[i - 2].OperandIs(6) && instructionList[i - 3].OperandIs(drawMeshNowOrLater))
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_3);//angle
 
@@ -1687,7 +1692,7 @@ namespace NareisLib
             hairYOffset.y += 0.028957527f;
             int layer = (int)TextureRenderLayer.FaceMask;
 
-            for (int index = 0; index < apparelGraphics.Count; ++index)
+            for (int index = 0; index < apparelGraphics.Count; index++)
             {
                 ApparelGraphicRecord apparel = apparelGraphics[index];
                 if ((!shouldDraw || apparel.sourceApparel.def.apparel.hatRenderedFrontOfFace) && apparel.sourceApparel.def.apparel.forceRenderUnderHair)
@@ -1880,7 +1885,7 @@ namespace NareisLib
             Vector3 hairYOffset = vector + headOffset;
             hairYOffset.y += 0.028957527f;
 
-            for (int index = 0; index < apparelGraphics.Count; ++index)
+            for (int index = 0; index < apparelGraphics.Count; index++)
             {
                 ApparelGraphicRecord apparel = apparelGraphics[index];
                 if ((!shouldDraw || apparel.sourceApparel.def.apparel.hatRenderedFrontOfFace) 
