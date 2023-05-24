@@ -29,7 +29,7 @@ namespace NareisLib
     {
         static HarmonyMain()
         {
-            var harmonyInstance = new Harmony("NazunaReiLib.kamijouko");
+            var harmonyInstance = new Harmony("NareisLib.kamijouko.nazunarei");
 
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveAllGraphics", null, null), null, null, null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveAllGraphicsFinalizer", null));
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveApparelGraphics", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveHairGraphicsPostfix", null), null, null);
@@ -939,24 +939,25 @@ namespace NareisLib
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 return;
+            
             if (!comp.PrefixResolved)
                 instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<string>> curDirection = comp.GetDataOfDirection(facing);
-            if (curDirection.NullOrEmpty())
-                return;
 
             int layer = (int)TextureRenderLayer.Head;
 
             //是否绘制原head贴图
-            if (!curDirection.ContainsKey(layer) 
-                || (!comp.GetAllHideOriginalDefData.NullOrEmpty() && !comp.GetAllHideOriginalDefData.Contains("Head")))
+            if (curDirection.NullOrEmpty()
+                || !curDirection.ContainsKey(layer) 
+                || comp.GetAllHideOriginalDefData.NullOrEmpty() 
+                || !comp.GetAllHideOriginalDefData.Contains("Head"))
             {
                 GenDraw.DrawMeshNowOrLater(headMesh, loc, quat, headMat, drawNow);
             }
 
             //绘制多层贴图
-            if (curDirection.ContainsKey(layer))
+            if (!curDirection.NullOrEmpty() && curDirection.ContainsKey(layer))
             {
                 Mesh bodyMesh = null;
                 Mesh hairMesh = null;
@@ -1148,8 +1149,6 @@ namespace NareisLib
                 instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<string>> curDirection = comp.GetDataOfDirection(facing);
-            if (curDirection.NullOrEmpty())
-                return;
 
             Mesh bodyMesh = null;
             Mesh hairMesh = null;
@@ -1183,7 +1182,8 @@ namespace NareisLib
                             loc.y += !(facing == Rot4.North) || apparel.sourceApparel.def.apparel.hatRenderedAboveBody ? 0.03185328f : 0.002895753f;
                     }
                     //是否绘制原装备的贴图
-                    if (!comp.GetAllHideOriginalDefData.NullOrEmpty() && !comp.GetAllHideOriginalDefData.Contains(apparel.sourceApparel.def.defName))
+                    if (comp.GetAllHideOriginalDefData.NullOrEmpty() 
+                        || !comp.GetAllHideOriginalDefData.Contains(apparel.sourceApparel.def.defName))
                     {
                         Material original = apparel.graphic.MatAt(facing, null);
                         Material mat = flags.FlagSet(PawnRenderFlags.Cache) ? original : OverrideMaterialIfNeeded(original, pawn, instance, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1191,7 +1191,7 @@ namespace NareisLib
                     }
 
                     //如果是多层服装的话
-                    if (curDirection.ContainsKey(layer) && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparel.sourceApparel.def.defName))
+                    if (!curDirection.NullOrEmpty() && curDirection.ContainsKey(layer) && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparel.sourceApparel.def.defName))
                     {
                         foreach (string keyName in curDirection[layer])
                         {
@@ -1257,20 +1257,19 @@ namespace NareisLib
                 instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<string>> curDirection = comp.GetDataOfDirection(facing);
-            if (curDirection.NullOrEmpty())
-                return;
 
             int layer = (int)TextureRenderLayer.Hair;
             //是否绘制原头发贴图
-            if (!curDirection.ContainsKey(layer)
-                    || (!comp.GetAllHideOriginalDefData.NullOrEmpty()
-                        && !comp.GetAllHideOriginalDefData.Contains("Head")))
+            if (curDirection.NullOrEmpty()
+                || !curDirection.ContainsKey(layer) 
+                || comp.GetAllHideOriginalDefData.NullOrEmpty() 
+                || !comp.GetAllHideOriginalDefData.Contains("Head"))
             {
                 GenDraw.DrawMeshNowOrLater(hairMesh, loc, quat, hairMat, drawNow);
             }
 
             //绘制多层头发贴图
-            if (curDirection.ContainsKey(layer))
+            if (!curDirection.NullOrEmpty() && curDirection.ContainsKey(layer))
             {
                 Vector3 hairYOffset = vector + headOffset;
                 hairYOffset.y += 0.028957527f;

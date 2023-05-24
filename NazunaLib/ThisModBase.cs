@@ -11,7 +11,7 @@ namespace NareisLib
 {
     public class ThisModBase : ModBase
     {
-        public override string ModIdentifier { get; } = "NazunaReiLib.kamijouko";
+        public override string ModIdentifier { get; } = "NareisLib.kamijouko.nazunarei";
 
         public override void DefsLoaded()
         {
