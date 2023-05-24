@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>L:\SteamLibrary\steamapps\common\RimWorld\Mods\NazunaLib\Assemblies\</OutputPath>
+    <OutputPath>L:\SteamLibrary\steamapps\common\RimWorld\Mods\NareisLib\Assemblies\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -33,8 +33,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\CodeEnvironment\0Harmony.dll</HintPath>
-      <Private>True</Private>
+      <HintPath>L:\SteamLibrary\steamapps\common\RimWorld\Mods\NareisLib\Assemblies\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="AlienRace">
       <HintPath>L:\SteamLibrary\steamapps\workshop\content\294100\839005762\1.4\Assemblies\AlienRace.dll</HintPath>
