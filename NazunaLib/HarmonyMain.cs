@@ -1341,8 +1341,6 @@ namespace NareisLib
                 instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<string>> curDirection = comp.GetDataOfDirection(facing);
-            if (curDirection.NullOrEmpty())
-                return;
 
             Mesh bodyMesh = null;
             Mesh hairMesh = null;
@@ -1377,7 +1375,7 @@ namespace NareisLib
                             loc.y += !(facing == Rot4.North) || apparel.sourceApparel.def.apparel.hatRenderedAboveBody ? 0.03185328f : 0.002895753f;
                     }
                     //是否绘制原装备的贴图
-                    if (!comp.GetAllHideOriginalDefData.NullOrEmpty() && !comp.GetAllHideOriginalDefData.Contains(apparel.sourceApparel.def.defName))
+                    if (comp.GetAllHideOriginalDefData.NullOrEmpty() || !comp.GetAllHideOriginalDefData.Contains(apparel.sourceApparel.def.defName))
                     {
                         Material original = apparel.graphic.MatAt(facing, null);
                         Material mat = flags.FlagSet(PawnRenderFlags.Cache) ? original : OverrideMaterialIfNeeded(original, pawn, instance, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1385,7 +1383,7 @@ namespace NareisLib
                     }
 
                     //如果是多层服装的话
-                    if (comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparel.sourceApparel.def.defName))
+                    if (!curDirection.NullOrEmpty() && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparel.sourceApparel.def.defName))
                     {
                         List<int> renderLayers = new List<int>() { (int)TextureRenderLayer.HeadMask, (int)TextureRenderLayer.Hat };
                         foreach (int layer in renderLayers)
