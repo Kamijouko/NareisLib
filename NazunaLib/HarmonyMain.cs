@@ -1048,8 +1048,6 @@ namespace NareisLib
             MethodInfo drawHeadHairFaceMaskTranPatch = AccessTools.Method(typeof(PawnRenderPatchs), "DrawHeadHairFaceMaskTranPatch", null, null);
             MethodInfo drawHeadHairHeadMaskTranPatch = AccessTools.Method(typeof(PawnRenderPatchs), "DrawHeadHairHeadMaskTranPatch", null, null);
             List<CodeInstruction> instructionList = instructions.ToList<CodeInstruction>();
-            bool canPatch = false;
-            bool canPatch2 = false;
             int num;
             for (int i = 0; i < instructionList.Count; i = num + 1)
             {
@@ -1058,30 +1056,6 @@ namespace NareisLib
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_3);//angle
 
-                    yield return new CodeInstruction(OpCodes.Ldarg_1);//rootLoc vector
-
-                    yield return new CodeInstruction(OpCodes.Ldarg_2);//headOffset
-
-                    yield return new CodeInstruction(OpCodes.Ldloc_S, 5);//headfacing
-
-                    yield return new CodeInstruction(OpCodes.Ldarg_S, 7);//flags
-
-                    yield return new CodeInstruction(OpCodes.Ldarg_0);//this.
-
-                    yield return new CodeInstruction(OpCodes.Ldfld, pawn);//pawn
-
-                    yield return new CodeInstruction(OpCodes.Ldarg_0);//PawnRenderer instance
-
-                    yield return new CodeInstruction(OpCodes.Call, drawHeadHairFaceMaskTranPatch);
-
-                    canPatch = true;
-
-                    i += 34;
-                }
-
-
-                if (canPatch && instruction.OperandIs(drawMeshNowOrLater) && instructionList[i - 37].opcode == OpCodes.Ldloc_2)
-                {
                     yield return new CodeInstruction(OpCodes.Ldarg_1);//rootLoc vector
 
                     yield return new CodeInstruction(OpCodes.Ldarg_2);//headOffset
@@ -1100,14 +1074,34 @@ namespace NareisLib
 
                     yield return new CodeInstruction(OpCodes.Ldarg_0);//PawnRenderer instance
 
-                    yield return new CodeInstruction(OpCodes.Call, drawHeadHairHeadTranPatch);
+                    yield return new CodeInstruction(OpCodes.Call, drawHeadHairFaceMaskTranPatch);
 
-                    canPatch2 = true;
+                    i += 34;
+                }
+
+
+                if (i > 530 && instruction.OperandIs(drawMeshNowOrLater) && instructionList[i - 37].opcode == OpCodes.Ldloc_2)
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);//rootLoc vector
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_2);//headOffset
+
+                    yield return new CodeInstruction(OpCodes.Ldloc_S, 5);//headfacing
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_S, 7);//flags
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);//this.
+
+                    yield return new CodeInstruction(OpCodes.Ldfld, pawn);//pawn
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);//PawnRenderer instance
+
+                    yield return new CodeInstruction(OpCodes.Call, drawHeadHairHeadTranPatch);
 
                     i++;
                 }
 
-                if (canPatch2 && instructionList[i - 2].opcode == OpCodes.Ldloc_S && instructionList[i - 2].OperandIs(6) && instructionList[i - 6].OperandIs(drawMeshNowOrLater))
+                if (i > 530 && instructionList[i - 2].opcode == OpCodes.Ldloc_S && instructionList[i - 2].OperandIs(6) && instructionList[i - 6].OperandIs(drawMeshNowOrLater))
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_3);//angle
 
@@ -1118,6 +1112,10 @@ namespace NareisLib
                     yield return new CodeInstruction(OpCodes.Ldloc_S, 5);//headfacing
 
                     yield return new CodeInstruction(OpCodes.Ldarg_S, 7);//flags
+
+                    yield return new CodeInstruction(OpCodes.Ldloc_1);//apparelGraphics
+
+                    yield return new CodeInstruction(OpCodes.Ldloc_S, 5);//shouldDraw
 
                     yield return new CodeInstruction(OpCodes.Ldarg_0);//this.
 
@@ -1258,7 +1256,7 @@ namespace NareisLib
             if (curDirection.NullOrEmpty()
                 || !curDirection.ContainsKey(layer) 
                 || comp.GetAllHideOriginalDefData.NullOrEmpty() 
-                || !comp.GetAllHideOriginalDefData.Contains("Head"))
+                || !comp.GetAllHideOriginalDefData.Contains("Hair"))
             {
                 GenDraw.DrawMeshNowOrLater(hairMesh, loc, quat, hairMat, drawNow);
             }
