@@ -8,10 +8,18 @@ namespace NareisLib
 {
     public enum RenderClass : byte
     {
-        None,
-        Normal,
+        Other,
+        //
+        Body,
+        //
+        Head,
+        //
+        Hair,
+        //
         Hand,
-        Equipment,
-        Hediff
+        //
+        Apparel,
+        //
+        Equipment
     }
 }

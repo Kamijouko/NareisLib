@@ -231,10 +231,10 @@ namespace NareisLib
             Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
             Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
             HeadTypeDef head = pawn.story.headType;
-            if (head != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(head.defName))
+            if (head != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(typeof(HeadTypeDef)) && ThisModData.DefAndKeyDatabase[plan][typeof(HeadTypeDef)].ContainsKey(head.defName))
             {
                 string keyName = head.defName;
-                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][keyName];
+                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][typeof(HeadTypeDef)][keyName];
                 if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(keyName))
                 {
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
@@ -250,10 +250,10 @@ namespace NareisLib
                     cachedOverride.Add("Head");
             }
             BodyTypeDef body = pawn.story.bodyType;
-            if (body != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(body.defName))
+            if (body != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(typeof(BodyTypeDef)) && ThisModData.DefAndKeyDatabase[plan][typeof(BodyTypeDef)].ContainsKey(body.defName))
             {
                 string keyName = body.defName;
-                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][keyName];
+                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][typeof(BodyTypeDef)][keyName];
                 if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(keyName))
                 {
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
@@ -269,9 +269,9 @@ namespace NareisLib
                     cachedOverride.Add("Body");
             }
             string hand = comp.Props.handDefName;
-            if (hand != "" && ThisModData.DefAndKeyDatabase[plan].ContainsKey(hand))
+            if (hand != "" && ThisModData.DefAndKeyDatabase[plan].ContainsKey(typeof(HandTypeDef)) && ThisModData.DefAndKeyDatabase[plan][typeof(HandTypeDef)].ContainsKey(hand))
             {
-                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][hand];
+                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][typeof(HandTypeDef)][hand];
                 if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(hand))
                 {
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
@@ -310,10 +310,10 @@ namespace NareisLib
             Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
             Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
             HairDef hair = pawn.story.hairDef;
-            if (hair != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(hair.defName))
+            if (hair != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(typeof(HairDef)) && ThisModData.DefAndKeyDatabase[plan][typeof(HairDef)].ContainsKey(hair.defName))
             {
                 string keyName = hair.defName;
-                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][keyName];
+                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][typeof(HairDef)][keyName];
                 if (comp.storedDataHair.NullOrEmpty() || !comp.storedDataHair.ContainsKey(keyName))
                 {
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
@@ -357,10 +357,10 @@ namespace NareisLib
             {
                 while (enumerator.MoveNext())
                 {
-                    if (ThisModData.DefAndKeyDatabase[plan].ContainsKey(enumerator.Current.def.defName))
+                    if (ThisModData.DefAndKeyDatabase[plan].ContainsKey(typeof(ThingDef)) && ThisModData.DefAndKeyDatabase[plan][typeof(ThingDef)].ContainsKey(enumerator.Current.def.defName))
                     {
                         string keyName = enumerator.Current.def.defName;
-                        MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][keyName];
+                        MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][typeof(ThingDef)][keyName];
                         if (comp.storedDataApparel.NullOrEmpty() || !comp.storedDataApparel.ContainsKey(keyName))
                         {
                             Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
@@ -931,6 +931,7 @@ namespace NareisLib
 
         public static void RenderPawnInternalHeadTranPatch(Mesh headMesh, Vector3 loc, Quaternion quat, Material headMat, bool drawNow, Vector3 headYOffset, RotDrawMode bodyDrawType, Rot4 facing, PawnRenderFlags flags, Pawn pawn, PawnRenderer instance)
         {
+            //Log.Warning("run head patch");
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 return;
@@ -1052,7 +1053,7 @@ namespace NareisLib
             for (int i = 0; i < instructionList.Count; i = num + 1)
             {
                 CodeInstruction instruction = instructionList[i];
-                if (i > 500 && instructionList[i - 2].opcode == OpCodes.Ldloc_S && instructionList[i - 2].OperandIs(6) && instructionList[i - 3].OperandIs(drawMeshNowOrLater))
+                if (i > 10 && instructionList[i - 2].opcode == OpCodes.Ldloc_S && instructionList[i - 2].OperandIs(6) && instructionList[i - 3].OperandIs(drawMeshNowOrLater))
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_3);//angle
 
@@ -1060,7 +1061,7 @@ namespace NareisLib
 
                     yield return new CodeInstruction(OpCodes.Ldarg_2);//headOffset
 
-                    yield return new CodeInstruction(OpCodes.Ldloc_S, 5);//headfacing
+                    yield return new CodeInstruction(OpCodes.Ldarg_S, 5);//headfacing
 
                     yield return new CodeInstruction(OpCodes.Ldarg_S, 7);//flags
 
@@ -1080,13 +1081,14 @@ namespace NareisLib
                 }
 
 
-                if (i > 530 && instruction.OperandIs(drawMeshNowOrLater) && instructionList[i - 37].opcode == OpCodes.Ldloc_2)
+                if (instruction.OperandIs(drawMeshNowOrLater) && instructionList[i - 37].opcode == OpCodes.Ldloc_2/* && instructionList[i + 4].OperandIs(6)*/)
                 {
+                    //Log.Warning("RunPatched");
                     yield return new CodeInstruction(OpCodes.Ldarg_1);//rootLoc vector
 
                     yield return new CodeInstruction(OpCodes.Ldarg_2);//headOffset
 
-                    yield return new CodeInstruction(OpCodes.Ldloc_S, 5);//headfacing
+                    yield return new CodeInstruction(OpCodes.Ldarg_S, 5);//headfacing
 
                     yield return new CodeInstruction(OpCodes.Ldarg_S, 7);//flags
 
@@ -1101,7 +1103,7 @@ namespace NareisLib
                     i++;
                 }
 
-                if (i > 530 && instructionList[i - 2].opcode == OpCodes.Ldloc_S && instructionList[i - 2].OperandIs(6) && instructionList[i - 6].OperandIs(drawMeshNowOrLater))
+                if (i > 10 && instructionList[i - 2].opcode == OpCodes.Ldloc_S && instructionList[i - 2].OperandIs(6) && instructionList[i - 6].OperandIs(drawMeshNowOrLater))
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_3);//angle
 
@@ -1109,7 +1111,7 @@ namespace NareisLib
 
                     yield return new CodeInstruction(OpCodes.Ldarg_2);//headOffset
 
-                    yield return new CodeInstruction(OpCodes.Ldloc_S, 5);//headfacing
+                    yield return new CodeInstruction(OpCodes.Ldarg_S, 5);//headfacing
 
                     yield return new CodeInstruction(OpCodes.Ldarg_S, 7);//flags
 
@@ -1243,6 +1245,7 @@ namespace NareisLib
 
         public static void DrawHeadHairHairTranPatch(Mesh hairMesh, Vector3 loc, Quaternion quat, Material hairMat, bool drawNow, Vector3 vector, Vector3 headOffset, Rot4 facing, PawnRenderFlags flags, Pawn pawn, PawnRenderer instance)
         {
+            //Log.Warning("run hair patch");
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 return;

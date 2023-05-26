@@ -11,8 +11,8 @@ namespace NareisLib
 {
     public class MultiTexDef : Def
     {
-        //渲染的部位类型(暂时不使用)
-        public RenderClass renderClass = RenderClass.None;
+        //渲染的部位的Def类型(例如HeadTypeDef或者BodyTypeDef)，手填写HandTypeDef
+        public Type originalDefClass;
         
         //基于渲染的Def
         public string originalDef;

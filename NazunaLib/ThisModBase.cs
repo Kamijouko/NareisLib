@@ -34,18 +34,24 @@ namespace NareisLib
                 if (plan.plans.NullOrEmpty())
                     continue;
                 string planDef = plan.defName;
-                Dictionary<string, MultiTexDef> data = new Dictionary<string, MultiTexDef>();
+                if (!ThisModData.DefAndKeyDatabase.ContainsKey(planDef))
+                    ThisModData.DefAndKeyDatabase[planDef] = new Dictionary<Type, Dictionary<string, MultiTexDef>>();
                 foreach (MultiTexDef def in plan.plans)
                 {
-                    if (def.levels.NullOrEmpty() || data.ContainsKey(def.originalDef))
+                    if (def.levels.NullOrEmpty() 
+                        || def.originalDefClass == null 
+                        || def.originalDef == null 
+                        || (ThisModData.DefAndKeyDatabase[planDef].ContainsKey(def.originalDefClass) && ThisModData.DefAndKeyDatabase[planDef][def.originalDefClass].ContainsKey(def.originalDef)))
                         continue;
+
+                    if (!ThisModData.DefAndKeyDatabase[planDef].ContainsKey(def.originalDefClass))
+                        ThisModData.DefAndKeyDatabase[planDef][def.originalDefClass] = new Dictionary<string, MultiTexDef>();
                     foreach (TextureLevels level in def.levels)
                     {
                         level.GetAllGraphicDatas(def.path);
                     }
-                    data[def.originalDef] = def;
+                    ThisModData.DefAndKeyDatabase[planDef][def.originalDefClass][def.originalDef] = def;
                 }
-                ThisModData.DefAndKeyDatabase[planDef] = data;
             }
         }
     }

@@ -305,6 +305,7 @@
     <Compile Include="GameObjectPlanListDef.cs" />
     <Compile Include="GOPListDefOf.cs" />
     <Compile Include="DAL_Graphic_Dynamic.cs" />
+    <Compile Include="HandTypeDef.cs" />
     <Compile Include="ModStaticMethod.cs" />
     <Compile Include="MultiRenderComp.cs" />
     <Compile Include="MultiRenderCompProperties.cs" />

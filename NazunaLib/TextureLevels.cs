@@ -84,7 +84,7 @@ namespace NareisLib
         public bool sleeveDrawBehindShell = true;
 
         //默认的权重（在未设定权重的情况下所有贴图的权重均为1）常数，无法更改
-        public const int normalWaight = 1;
+        public const int normalWeight = 1;
 
 
 
@@ -156,7 +156,8 @@ namespace NareisLib
             }
 
             //组合指定的文件夹路径
-            string folderAbsDir = Path.Combine(ModStaticMethod.RootDir, "Textures", folderPath);
+            List<ModContentPack> mods = LoadedModManager.RunningModsListForReading;
+            string[] folderAbsDir = mods.Select(x => Path.Combine(x.RootDir, "Textures", folderPath)).Where(x => Directory.Exists(x)).ToArray();
 
             string[] names = new string[] { };
 
@@ -165,9 +166,11 @@ namespace NareisLib
             {
                 foreach (string pre in prefix)
                 {
-                    string[] fullName = Directory.GetFiles(folderAbsDir, pre + "*");
+                    string[] fullName = folderAbsDir.SelectMany(x => Directory.GetFiles(x, pre + "*")).ToArray();
+                    
                     if (fullName.Length > 0)
                     {
+                        Log.Warning(fullName[0]);
                         string[] resolvedName = fullName.Select(x => ResolveKeyName(Path.GetFileNameWithoutExtension(x))).Distinct().ToArray();
                         preFixToTexName[pre] = resolvedName;
                         names = names.Concat(resolvedName).ToArray();
@@ -202,10 +205,10 @@ namespace NareisLib
                 if (weightOfTheName.ContainsKey(keyName))
                     texWeights[keyName] = weightOfTheName[keyName];
                 else
-                    texWeights[keyName] = normalWaight;
+                    texWeights[keyName] = normalWeight;
             }
             else
-                texWeights[keyName] = normalWaight;
+                texWeights[keyName] = normalWeight;
         }
 
         //赋予prefix权重
@@ -216,10 +219,10 @@ namespace NareisLib
                 if (weightOfThePrefix.ContainsKey(pre))
                     preFixWeights[pre] = weightOfThePrefix[pre];
                 else
-                    preFixWeights[pre] = normalWaight;
+                    preFixWeights[pre] = normalWeight;
             }
             else
-                preFixWeights[pre] = normalWaight;
+                preFixWeights[pre] = normalWeight;
         }
 
         //去掉贴图名称中的额外信息
