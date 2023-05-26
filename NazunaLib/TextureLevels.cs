@@ -228,14 +228,15 @@ namespace NareisLib
         //去掉贴图名称中的额外信息
         public static string ResolveKeyName(string key)
         {
-            key = key.Replace("_south", "");
-            key = key.Replace("_east", "");
-            key = key.Replace("_north", "");
-            key = key.Replace("_west", "");
-            key = key.Replace("_southm", "");
-            key = key.Replace("_eastm", "");
+            //此处的顺序很重要
             key = key.Replace("_northm", "");
+            key = key.Replace("_north", ""); 
+            key = key.Replace("_southm", "");
+            key = key.Replace("_south", "");
+            key = key.Replace("_eastm", "");
+            key = key.Replace("_east", "");
             key = key.Replace("_westm", "");
+            key = key.Replace("_west", "");
             key = key.Replace("_Male", "");
             key = key.Replace("_Female", "");
             key = key.Replace("_Rotting", "");
