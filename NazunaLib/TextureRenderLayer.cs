@@ -37,6 +37,7 @@ namespace NareisLib
 
         //各方向都不变
         //对于最后一层是shell层以外的衣服使用为PawnRenderer类的DrawPawnBody方法打的Finalizer补丁进行渲染，shell层使用DrawBodyApparel方法打的Prefix方法进行渲染
+        //用于服装的渲染，其他部位设置此层不会生效
         Apparel,
 
         //各方向不变
@@ -57,6 +58,7 @@ namespace NareisLib
         //在描绘侧面时不变
         //在描绘背面时为Shell层
         //使用IL语言在PawnRenderer类的DrawHeadHair中渲染头发前进行渲染
+        //用于服装的渲染，其他部位设置此层不会生效
         FaceMask,
 
         //在描绘侧面时不变
@@ -66,14 +68,17 @@ namespace NareisLib
 
         //各方向不变
         //使用IL语言在PawnRenderer类的DrawHeadHair中渲染头发后渲染装备前进行渲染，对象为身体
+        //用于服装的渲染，其他部位设置此层不会生效
         FrontShell,
 
         //各方向不变
         //使用IL语言在PawnRenderer类的DrawHeadHair中渲染头发后渲染装备前进行渲染，对象为头部
+        //用于服装的渲染，其他部位设置此层不会生效
         HeadMask,
 
         //各方向不变
         //使用IL语言在PawnRenderer类的DrawHeadHair中修改装备进行渲染
+        //用于服装的渲染，其他部位设置此层不会生效
         Hat,
 
         //各方向不变
