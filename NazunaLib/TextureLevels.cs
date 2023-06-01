@@ -15,6 +15,9 @@ namespace NareisLib
 {
     public class TextureLevels : GraphicData
     {
+        //图层的唯一标识符
+        public string textureLevelsName = "";
+
         //贴图名称前缀（不带文件夹路径）此定义出的贴图名为唯一标识符，请不要重复使用相同的贴图名（前缀可以重复）
         public List<string> prefix = new List<string>();
 
@@ -101,6 +104,9 @@ namespace NareisLib
         public string keyName = "";
 
         //xml里无需设定并且设定无效
+        public Type originalDefClass = null;
+
+        //xml里无需设定并且设定无效
         public string originalDef = "";
 
         //xml里无需设定并且设定无效
@@ -119,10 +125,56 @@ namespace NareisLib
         public Graphic cacheGraphic;
 
 
+        //用于从ThisModData的数据库中克隆
+        public TextureLevels Clone()
+        {
+            TextureLevels result = new TextureLevels();
+            result.CopyFrom(this);
+            result.textureLevelsName = textureLevelsName;
+            result.prefix = prefix;
+            result.renderLayer = renderLayer;
+            result.hediffSets = hediffSets;
+            result.jobSets = jobSets;
+            result.patternSets = patternSets;
+            result.meshType = meshType;
+            result.meshSize = meshSize;
+            result.hasGender = hasGender;
+            result.renderMale = renderMale;
+            result.renderFemale = renderFemale;
+            result.bodyPart = bodyPart;
+            result.bodyPartLabel = bodyPartLabel;
+            result.renderOnGround = renderOnGround;
+            result.renderInBed = renderInBed;
+            result.hasRotting = hasRotting;
+            result.hasDessicated = hasDessicated;
+            result.hasStump = hasStump;
+            result.handDrawBehindShell = handDrawBehindShell;
+            result.renderSwitch = renderSwitch;
+            result.weightOfThePrefix = weightOfThePrefix;
+            result.weightOfTheName = weightOfTheName;
+            result.isSleeve = isSleeve;
+            result.sleeveTexList = sleeveTexList;
+            result.sleeveDrawBehindShell = sleeveDrawBehindShell;
+
+            result.preFixWeights = preFixWeights;
+            result.texWeights = texWeights;
+            result.preFixToTexName = preFixToTexName;
+            result.keyName = keyName;
+            result.originalDefClass = originalDefClass;
+            result.originalDef = originalDef;
+            result.hediffPrefix = hediffPrefix;
+            result.jobPrefix = jobPrefix;
+            result.genderSuffix = genderSuffix;
+            result.folder = folder;
+            return result;
+        }
+
 
         //对当前Level应该渲染的贴图路径进行处理，并且将每个路径都对应一个GraphicData
-        public void GetAllGraphicDatas(string folderPath)
+        public void GetAllGraphicDatas(MultiTexDef def)
         {
+            if (def == null)
+                return;
             if (graphicClass == null)
                 graphicClass = typeof(Graphic_Multi);
             if (drawOffsetSouth == null)
@@ -133,31 +185,34 @@ namespace NareisLib
                 drawOffsetNorth = Vector3.zero;
             if (drawOffsetWest == null)
                 drawOffsetWest = Vector3.zero;
-            folder = folderPath;
+            folder = def.path;
+            originalDef = def.originalDef;
+            originalDefClass = def.originalDefClass;
+            string type_originalDefName = originalDefClass.ToStringSafe() + "_" + def.originalDef;
 
             //处理当prefix列表为空的时候，就使用原GraphicData的texPath路径
             if (prefix.NullOrEmpty())
             {
                 string tmpKeyName = "singleLevel" + ThisModData.TmpLevelID;
                 if (texPath == null)
+                {
                     texPath = tmpKeyName;
-                else
-                    tmpKeyName = ResolveKeyName(Path.GetFileNameWithoutExtension(texPath));
+                    ThisModData.TmpLevelID++;
+                }   
 
-                if (!ThisModData.TexLevelsDatabase.Keys.Contains(tmpKeyName))
+                if (!ThisModData.TexLevelsDatabase[type_originalDefName].ContainsKey(textureLevelsName))
                 {
                     //preFixToTexName["NullPrefix"] = new string[] { tmpKeyName };
                     //ResolveSingleTexWeights(tmpKeyName);
-                    ThisModData.TexLevelsDatabase.Add(tmpKeyName, this);
-                    if (texPath != null)
-                        ThisModData.TmpLevelID++;
+                    //keyName = tmpKeyName;
+                    ThisModData.TexLevelsDatabase[type_originalDefName][textureLevelsName] = this;
                 }
                 return;
             }
 
             //组合指定的文件夹路径
             List<ModContentPack> mods = LoadedModManager.RunningModsListForReading;
-            string[] folderAbsDir = mods.Select(x => Path.Combine(x.RootDir, "Textures", folderPath)).Where(x => Directory.Exists(x)).ToArray();
+            string[] folderAbsDir = mods.Select(x => Path.Combine(x.RootDir, "Textures", folder)).Where(x => Directory.Exists(x)).ToArray();
 
             string[] names = new string[] { };
 
@@ -183,17 +238,22 @@ namespace NareisLib
             //处理路径全名为不带后缀的名称，并且如果有针对特定名称列表的话就给特定名称赋予权重
             if (names.Length > 0)
             {
-                foreach (string name in names)
+                if (!ThisModData.TexLevelsDatabase[type_originalDefName].ContainsKey(textureLevelsName))
                 {
-                    //Log.Warning(name);
-                    if (!ThisModData.TexLevelsDatabase.ContainsKey(name))
+                    foreach (string name in names)
                     {
-                        //GraphicData data = this;
-                        texPath = Path.Combine(folderPath, name);
+                        //Log.Warning(name);
+                        /*if (!ThisModData.TexLevelsDatabase.ContainsKey(name))
+                        {
+                            //GraphicData data = this;
+                            //texPath = Path.Combine(folderPath, name);
+                            //keyName = name;
+                        }*/
                         ResolveSingleTexWeights(name);
-                        ThisModData.TexLevelsDatabase.Add(name, this);
                     }
+                    ThisModData.TexLevelsDatabase[type_originalDefName][textureLevelsName] = this;
                 }
+                
             }
         } 
 

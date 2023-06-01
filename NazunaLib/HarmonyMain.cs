@@ -15,6 +15,7 @@ using Verse.AI.Group;
 using System.Reflection;
 using Verse.AI;
 using RimWorld.Planet;
+using System.Security.Cryptography;
 
 
 namespace NareisLib
@@ -145,10 +146,11 @@ namespace NareisLib
         //对其属性levels里所存储的所有TextureLevels都根据指定的权重随机一个贴图的名称，
         //并将名称记录进一个从其属性cacheOfLevels得来的MultiTexEpoch中所对应渲染图层的MultiTexBatch的名称列表里，
         //最终返回这个MultiTexEpoch
-        public static MultiTexEpoch ResolveMultiTexDef(MultiTexDef def, out Dictionary<string, TextureLevels> data, bool isOwnerable = false)
+        public static MultiTexEpoch ResolveMultiTexDef(MultiTexDef def, out Dictionary<string, TextureLevels> data)
         {
             //Log.Warning(plan+","+defName);
             MultiTexEpoch epoch = def.cacheOfLevels;
+            List<MultiTexBatch> batches = new List<MultiTexBatch>();
             data = new Dictionary<string, TextureLevels>();
             foreach (TextureLevels level in def.levels)
             {
@@ -164,33 +166,18 @@ namespace NareisLib
                     keyName = level.preFixToTexName[pre].RandomElementByWeight(x => level.texWeights[x]);
                 }
 
-                if (!epoch.batches.Exists(x => x.keyName == keyName))
-                    epoch.batches.Add(new MultiTexBatch(def.defName, keyName, level.renderLayer, level.renderSwitch));
+                if (!batches.Exists(x => x.textureLevelsName == level.textureLevelsName))
+                    batches.Add(new MultiTexBatch(def.originalDefClass, def.originalDef, def.defName, keyName, level.textureLevelsName, level.renderLayer, level.renderSwitch));
                 //epoch.batches.First(x => x.keyName == keyName).keyList.Add(keyName);
 
-                level.keyName = keyName;
-                level.originalDef = epoch.originalDef;
-                if (level.patternSets != null)
-                    level.patternSets.keyName = keyName;
-                data[keyName] = level;
+                TextureLevels textureLevels = ThisModData.TexLevelsDatabase[def.originalDefClass.ToStringSafe()+"_"+def.originalDef][level.textureLevelsName].Clone();
+                textureLevels.keyName = keyName;
+                if (textureLevels.patternSets != null)
+                    textureLevels.patternSets.keyName = keyName;
+                if (!data.ContainsKey(textureLevels.textureLevelsName))
+                    data[textureLevels.textureLevelsName] = textureLevels;
             }
-            /*if (isOwnerable)
-            {
-                foreach (MultiTexBatch batch in epoch.batches)
-                {
-                    batch.keyListSouth = batch.keyList;
-                    batch.keyListEast = batch.keyList;
-                    batch.keyListNorth = batch.keyList;
-                    batch.keyListWest = batch.keyList;
-                    if (batch.keyList.Count() > 1)
-                    {
-                        batch.keyListSouth.Sort((i, j) => ThisModData.TexLevelsDatabase[i].drawOffsetSouth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetSouth.Value.y));
-                        batch.keyListEast.Sort((i, j) => ThisModData.TexLevelsDatabase[i].drawOffsetEast.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetEast.Value.y));
-                        batch.keyListNorth.Sort((i, j) => ThisModData.TexLevelsDatabase[i].drawOffsetNorth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetNorth.Value.y));
-                        batch.keyListWest.Sort((i, j) => ThisModData.TexLevelsDatabase[i].drawOffsetWest.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j].drawOffsetWest.Value.y));
-                    }
-                }
-            }*/
+            epoch.batches = batches;
             return epoch;
         }
 
@@ -198,7 +185,7 @@ namespace NareisLib
         //从comp的storedData里获取TextureLevels数据，用于处理读取存档时从已有的storedData字典中得到的epoch
         public static Dictionary<string, TextureLevels> GetLevelsDictFromEpoch(MultiTexEpoch epoch)
         {
-            return epoch.batches.ToDictionary(k => k.keyName, v => ResolveKeyNameForLevel(ThisModData.TexLevelsDatabase[v.keyName], v.keyName));
+            return epoch.batches.ToDictionary(k => k.keyName, v => ResolveKeyNameForLevel(ThisModData.TexLevelsDatabase[v.originalDefClass.ToStringSafe()+"_"+v.originalDefName][v.textureLevelsName].Clone(), v.keyName));
         }
         //上方法的子方法，为获取到的TextureLevels进行赋值操作
         public static TextureLevels ResolveKeyNameForLevel(TextureLevels level, string key)
@@ -231,57 +218,60 @@ namespace NareisLib
             Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
             Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
             HeadTypeDef head = pawn.story.headType;
-            if (head != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(typeof(HeadTypeDef)) && ThisModData.DefAndKeyDatabase[plan][typeof(HeadTypeDef)].ContainsKey(head.defName))
+            string fullOriginalDefName = typeof(HeadTypeDef).ToStringSafe() + "_" + head.defName;
+            if (head != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
             {
                 string keyName = head.defName;
-                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][typeof(HeadTypeDef)][keyName];
+                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
                 if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(keyName))
                 {
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
-                    data[keyName] = ResolveMultiTexDef(multidef, out cachedData);
-                    cachedGraphicData[keyName] = cachedData;
+                    data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                    cachedGraphicData[fullOriginalDefName] = cachedData;
                 }
                 else
                 {
-                    data[keyName] = comp.storedDataBody[keyName];
-                    cachedGraphicData[keyName] = GetLevelsDictFromEpoch(data[keyName]);
+                    data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
+                    cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
                 }
                 if (!multidef.renderOriginTex)
                     cachedOverride.Add("Head");
             }
             BodyTypeDef body = pawn.story.bodyType;
-            if (body != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(typeof(BodyTypeDef)) && ThisModData.DefAndKeyDatabase[plan][typeof(BodyTypeDef)].ContainsKey(body.defName))
+            fullOriginalDefName = typeof(BodyTypeDef).ToStringSafe() + "_" + body.defName;
+            if (body != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
             {
                 string keyName = body.defName;
-                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][typeof(BodyTypeDef)][keyName];
+                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
                 if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(keyName))
                 {
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
-                    data[keyName] = ResolveMultiTexDef(multidef, out cachedData);
-                    cachedGraphicData[keyName] = cachedData;
+                    data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                    cachedGraphicData[fullOriginalDefName] = cachedData;
                 }
                 else
                 {
-                    data[keyName] = comp.storedDataBody[keyName];
-                    cachedGraphicData[keyName] = GetLevelsDictFromEpoch(data[keyName]);
+                    data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
+                    cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
                 }
                 if (!multidef.renderOriginTex)
                     cachedOverride.Add("Body");
             }
             string hand = comp.Props.handDefName;
-            if (hand != "" && ThisModData.DefAndKeyDatabase[plan].ContainsKey(typeof(HandTypeDef)) && ThisModData.DefAndKeyDatabase[plan][typeof(HandTypeDef)].ContainsKey(hand))
+            fullOriginalDefName = typeof(HandTypeDef).ToStringSafe() + "_" + hand;
+            if (hand != "" && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
             {
-                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][typeof(HandTypeDef)][hand];
+                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
                 if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(hand))
                 {
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
-                    data[hand] = ResolveMultiTexDef(multidef, out cachedData);
-                    cachedGraphicData[hand] = cachedData;
+                    data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                    cachedGraphicData[fullOriginalDefName] = cachedData;
                 }
                 else
                 {
-                    data[hand] = comp.storedDataBody[hand];
-                    cachedGraphicData[hand] = GetLevelsDictFromEpoch(data[hand]);
+                    data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
+                    cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
                 }
             }
             comp.cachedOverrideBody = cachedOverride;
@@ -310,20 +300,21 @@ namespace NareisLib
             Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
             Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
             HairDef hair = pawn.story.hairDef;
-            if (hair != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(typeof(HairDef)) && ThisModData.DefAndKeyDatabase[plan][typeof(HairDef)].ContainsKey(hair.defName))
+            string fullOriginalDefName = typeof(HairDef).ToStringSafe() + "_" + hair.defName;
+            if (hair != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
             {
                 string keyName = hair.defName;
-                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][typeof(HairDef)][keyName];
-                if (comp.storedDataHair.NullOrEmpty() || !comp.storedDataHair.ContainsKey(keyName))
+                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
+                if (comp.storedDataHair.NullOrEmpty() || !comp.storedDataHair.ContainsKey(fullOriginalDefName))
                 {
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
-                    data[keyName] = ResolveMultiTexDef(multidef, out cachedData);
-                    cachedGraphicData[keyName] = cachedData;
+                    data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                    cachedGraphicData[fullOriginalDefName] = cachedData;
                 }
                 else
                 {
-                    data[keyName] = comp.storedDataHair[keyName];
-                    cachedGraphicData[keyName] = GetLevelsDictFromEpoch(data[keyName]);
+                    data[fullOriginalDefName] = comp.storedDataHair[keyName];
+                    cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
                 }
                 if (!multidef.renderOriginTex)
                     cachedOverride.Add("Hair");
@@ -357,20 +348,21 @@ namespace NareisLib
             {
                 while (enumerator.MoveNext())
                 {
-                    if (ThisModData.DefAndKeyDatabase[plan].ContainsKey(typeof(ThingDef)) && ThisModData.DefAndKeyDatabase[plan][typeof(ThingDef)].ContainsKey(enumerator.Current.def.defName))
+                    string fullOriginalDefName = typeof(ThingDef).ToStringSafe() + "_" + enumerator.Current.def.defName;
+                    if (ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
                     {
                         string keyName = enumerator.Current.def.defName;
-                        MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][typeof(ThingDef)][keyName];
-                        if (comp.storedDataApparel.NullOrEmpty() || !comp.storedDataApparel.ContainsKey(keyName))
+                        MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
+                        if (comp.storedDataApparel.NullOrEmpty() || !comp.storedDataApparel.ContainsKey(fullOriginalDefName))
                         {
                             Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
-                            data[keyName] = ResolveMultiTexDef(multidef, out cachedData);
-                            cachedGraphicData[keyName] = cachedData;
+                            data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                            cachedGraphicData[fullOriginalDefName] = cachedData;
                         }
                         else
                         {
-                            data[keyName] = comp.storedDataApparel[keyName];
-                            cachedGraphicData[keyName] = GetLevelsDictFromEpoch(data[keyName]);
+                            data[fullOriginalDefName] = comp.storedDataApparel[fullOriginalDefName];
+                            cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
                         }
                         if (!multidef.renderOriginTex)
                             cachedOverride.Add(keyName);
@@ -396,7 +388,7 @@ namespace NareisLib
             if (!comp.PrefixResolved)
                 __instance.graphics.ResolveAllGraphics();
 
-            Dictionary<int, List<string>> curDirection = comp.GetDataOfDirection(facing);
+            Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
             if (curDirection.NullOrEmpty())
                 return __state = true;
 
@@ -421,11 +413,12 @@ namespace NareisLib
             {
                 if (curDirection.ContainsKey(level))
                 {
-                    foreach (string keyName in curDirection[level])
+                    foreach (MultiTexBatch batch in curDirection[level])
                     {
-                        if (comp.cachedAllGraphicData[keyName] != null && comp.cachedAllGraphicData[keyName].CanRender(___pawn, keyName))
+                        string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
+                        if (comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName] != null && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
                         {
-                            TextureLevels data = comp.cachedAllGraphicData[keyName];
+                            TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                             Mesh mesh = null;
                             Vector3 offset = Vector3.zero;
                             if (data.meshSize != Vector2.zero)
@@ -458,8 +451,8 @@ namespace NareisLib
                                     mesh = bodyMesh;
                             }
                             int pattern = 0;
-                            if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
-                                pattern = comp.cachedRandomGraphicPattern[keyName];
+                            if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(batch))
+                                pattern = comp.cachedRandomGraphicPattern[batch];
                             string condition = "";
                             if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
                                 condition = "Rotting";
@@ -468,7 +461,7 @@ namespace NareisLib
                             Vector3 dataOffset = data.DrawOffsetForRot(facing);
                             dataOffset.y *= 0.0001f;
                             Vector3 pos = vector + offset + dataOffset;
-                            Material mat = data.GetGraphic(keyName, pattern, condition).MatAt(facing, null);
+                            Material mat = data.GetGraphic(batch, pattern, condition).MatAt(facing, null);
                             GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                         }
                     }
@@ -505,7 +498,7 @@ namespace NareisLib
             if (!comp.PrefixResolved)
                 __instance.graphics.ResolveAllGraphics();
 
-            Dictionary<int, List<string>> curDirection = comp.GetDataOfDirection(facing);
+            Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
             if (curDirection.NullOrEmpty())
                 return;
 
@@ -562,9 +555,9 @@ namespace NareisLib
             {
                 if (curDirection.ContainsKey(level))
                 {
-                    foreach (string keyName in curDirection[level])
+                    foreach (MultiTexBatch batch in curDirection[level])
                     {
-                        TextureLevels data = comp.cachedAllGraphicData[keyName];
+                        TextureLevels data = comp.cachedAllGraphicData[batch];
                         Mesh mesh = null;
                         Vector3 offset = Vector3.zero;
                         if (data.meshSize != Vector2.zero)
@@ -605,8 +598,8 @@ namespace NareisLib
                             else
                                 continue;
                         }  
-                        else if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
-                            pattern = comp.cachedRandomGraphicPattern[keyName];
+                        else if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(batch))
+                            pattern = comp.cachedRandomGraphicPattern[batch];
                         string condition = "";
                         if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
                             condition = "Rotting";
@@ -632,7 +625,7 @@ namespace NareisLib
                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
                         dataOffset.y *= 0.0001f;
                         Vector3 pos = vector + offset + dataOffset + handOffset;
-                        Material material = data.GetGraphic(keyName, pattern, condition).MatAt(facing, null);
+                        Material material = data.GetGraphic(batch, pattern, condition).MatAt(facing, null);
                         Material mat = (___pawn.RaceProps.IsMechanoid 
                             && ___pawn.Faction != null 
                             && ___pawn.Faction != Faction.OfMechanoids) ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor) : material;
@@ -669,11 +662,11 @@ namespace NareisLib
                         //如果是需要多层的服装的话
                         if (!comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparel.sourceApparel.def.defName))
                         {
-                            foreach (string keyName in curDirection[(int)TextureRenderLayer.Apparel])
+                            foreach (MultiTexBatch batch in curDirection[(int)TextureRenderLayer.Apparel])
                             {
-                                if (comp.GetAllOriginalDefForGraphicDataDict[apparel.sourceApparel.def.defName].ContainsKey(keyName))
+                                if (comp.GetAllOriginalDefForGraphicDataDict[apparel.sourceApparel.def.defName].ContainsKey(batch))
                                 {
-                                    TextureLevels data = comp.cachedAllGraphicData[keyName];
+                                    TextureLevels data = comp.cachedAllGraphicData[batch];
                                     Mesh mesh = null;
                                     Vector3 offset = Vector3.zero;
                                     if (data.meshSize != Vector2.zero)
@@ -706,8 +699,8 @@ namespace NareisLib
                                             mesh = bodyMesh;
                                     }
                                     int pattern = 0;
-                                    if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(keyName))
-                                        pattern = comp.cachedRandomGraphicPattern[keyName];
+                                    if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(batch))
+                                        pattern = comp.cachedRandomGraphicPattern[batch];
                                     string condition = "";
                                     if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
                                         condition = "Rotting";
@@ -716,7 +709,7 @@ namespace NareisLib
                                     Vector3 dataOffset = data.DrawOffsetForRot(facing);
                                     dataOffset.y *= 0.0001f;
                                     Vector3 pos = vector + offset + dataOffset;
-                                    Material material = data.GetGraphic(keyName, pattern, condition).MatAt(facing, null);
+                                    Material material = data.GetGraphic(batch, pattern, condition).MatAt(facing, null);
                                     Material mat = (___pawn.RaceProps.IsMechanoid && ___pawn.Faction != null && ___pawn.Faction != Faction.OfMechanoids)
                                         ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor)
                                         : material;

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Verse;
 using UnityEngine;
+using static UnityEngine.UI.Image;
 
 namespace NareisLib
 {
@@ -12,9 +13,15 @@ namespace NareisLib
     {
         //每个Batch对应一个层的数据
 
+        public System.Type originalDefClass = null;
+
+        public string originalDefName = "";
+
         public string multiTexDefName = "";
 
         public string keyName = "";
+
+        public string textureLevelsName = "";
 
         public TextureRenderLayer layer = TextureRenderLayer.None;
 
@@ -28,10 +35,13 @@ namespace NareisLib
         public Vector3 renderSwitch = Vector3.one;
         public IntVec3 saveRenderSwitch;
 
-        public MultiTexBatch(string def, string key, TextureRenderLayer la, Vector3 r/*, List<string> list*/)
+        public MultiTexBatch(System.Type type, string original, string def, string key, string levelsName, TextureRenderLayer la, Vector3 r/*, List<string> list*/)
         {
+            originalDefClass = type;
+            originalDefName = original;
             multiTexDefName = def;
             keyName = key;
+            textureLevelsName = levelsName;
             layer = la;
             //keyList = list;
             renderSwitch = r;
@@ -39,8 +49,11 @@ namespace NareisLib
 
         public void ExposeData()
         {
-            Scribe_Values.Look<string>(ref multiTexDefName, "multiTexDefNamr", "", false);
+            Scribe_Values.Look<System.Type>(ref originalDefClass, "originalDefClass", null, false);
+            Scribe_Values.Look<string>(ref originalDefName, "originalDefName", "", false);
+            Scribe_Values.Look<string>(ref multiTexDefName, "multiTexDefName", "", false);
             Scribe_Values.Look<string>(ref keyName, "keyName", "", false);
+            Scribe_Values.Look<string>(ref textureLevelsName, "textureLevelsName", "", false);
             Scribe_Values.Look<TextureRenderLayer>(ref layer, "layer", TextureRenderLayer.None, false);
             //Scribe_Collections.Look<string>(ref keyList, "keyList", LookMode.Value, Array.Empty<object>());
 
