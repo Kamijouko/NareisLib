@@ -325,7 +325,7 @@ namespace NareisLib
                 }
                 else
                 {
-                    data[fullOriginalDefName] = comp.storedDataHair[keyName];
+                    data[fullOriginalDefName] = comp.storedDataHair[fullOriginalDefName];
                     cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
                 }
                 if (!multidef.renderOriginTex)
