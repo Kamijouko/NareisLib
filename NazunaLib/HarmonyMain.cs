@@ -196,6 +196,18 @@ namespace NareisLib
             return level;
         }
 
+        public static RenderPlanDef GetRenderPlanDef(string race)
+        {
+            RenderPlanDef plan = new RenderPlanDef();
+            foreach (RenderPlanDef def in DefDatabase<RenderPlanDef>.AllDefsListForReading)
+            {
+                if (def.races.Contains(race))
+                    plan.Combie(def);
+            }
+            if (plan.plans.NullOrEmpty())
+                plan = null;
+            return plan;
+        }
 
         //预处理Pawn身体的多层渲染数据，只会在pawn出现或生成时执行一次，在整体预处理方法中最后执行（因为原方法的顺序）
         static void ResolveAllGraphicsFinalizer(PawnGraphicSet __instance)
@@ -204,7 +216,7 @@ namespace NareisLib
                 return;
             Pawn pawn = __instance.pawn;
             string race = pawn.def.defName;
-            RenderPlanDef def = DefDatabase<RenderPlanDef>.AllDefs.FirstOrDefault(x => x.races.Contains(race));
+            RenderPlanDef def = GetRenderPlanDef(race);
             if (def == null)
                 return;
             string plan = def.defName;
@@ -288,7 +300,7 @@ namespace NareisLib
                 return;
             Pawn pawn = __instance.pawn;
             string race = pawn.def.defName;
-            RenderPlanDef def = DefDatabase<RenderPlanDef>.AllDefs.FirstOrDefault(x => x.races.Contains(race));
+            RenderPlanDef def = GetRenderPlanDef(race);
             if (def == null)
                 return;
             string plan = def.defName;
@@ -333,7 +345,7 @@ namespace NareisLib
                 return;
             Pawn pawn = __instance.pawn;
             string race = pawn.def.defName;
-            RenderPlanDef def = DefDatabase<RenderPlanDef>.AllDefs.FirstOrDefault(x => x.races.Contains(race));
+            RenderPlanDef def = GetRenderPlanDef(race);
             if (def == null)
                 return;
             string plan = def.defName;

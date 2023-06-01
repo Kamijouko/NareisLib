@@ -33,9 +33,21 @@ namespace NareisLib
             {
                 if (plan.plans.NullOrEmpty())
                     continue;
+                
+                if (!plan.races.NullOrEmpty())
+                {
+                    foreach (string race in plan.races)
+                    {
+                        if (!ThisModData.RacePlansDatabase.ContainsKey(race))
+                            ThisModData.RacePlansDatabase[race] = new List<RenderPlanDef>();
+                        if (!ThisModData.RacePlansDatabase[race].Exists(x => x.defName == plan.defName))
+                            ThisModData.RacePlansDatabase[race].Add(plan);
+                    }
+                }
                 string planDef = plan.defName;
                 if (!ThisModData.DefAndKeyDatabase.ContainsKey(planDef))
                     ThisModData.DefAndKeyDatabase[planDef] = new Dictionary<string, MultiTexDef>();
+
                 foreach (MultiTexDef def in plan.plans)
                 {
                     string type_originalDefName = def.originalDefClass.ToStringSafe() + "_" + def.originalDef;
