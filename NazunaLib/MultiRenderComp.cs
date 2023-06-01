@@ -44,7 +44,10 @@ namespace NareisLib
         public List<string> cachedOverrideBody, cachedOverrideApparel, cachedOverrideHair = new List<string>();
 
         //用于缓存当前pawn的race关联的RenderPlanDef
-        public string cachedRenderPlanDefName = "";
+        //public string cachedRenderPlanDefName = "";
+
+        //用于存储当前pawn的手部DefName
+        public string storedHandDefName = "";
 
         //用于缓存当前手对应的持有装备角度
         public float holdEquipmentAngle = 0f;
@@ -60,6 +63,20 @@ namespace NareisLib
             get
             {
                 return (MultiRenderCompProperties)props;
+            }
+        }
+
+        public string GetCurHandDefName
+        {
+            get
+            {
+                if (storedHandDefName == "" && !Props.handDefNameAndWeights.NullOrEmpty())
+                    storedHandDefName = Props.handDefNameAndWeights.Keys.RandomElementByWeight(x => Props.handDefNameAndWeights[x]);
+                return storedHandDefName;
+            }
+            set
+            {
+                storedHandDefName = value;
             }
         }
 
@@ -108,7 +125,7 @@ namespace NareisLib
             if (!patternLine.NullOrEmpty() && tick >= patternLine[timeTickLineIndex].cachedActionTimeOfTicks)
             {
                 TextureLevelRandomPatternSet set = patternLine[timeTickLineIndex];
-                cachedRandomGraphicPattern[set.keyName] = set.cachedPattern;
+                cachedRandomGraphicPattern[set.typeOriginalDefNameKeyName] = set.cachedPattern;
                 set.RandomNextIntervalAndPattern();
                 patternLine.Append(set);
                 patternLine.SortStable((i, j) => i.cachedActionTimeOfTicks.CompareTo(j.cachedActionTimeOfTicks));
@@ -223,6 +240,7 @@ namespace NareisLib
         {
             base.PostExposeData();
             //GetAllBatch.Where(x => x.layer == TextureRenderLayer.Apparel).SelectMany(x => x.keyList).Distinct().ToList().Sort((x, y) => ThisModData.TexLevelsDatabase[x].DrawOffsetForRot(Rot4.South).y.CompareTo(ThisModData.TexLevelsDatabase[y].DrawOffsetForRot(Rot4.South).y));
+            Scribe_Values.Look<string>(ref storedHandDefName, "storedHandDefName", "", false);
             Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataBody, "storedData", LookMode.Value, LookMode.Deep);
             Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataHair, "storedDataHair", LookMode.Value, LookMode.Deep);
             Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataApparel, "storedDataApparel", LookMode.Value, LookMode.Deep);

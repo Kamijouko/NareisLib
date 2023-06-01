@@ -17,7 +17,7 @@ namespace NareisLib
 
         public Vector2Int timeIntervalOfTicks = new Vector2Int(1200, 1800);
 
-        public string keyName = "";
+        public string typeOriginalDefNameKeyName = "";
         public int cachedPattern = 1;
         public int cachedActionTimeOfTicks = 0;
 

@@ -81,7 +81,7 @@ namespace NareisLib
 
         //可选参数，当前层是否为袖子
         public bool isSleeve = false;
-        //可选参数，和上方参数联动，当前袖子对应哪个手部的贴图，填入贴图名称（不带前后缀）
+        //可选参数，和上方参数联动，当前袖子对应哪个手部的贴图，填入手部贴图名称（不带前后缀）
         public List<string> sleeveTexList = new List<string>();
         //可选参数，设置袖子是否在shell层下方
         public bool sleeveDrawBehindShell = true;
