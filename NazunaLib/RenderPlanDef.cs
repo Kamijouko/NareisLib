@@ -17,6 +17,11 @@ namespace NareisLib
         //xml里不需要设置
         public List<string> combinedPlanDefNames = new List<string>();
 
+        public RenderPlanDef()
+        {
+
+        }
+
         public RenderPlanDef(string race)
         {
             defName = race + "_planDef_combine";
