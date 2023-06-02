@@ -169,9 +169,9 @@ namespace NareisLib
                     TextureRenderLayer layer = batch.layer;
                     if (batch.layer == TextureRenderLayer.BottomHair)
                         layer = TextureRenderLayer.Hair;
-                    if (batch.layer == TextureRenderLayer.HandOne)
+                    else if (batch.layer == TextureRenderLayer.HandOne)
                         layer = TextureRenderLayer.HandTwo;
-                    if (dataEast.NullOrEmpty() || !dataEast.ContainsKey((int)batch.layer))
+                    if (dataEast.NullOrEmpty() || !dataEast.ContainsKey((int)layer))
                         dataEast[(int)layer] = new List<MultiTexBatch>();
                     dataEast[(int)layer].Add(batch);
                 }
@@ -180,13 +180,13 @@ namespace NareisLib
                     TextureRenderLayer layer = batch.layer;
                     if (batch.layer == TextureRenderLayer.BottomHair)
                         layer = TextureRenderLayer.Hair;
-                    if (batch.layer == TextureRenderLayer.BottomShell)
+                    else if (batch.layer == TextureRenderLayer.BottomShell)
                         layer = TextureRenderLayer.FaceMask;
-                    if (batch.layer == TextureRenderLayer.FaceMask)
+                    else if (batch.layer == TextureRenderLayer.FaceMask)
                         layer = TextureRenderLayer.BottomShell;
-                    if (batch.layer == TextureRenderLayer.Hair)
+                    else if (batch.layer == TextureRenderLayer.Hair)
                         layer = TextureRenderLayer.BottomHair;
-                    if (!dataNorth.NullOrEmpty() || !dataNorth.ContainsKey((int)batch.layer))
+                    if (dataNorth.NullOrEmpty() || !dataNorth.ContainsKey((int)layer))
                         dataNorth[(int)layer] = new List<MultiTexBatch>();
                     dataNorth[(int)layer].Add(batch);
                 }
@@ -226,12 +226,12 @@ namespace NareisLib
             cachedRandomGraphicPattern.Clear();
             timeTickLineIndex = 0;
 
-            Log.Warning("south:" + cachedDataSouth.Count().ToString());
-            Log.Warning("east:" + cachedDataEast.Count().ToString());
-            Log.Warning("north:" + cachedDataNorth.Count().ToString());
-            Log.Warning("AllGraphicData:" + GetAllGraphicDataDict.Count().ToString());
-            Log.Warning("levels:" + ThisModData.TexLevelsDatabase.SelectMany(x => x.Value.Values).Count().ToString());
-            Log.Warning("plans:" + ThisModData.DefAndKeyDatabase.SelectMany(x => x.Value.Values).Count().ToString());
+            Log.Warning("south:" + cachedDataSouth.SelectMany(x => x.Value).Count().ToString());
+            Log.Warning("east:" + cachedDataEast.SelectMany(x => x.Value).Count().ToString());
+            Log.Warning("north:" + cachedDataNorth.SelectMany(x => x.Value).Count().ToString());
+            Log.Warning("AllGraphicData:" + GetAllOriginalDefForGraphicDataDict.Values.SelectMany(x => x.Values).Count().ToString());
+            Log.Warning("levels:" + ThisModData.TexLevelsDatabase.Values.SelectMany(x => x.Values).Count().ToString());
+            Log.Warning("plans:" + ThisModData.DefAndKeyDatabase.Values.SelectMany(x => x.Values).Count().ToString());
         }
 
 

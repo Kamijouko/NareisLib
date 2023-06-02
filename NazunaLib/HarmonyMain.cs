@@ -1339,6 +1339,8 @@ namespace NareisLib
                 else
                     bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
 
+                Log.Warning("Hair hair hair : " + curDirection.Count);
+
                 foreach (MultiTexBatch batch in curDirection[layer])
                 {
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
