@@ -25,7 +25,7 @@ namespace NareisLib
         public RenderPlanDef(string race)
         {
             defName = race + "_planDef_combine";
-            races[0] = race;
+            races.Add(race);
         }
 
         public void Combine(RenderPlanDef def)

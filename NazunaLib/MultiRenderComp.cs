@@ -22,7 +22,7 @@ namespace NareisLib
         public Dictionary<int, List<MultiTexBatch>> cachedDataSouth, cachedDataEast, cachedDataNorth, cachedDataWest = new Dictionary<int, List<MultiTexBatch>>();
 
         //用于缓存已经初始化了的身体，头发，服装的TextureLevels，
-        //第一个key为原部位的originalDefName，格式为Type_OriginalDefName，Type为这个Def的类型，
+        //第一个key为Type_OriginalDefName，Type为这个Def的类型，
         //第二个key为从multiTexBatch读取的TextureLevelName，
         //value为其对应的TextureLevels
         public Dictionary<string, Dictionary<string, TextureLevels>> cachedBodyGraphicData, cachedHairGraphicData, cachedApparelGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();

@@ -374,7 +374,7 @@ namespace NareisLib
         public bool CanRender(Pawn pawn, string keyName)
         {
             ExtendedGraphicsPawnWrapper obj = new ExtendedGraphicsPawnWrapper(pawn);
-            return RequiredBodyPartExistsFor(obj) && VisibleForPostureOf(obj) && ResolvePrefixForJob(obj, keyName) && ResolvePrefixForHediff(obj, keyName) &&　ResolveSuffixForGenderOf(obj);
+            return RequiredBodyPartExistsFor(obj) && VisibleForPostureOf(obj) && ResolvePrefixForJob(obj, keyName) && ResolvePrefixForHediff(obj, keyName) && ResolveSuffixForGenderOf(obj);
         }
 
         //初始化，与基类的Init方法相同但显式

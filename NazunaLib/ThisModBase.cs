@@ -58,13 +58,13 @@ namespace NareisLib
 
                 foreach (MultiTexDef def in plan.plans)
                 {
-                    string type_originalDefName = def.originalDefClass.ToStringSafe() + "_" + def.originalDef;
-
                     if (def.levels.NullOrEmpty() 
                         || def.originalDefClass == null 
                         || def.originalDef == null 
-                        || ThisModData.DefAndKeyDatabase[planDef].ContainsKey(type_originalDefName))
+                        || ThisModData.DefAndKeyDatabase[planDef].ContainsKey(def.originalDefClass.ToStringSafe() + "_" + def.originalDef))
                         continue;
+
+                    string type_originalDefName = def.originalDefClass.ToStringSafe() + "_" + def.originalDef;
 
                     if (!ThisModData.TexLevelsDatabase.ContainsKey(type_originalDefName))
                         ThisModData.TexLevelsDatabase[type_originalDefName] = new Dictionary<string, TextureLevels>();

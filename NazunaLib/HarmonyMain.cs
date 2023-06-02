@@ -185,7 +185,7 @@ namespace NareisLib
         //从comp的storedData里获取TextureLevels数据，用于处理读取存档时从已有的storedData字典中得到的epoch
         public static Dictionary<string, TextureLevels> GetLevelsDictFromEpoch(MultiTexEpoch epoch)
         {
-            return epoch.batches.ToDictionary(k => k.keyName, v => ResolveKeyNameForLevel(ThisModData.TexLevelsDatabase[v.originalDefClass.ToStringSafe()+"_"+v.originalDefName][v.textureLevelsName].Clone(), v.keyName));
+            return epoch.batches.ToDictionary(k => k.textureLevelsName, v => ResolveKeyNameForLevel(ThisModData.TexLevelsDatabase[v.originalDefClass.ToStringSafe()+"_"+v.originalDefName][v.textureLevelsName].Clone(), v.keyName));
         }
         //上方法的子方法，为获取到的TextureLevels进行赋值操作
         public static TextureLevels ResolveKeyNameForLevel(TextureLevels level, string key)
@@ -204,9 +204,9 @@ namespace NareisLib
                 return;
             Pawn pawn = __instance.pawn;
             string race = pawn.def.defName;
-            RenderPlanDef def = ThisModData.RacePlansDatabase[race];
-            if (def == null)
+            if (!ThisModData.RacePlansDatabase.ContainsKey(race))
                 return;
+            RenderPlanDef def = ThisModData.RacePlansDatabase[race];
             string plan = def.defName;
             
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
@@ -288,9 +288,9 @@ namespace NareisLib
                 return;
             Pawn pawn = __instance.pawn;
             string race = pawn.def.defName;
-            RenderPlanDef def = ThisModData.RacePlansDatabase[race];
-            if (def == null)
+            if (!ThisModData.RacePlansDatabase.ContainsKey(race))
                 return;
+            RenderPlanDef def = ThisModData.RacePlansDatabase[race];
             string plan = def.defName;
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
@@ -333,9 +333,9 @@ namespace NareisLib
                 return;
             Pawn pawn = __instance.pawn;
             string race = pawn.def.defName;
-            RenderPlanDef def = ThisModData.RacePlansDatabase[race];
-            if (def == null)
+            if (!ThisModData.RacePlansDatabase.ContainsKey(race))
                 return;
+            RenderPlanDef def = ThisModData.RacePlansDatabase[race];
             string plan = def.defName;
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
@@ -392,6 +392,11 @@ namespace NareisLib
             if (curDirection.NullOrEmpty())
                 return __state = true;
 
+            //Log.Warning("curDirection curDirection curDirection : " + curDirection.Count);
+            //Log.Warning("curDirection curDirection curDirection : " + curDirection.ContainsKey((int)TextureRenderLayer.BottomHair).ToStringSafe());
+            //Log.Warning("curDirection curDirection curDirection : " + curDirection[(int)TextureRenderLayer.BottomHair].Count);
+            //Log.Warning("curDirection curDirection curDirection : " + curDirection[(int)TextureRenderLayer.BottomHair].First().textureLevelsName);
+
             Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
             Vector3 vector = rootLoc;
             vector.y += 0.006687258f;/*原身体为0.008687258f，反映精度为0.0003f*/
@@ -418,55 +423,65 @@ namespace NareisLib
                         string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                         string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                        if (comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName] != null 
-                            && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
+                        //Log.Warning("MultiTexBatch MultiTexBatch MultiTexBatch : " + typeOriginalDefName);
+
+                        //Log.Warning("GraphicData GraphicData GraphicData : " + comp.GetAllOriginalDefForGraphicDataDict.Count);
+                        //Log.Warning("GraphicData GraphicData GraphicData : " + comp.GetAllOriginalDefForGraphicDataDict.First().Key);
+                        //Log.Warning("GraphicData GraphicData GraphicData : " + comp.GetAllOriginalDefForGraphicDataDict.First().Value.First().Key);
+
+                        if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
+                            || !comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(typeOriginalDefName)
+                            || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
+                            || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
+                            continue;
+
+                        //Log.Warning("TTTTTTTTTTTTTTTTTTTTTTTTTTT");
+
+                        TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
+                        Mesh mesh = null;
+                        Vector3 offset = Vector3.zero;
+                        if (data.meshSize != Vector2.zero)
                         {
-                            TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
-                            Mesh mesh = null;
-                            Vector3 offset = Vector3.zero;
-                            if (data.meshSize != Vector2.zero)
+                            mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                            switch (data.meshType)
                             {
-                                mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                                case "Head": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
+                                case "Hair": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
+                            }
+                        }
+                        else
+                        {
+                            if (___pawn.RaceProps.Humanlike)
+                            {
                                 switch (data.meshType)
                                 {
-                                    case "Head": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
-                                    case "Hair": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
+                                    case "Body": mesh = bodyMesh; break;
+                                    case "Head":
+                                        mesh = headMesh;
+                                        offset = quat * __instance.BaseHeadOffsetAt(facing);
+                                        break;
+                                    case "Hair":
+                                        mesh = hairMesh;
+                                        offset = quat * __instance.BaseHeadOffsetAt(facing);
+                                        break;
                                 }
                             }
                             else
-                            {
-                                if (___pawn.RaceProps.Humanlike)
-                                {
-                                    switch (data.meshType)
-                                    {
-                                        case "Body": mesh = bodyMesh; break;
-                                        case "Head":
-                                            mesh = headMesh;
-                                            offset = quat * __instance.BaseHeadOffsetAt(facing);
-                                            break;
-                                        case "Hair":
-                                            mesh = hairMesh;
-                                            offset = quat * __instance.BaseHeadOffsetAt(facing);
-                                            break;
-                                    }
-                                }
-                                else
-                                    mesh = bodyMesh;
-                            }
-                            int pattern = 0;
-                            if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
-                                pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
-                            string condition = "";
-                            if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
-                                condition = "Rotting";
-                            if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
-                                condition = "Dessicated";
-                            Vector3 dataOffset = data.DrawOffsetForRot(facing);
-                            dataOffset.y *= 0.0001f;
-                            Vector3 pos = vector + offset + dataOffset;
-                            Material mat = data.GetGraphic(batch.keyName, pattern, condition).MatAt(facing, null);
-                            GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
+                                mesh = bodyMesh;
                         }
+                        int pattern = 0;
+                        if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
+                            pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
+                        string condition = "";
+                        if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
+                            condition = "Rotting";
+                        if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
+                            condition = "Dessicated";
+                        Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                        dataOffset.y *= 0.0001f;
+                        Vector3 pos = vector + offset + dataOffset;
+                        Material mat = data.GetGraphic(batch.keyName, pattern, condition).MatAt(facing, null);
+                        GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                     }
                 }
             }
@@ -562,6 +577,12 @@ namespace NareisLib
                     {
                         string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                         string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+
+                        if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() 
+                            || !comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(typeOriginalDefName)
+                            || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
+                            || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
+                            continue;
 
                         TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                         Mesh mesh = null;
@@ -667,14 +688,15 @@ namespace NareisLib
                         }
 
                         //如果是需要多层的服装的话
-                        if (!comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparel.sourceApparel.def.GetType().ToStringSafe() + "_" + apparel.sourceApparel.def.defName))
+                        string apparelTypeOriginalDefName = apparel.sourceApparel.def.GetType().ToStringSafe() + "_" + apparel.sourceApparel.def.defName;
+                        if (!comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparelTypeOriginalDefName))
                         {
                             foreach (MultiTexBatch batch in curDirection[(int)TextureRenderLayer.Apparel])
                             {
                                 string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                                 string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                                if (typeOriginalDefName == apparel.sourceApparel.def.GetType().ToStringSafe() + "_" + apparel.sourceApparel.def.defName 
+                                if (typeOriginalDefName == apparelTypeOriginalDefName 
                                     && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName))
                                 {
                                     TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
@@ -798,7 +820,8 @@ namespace NareisLib
                         }
 
                         //如果是多层服装的话
-                        if (comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparel.sourceApparel.def.defName))
+                        string apparelTypeOriginalDefName = apparel.sourceApparel.def.GetType().ToStringSafe() + "_" + apparel.sourceApparel.def.defName;
+                        if (!comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparelTypeOriginalDefName))
                         {
                             List<int> renderLayers = new List<int>() { (int)TextureRenderLayer.Apparel, (int)TextureRenderLayer.FrontShell };
                             foreach (int layer in renderLayers)
@@ -813,7 +836,7 @@ namespace NareisLib
                                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                                    if (typeOriginalDefName == apparel.sourceApparel.def.GetType().ToStringSafe() + "_" + apparel.sourceApparel.def.defName
+                                    if (typeOriginalDefName == apparelTypeOriginalDefName 
                                         && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName))
                                     {
                                         TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
@@ -906,6 +929,8 @@ namespace NareisLib
         }
 
 
+
+
         //Head RenderPawnInternalTranspiler
         public static IEnumerable<CodeInstruction> RenderPawnInternalHeadPatchTranspiler(IEnumerable<CodeInstruction> instructions)
         {
@@ -985,6 +1010,12 @@ namespace NareisLib
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
+                    if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
+                        || !comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(typeOriginalDefName)
+                        || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
+                        || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(pawn, batch.keyName))
+                        continue;
+
                     TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                     Mesh mesh = null;
                     Vector3 offset = Vector3.zero;
@@ -1043,6 +1074,8 @@ namespace NareisLib
         }
 
 
+
+
         //下面的转释器方法的子方法，用于覆盖隐形贴图和效果贴图等，特定用于头发
         public static Material GetHairOverrideMat(Material mat, PawnRenderer instance, bool portrait = false, bool cached = true)
         {
@@ -1057,6 +1090,8 @@ namespace NareisLib
             }
             return material;
         }
+
+
 
         //FaceMask Hair HeadMask Hat DrawHeadHairTranspiler
         public static IEnumerable<CodeInstruction> DrawHeadHairPatchTranspiler(IEnumerable<CodeInstruction> instructions)
@@ -1204,14 +1239,17 @@ namespace NareisLib
                     }
 
                     //如果是多层服装的话
-                    if (!curDirection.NullOrEmpty() && curDirection.ContainsKey(layer) && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparel.sourceApparel.def.defName))
+                    string apparelTypeOriginalDefName = apparel.sourceApparel.def.GetType().ToStringSafe() + "_" + apparel.sourceApparel.def.defName;
+                    if (!curDirection.NullOrEmpty() && curDirection.ContainsKey(layer) 
+                        && !comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() 
+                        && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparelTypeOriginalDefName))
                     {
                         foreach (MultiTexBatch batch in curDirection[layer])
                         {
                             string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                             string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                            if (typeOriginalDefName == apparel.sourceApparel.def.GetType().ToStringSafe() + "_" + apparel.sourceApparel.def.defName 
+                            if (typeOriginalDefName == apparelTypeOriginalDefName 
                                 && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName))
                             {
                                 TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
@@ -1305,6 +1343,12 @@ namespace NareisLib
                 {
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+
+                    if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
+                        || !comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(typeOriginalDefName)
+                        || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
+                        || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(pawn, batch.keyName))
+                        continue;
 
                     TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                     Mesh mesh = null;
@@ -1404,7 +1448,10 @@ namespace NareisLib
                     }
 
                     //如果是多层服装的话
-                    if (!curDirection.NullOrEmpty() && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparel.sourceApparel.def.defName))
+                    string apparelTypeOriginalDefName = apparel.sourceApparel.def.GetType().ToStringSafe() + "_" + apparel.sourceApparel.def.defName;
+                    if (!curDirection.NullOrEmpty()
+                        && !comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() 
+                        && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparelTypeOriginalDefName))
                     {
                         List<int> renderLayers = new List<int>() { (int)TextureRenderLayer.HeadMask, (int)TextureRenderLayer.Hat };
                         foreach (int layer in renderLayers)
@@ -1416,7 +1463,7 @@ namespace NareisLib
                                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                                    if (typeOriginalDefName == apparel.sourceApparel.def.GetType().ToStringSafe() + "_" + apparel.sourceApparel.def.defName 
+                                    if (typeOriginalDefName == apparelTypeOriginalDefName 
                                         && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName))
                                     {
                                         TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
@@ -1509,55 +1556,57 @@ namespace NareisLib
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                    if (comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName] != null
-                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
+                    if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
+                        || !comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(typeOriginalDefName)
+                        || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
+                        || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
+                        continue;
+
+                    TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
+                    Mesh mesh = null;
+                    Vector3 offset = Vector3.zero;
+                    if (data.meshSize != Vector2.zero)
                     {
-                        TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
-                        Mesh mesh = null;
-                        Vector3 offset = Vector3.zero;
-                        if (data.meshSize != Vector2.zero)
+                        mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                        switch (data.meshType)
                         {
-                            mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                            case "Head": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
+                            case "Hair": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
+                        }
+                    }
+                    else
+                    {
+                        if (___pawn.RaceProps.Humanlike)
+                        {
                             switch (data.meshType)
                             {
-                                case "Head": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
-                                case "Hair": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
+                                case "Body": mesh = bodyMesh; break;
+                                case "Head":
+                                    mesh = headMesh;
+                                    offset = quat * __instance.BaseHeadOffsetAt(facing);
+                                    break;
+                                case "Hair":
+                                    mesh = hairMesh;
+                                    offset = quat * __instance.BaseHeadOffsetAt(facing);
+                                    break;
                             }
                         }
                         else
-                        {
-                            if (___pawn.RaceProps.Humanlike)
-                            {
-                                switch (data.meshType)
-                                {
-                                    case "Body": mesh = bodyMesh; break;
-                                    case "Head":
-                                        mesh = headMesh;
-                                        offset = quat * __instance.BaseHeadOffsetAt(facing);
-                                        break;
-                                    case "Hair":
-                                        mesh = hairMesh;
-                                        offset = quat * __instance.BaseHeadOffsetAt(facing);
-                                        break;
-                                }
-                            }
-                            else
-                                mesh = bodyMesh;
-                        }
-                        int pattern = 0;
-                        if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
-                            pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
-                        string condition = "";
-                        if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
-                            condition = "Rotting";
-                        if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
-                            condition = "Dessicated";
-                        Vector3 dataOffset = data.DrawOffsetForRot(facing);
-                        dataOffset.y *= 0.0001f;
-                        Vector3 pos = bodyLoc + offset + dataOffset;
-                        Material mat = data.GetGraphic(batch.keyName, pattern, condition).MatAt(facing, null);
-                        GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
+                            mesh = bodyMesh;
                     }
+                    int pattern = 0;
+                    if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
+                        pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
+                    string condition = "";
+                    if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
+                        condition = "Rotting";
+                    if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
+                        condition = "Dessicated";
+                    Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                    dataOffset.y *= 0.0001f;
+                    Vector3 pos = bodyLoc + offset + dataOffset;
+                    Material mat = data.GetGraphic(batch.keyName, pattern, condition).MatAt(facing, null);
+                    GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                 }
             }
         }
