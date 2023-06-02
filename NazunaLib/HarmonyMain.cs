@@ -202,7 +202,7 @@ namespace NareisLib
             foreach (RenderPlanDef def in DefDatabase<RenderPlanDef>.AllDefsListForReading)
             {
                 if (def.races.Contains(race))
-                    plan.Combie(def);
+                    plan.Combine(def);
             }
             if (plan.plans.NullOrEmpty())
                 plan = null;

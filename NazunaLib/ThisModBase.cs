@@ -29,21 +29,29 @@ namespace NareisLib
             List<RenderPlanDef> list = DefDatabase<RenderPlanDef>.AllDefsListForReading;
             if (list.NullOrEmpty())
                 return;
+
             foreach (RenderPlanDef plan in list)
             {
                 if (plan.plans.NullOrEmpty())
                     continue;
-                
+
                 if (!plan.races.NullOrEmpty())
                 {
                     foreach (string race in plan.races)
                     {
                         if (!ThisModData.RacePlansDatabase.ContainsKey(race))
-                            ThisModData.RacePlansDatabase[race] = new List<RenderPlanDef>();
-                        if (!ThisModData.RacePlansDatabase[race].Exists(x => x.defName == plan.defName))
-                            ThisModData.RacePlansDatabase[race].Add(plan);
+                            ThisModData.RacePlansDatabase[race] = new RenderPlanDef(race);
+                        ThisModData.RacePlansDatabase[race].Combine(plan);
                     }
                 }
+            }
+
+
+            foreach (RenderPlanDef plan in ThisModData.RacePlansDatabase.Values)
+            {
+                if (plan.plans.NullOrEmpty())
+                    continue;
+                
                 string planDef = plan.defName;
                 if (!ThisModData.DefAndKeyDatabase.ContainsKey(planDef))
                     ThisModData.DefAndKeyDatabase[planDef] = new Dictionary<string, MultiTexDef>();
