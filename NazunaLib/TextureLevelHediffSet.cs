@@ -14,6 +14,7 @@ namespace NareisLib
         //填入hediff的defName
         public HediffDef hediff;
 
+
         //此hediff的优先级，当这些hediff可以同时存在于某个部位时才须设置，优先渲染数字大的效果贴图
         public int priority = 0;
 

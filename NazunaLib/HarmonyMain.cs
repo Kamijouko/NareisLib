@@ -16,6 +16,7 @@ using System.Reflection;
 using Verse.AI;
 using RimWorld.Planet;
 using System.Security.Cryptography;
+using static AlienRace.AlienPartGenerator;
 
 
 namespace NareisLib
@@ -149,7 +150,7 @@ namespace NareisLib
         public static MultiTexEpoch ResolveMultiTexDef(MultiTexDef def, out Dictionary<string, TextureLevels> data)
         {
             //Log.Warning(plan+","+defName);
-            MultiTexEpoch epoch = def.cacheOfLevels;
+            MultiTexEpoch epoch = new MultiTexEpoch(def.originalDefClass.ToStringSafe() + "_" + def.originalDef);
             List<MultiTexBatch> batches = new List<MultiTexBatch>();
             data = new Dictionary<string, TextureLevels>();
             foreach (TextureLevels level in def.levels)
@@ -160,7 +161,7 @@ namespace NareisLib
                 {
                     keyName = TextureLevels.ResolveKeyName(Path.GetFileNameWithoutExtension(level.texPath));
                 }    
-                else
+                else if (!level.prefix.NullOrEmpty())
                 {
                     pre = level.prefix.RandomElementByWeight(x => level.preFixWeights[x]);
                     keyName = level.preFixToTexName[pre].RandomElementByWeight(x => level.texWeights[x]);
@@ -168,6 +169,8 @@ namespace NareisLib
 
                 if (!batches.Exists(x => x.textureLevelsName == level.textureLevelsName))
                     batches.Add(new MultiTexBatch(def.originalDefClass, def.originalDef, def.defName, keyName, level.textureLevelsName, level.renderLayer, level.renderSwitch));
+
+                Log.Warning("render switch : "+level.renderSwitch.ToStringSafe());
                 //epoch.batches.First(x => x.keyName == keyName).keyList.Add(keyName);
 
                 TextureLevels textureLevels = ThisModData.TexLevelsDatabase[def.originalDefClass.ToStringSafe()+"_"+def.originalDef][level.textureLevelsName].Clone();
@@ -218,12 +221,12 @@ namespace NareisLib
             Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
             Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
             HeadTypeDef head = pawn.story.headType;
-            string fullOriginalDefName = typeof(HeadTypeDef).ToStringSafe() + "_" + head.defName;
-            if (head != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
+            string headName = head != null ? head.defName : "";
+            string fullOriginalDefName = typeof(HeadTypeDef).ToStringSafe() + "_" + headName;
+            if (head != null && ThisModData.DefAndKeyDatabase.ContainsKey(plan) && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
             {
-                string keyName = head.defName;
                 MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
-                if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(keyName))
+                if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(fullOriginalDefName))
                 {
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
                     data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
@@ -238,12 +241,12 @@ namespace NareisLib
                     cachedOverride.Add("Head");
             }
             BodyTypeDef body = pawn.story.bodyType;
-            fullOriginalDefName = typeof(BodyTypeDef).ToStringSafe() + "_" + body.defName;
+            string bodyName = body != null ? body.defName : "";
+            fullOriginalDefName = typeof(BodyTypeDef).ToStringSafe() + "_" + bodyName;
             if (body != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
             {
-                string keyName = body.defName;
                 MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
-                if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(keyName))
+                if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(fullOriginalDefName))
                 {
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
                     data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
@@ -262,7 +265,7 @@ namespace NareisLib
             if (hand != "" && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
             {
                 MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
-                if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(hand))
+                if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(fullOriginalDefName))
                 {
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
                     data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
@@ -300,10 +303,11 @@ namespace NareisLib
             Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
             Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
             HairDef hair = pawn.story.hairDef;
-            string fullOriginalDefName = typeof(HairDef).ToStringSafe() + "_" + hair.defName;
-            if (hair != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
+            string keyName = hair != null ? hair.defName : "";
+            string fullOriginalDefName = typeof(HairDef).ToStringSafe() + "_" + keyName;
+            if (hair != null && ThisModData.DefAndKeyDatabase.ContainsKey(plan) && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
             {
-                string keyName = hair.defName;
+                
                 MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
                 if (comp.storedDataHair.NullOrEmpty() || !comp.storedDataHair.ContainsKey(fullOriginalDefName))
                 {
@@ -348,10 +352,11 @@ namespace NareisLib
             {
                 while (enumerator.MoveNext())
                 {
-                    string fullOriginalDefName = typeof(ThingDef).ToStringSafe() + "_" + enumerator.Current.def.defName;
-                    if (ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
+                    string keyName = enumerator.Current.def.defName;
+                    string fullOriginalDefName = typeof(ThingDef).ToStringSafe() + "_" + keyName;
+                    if (ThisModData.DefAndKeyDatabase.ContainsKey(plan) && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
                     {
-                        string keyName = enumerator.Current.def.defName;
+                        
                         MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
                         if (comp.storedDataApparel.NullOrEmpty() || !comp.storedDataApparel.ContainsKey(fullOriginalDefName))
                         {
@@ -378,11 +383,12 @@ namespace NareisLib
 
 
         //BottomOverlay BottomHair BottomShell BodyPrefix
-        static bool DrawPawnBodyPrefix(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags, ref bool __state)
+        static bool DrawPawnBodyPrefix(PawnRenderer __instance, Pawn ___pawn, ref bool __state, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags)
         {
             //Log.Warning(___pawn.Name + " flags: DrawNow = " + flags.FlagSet(PawnRenderFlags.DrawNow).ToStringSafe());
             __state = false;
             MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
+            AlienPartGenerator.AlienComp alienComp = ___pawn.GetComp<AlienPartGenerator.AlienComp>();
             if (comp == null)
                 return __state = true;
             if (!comp.PrefixResolved)
@@ -418,6 +424,7 @@ namespace NareisLib
             {
                 if (curDirection.ContainsKey(level))
                 {
+                    Color colorTwo = level != (int)TextureRenderLayer.BottomShell && alienComp != null ? alienComp.GetChannel("hair").second : Color.white;
                     foreach (MultiTexBatch batch in curDirection[level])
                     {
                         string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
@@ -438,6 +445,10 @@ namespace NareisLib
                         //Log.Warning("TTTTTTTTTTTTTTTTTTTTTTTTTTT");
 
                         TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
+                        Color colorOne = level != (int)TextureRenderLayer.BottomShell ? ___pawn.story.HairColor 
+                                         : (((ThingDef)GenDefDatabase.GetDef(data.originalDefClass, data.originalDef)).graphicData != null ?
+                                            ((ThingDef)GenDefDatabase.GetDef(data.originalDefClass, data.originalDef)).graphicData.color
+                                            : Color.white);
                         Mesh mesh = null;
                         Vector3 offset = Vector3.zero;
                         if (data.meshSize != Vector2.zero)
@@ -480,7 +491,7 @@ namespace NareisLib
                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
                         dataOffset.y *= 0.0001f;
                         Vector3 pos = vector + offset + dataOffset;
-                        Material mat = data.GetGraphic(batch.keyName, pattern, condition).MatAt(facing, null);
+                        Material mat = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition).MatAt(facing, null);
                         GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                     }
                 }
@@ -508,24 +519,9 @@ namespace NareisLib
 
 
         //Body HandOne Hand HandTwo Apparel(除了shell层) DrawPawnBodyFinalizer
-        static void DrawPawnBodyFinalizer(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags, bool __state)
+        static void DrawPawnBodyFinalizer(PawnRenderer __instance, Pawn ___pawn, bool __state, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags, out Mesh bodyMesh)
         {
-            MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
-            if (comp == null)
-                return;
-            if (!comp.PrefixResolved)
-                __instance.graphics.ResolveAllGraphics();
-
-            Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
-            if (curDirection.NullOrEmpty())
-                return;
-
-            Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
-            Vector3 vector = rootLoc;
-            vector.y += 0.008687258f;
-            Vector3 loc = vector;
-            loc.y += 0.0014478763f;
-            Mesh bodyMesh = null;
+            bodyMesh = null;
             Mesh hairMesh = null;
             Mesh headMesh = null;
             if (___pawn.RaceProps.Humanlike)
@@ -537,6 +533,27 @@ namespace NareisLib
             else
                 bodyMesh = __instance.graphics.nakedGraphic.MeshAt(facing);
 
+            MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
+            if (comp == null)
+                return;
+            if (!comp.PrefixResolved)
+                __instance.graphics.ResolveAllGraphics();
+
+            ThingDef_AlienRace thingDef_AlienRace = ___pawn.def as ThingDef_AlienRace;
+            AlienPartGenerator alienPartGenerator = null;
+            if (thingDef_AlienRace != null)
+                alienPartGenerator = thingDef_AlienRace.alienRace.generalSettings.alienPartGenerator;
+
+            Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
+            if (curDirection.NullOrEmpty())
+                return;
+
+            Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
+            Vector3 vector = rootLoc;
+            vector.y += 0.008687258f;
+            Vector3 loc = vector;
+            loc.y += 0.0014478763f;
+            
 
             //如果原方法未执行且并不具有多层身体或者不隐藏原身体
             if (!__state
@@ -573,6 +590,8 @@ namespace NareisLib
             {
                 if (curDirection.ContainsKey(level))
                 {
+                    Color colorOne = ___pawn.story.SkinColor;
+                    Color colorTwo = alienPartGenerator != null ? alienPartGenerator.SkinColor(___pawn, false) : Color.white;
                     foreach (MultiTexBatch batch in curDirection[level])
                     {
                         string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
@@ -653,7 +672,7 @@ namespace NareisLib
                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
                         dataOffset.y *= 0.0001f;
                         Vector3 pos = vector + offset + dataOffset + handOffset;
-                        Material material = data.GetGraphic(batch.keyName, pattern, condition).MatAt(facing, null);
+                        Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition).MatAt(facing, null);
                         Material mat = (___pawn.RaceProps.IsMechanoid 
                             && ___pawn.Faction != null 
                             && ___pawn.Faction != Faction.OfMechanoids) ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor) : material;
@@ -691,13 +710,15 @@ namespace NareisLib
                         string apparelTypeOriginalDefName = apparel.sourceApparel.def.GetType().ToStringSafe() + "_" + apparel.sourceApparel.def.defName;
                         if (!comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparelTypeOriginalDefName))
                         {
+                            Color apparelColor = apparel.sourceApparel.DrawColor;
                             foreach (MultiTexBatch batch in curDirection[(int)TextureRenderLayer.Apparel])
                             {
                                 string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                                 string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
                                 if (typeOriginalDefName == apparelTypeOriginalDefName 
-                                    && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName))
+                                    && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName) 
+                                    && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
                                 {
                                     TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                                     Mesh mesh = null;
@@ -742,7 +763,7 @@ namespace NareisLib
                                     Vector3 dataOffset = data.DrawOffsetForRot(facing);
                                     dataOffset.y *= 0.0001f;
                                     Vector3 pos = vector + offset + dataOffset;
-                                    Material material = data.GetGraphic(batch.keyName, pattern, condition).MatAt(facing, null);
+                                    Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, condition).MatAt(facing, null);
                                     Material mat = (___pawn.RaceProps.IsMechanoid && ___pawn.Faction != null && ___pawn.Faction != Faction.OfMechanoids)
                                         ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor)
                                         : material;
@@ -784,9 +805,9 @@ namespace NareisLib
             bool hasMultiTexApparel = !comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() 
                 && apparelGraphics.Exists(x => x.sourceApparel.def.apparel.LastLayer == ApparelLayerDefOf.Shell 
                     && !x.sourceApparel.def.apparel.shellRenderedBehindHead 
-                    && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(x.sourceApparel.def.defName));
+                    && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(x.sourceApparel.def.GetType().ToStringSafe() + "_" + x.sourceApparel.def.defName));
 
-            if (curDirection.ContainsKey((int)TextureRenderLayer.Apparel) && hasMultiTexApparel)
+            if ((curDirection.ContainsKey((int)TextureRenderLayer.Apparel) || curDirection.ContainsKey((int)TextureRenderLayer.FrontShell)) && hasMultiTexApparel)
             {
                 patchResult = false;
 
@@ -826,18 +847,22 @@ namespace NareisLib
                             List<int> renderLayers = new List<int>() { (int)TextureRenderLayer.Apparel, (int)TextureRenderLayer.FrontShell };
                             foreach (int layer in renderLayers)
                             {
+                                if (!curDirection.ContainsKey(layer))
+                                    continue;
                                 Vector3 loc = shellLoc;
                                 if (apparel.sourceApparel.def.apparel.shellCoversHead)
                                     loc.y += 0.0028957527f;
                                 if (layer == (int)TextureRenderLayer.FrontShell)
                                     loc.y = 0.0304054035f;
+                                Color apparelColor = apparel.sourceApparel.DrawColor;
                                 foreach (MultiTexBatch batch in curDirection[layer])
                                 {
                                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
                                     if (typeOriginalDefName == apparelTypeOriginalDefName 
-                                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName))
+                                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName) 
+                                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
                                     {
                                         TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                                         Mesh mesh = null;
@@ -872,13 +897,14 @@ namespace NareisLib
                                             else
                                                 mesh = bodyMesh;
                                         }
+                                        Log.Warning("has mesh mesh mesh : "+(bodyMesh != null).ToStringSafe());
                                         int pattern = 0;
                                         if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
                                             pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
                                         Vector3 dataOffset = data.DrawOffsetForRot(bodyFacing);
                                         dataOffset.y *= 0.0001f;
                                         Vector3 pos = loc + offset + dataOffset;
-                                        Material material = data.GetGraphic(batch.keyName, pattern).MatAt(bodyFacing, null);
+                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern).MatAt(bodyFacing, null);
                                         Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                                             ? material
                                             : OverrideMaterialIfNeeded(__instance, material, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -979,6 +1005,11 @@ namespace NareisLib
             if (!comp.PrefixResolved)
                 instance.graphics.ResolveAllGraphics();
 
+            ThingDef_AlienRace thingDef_AlienRace = pawn.def as ThingDef_AlienRace;
+            AlienPartGenerator alienPartGenerator = null;
+            if (thingDef_AlienRace != null)
+                alienPartGenerator = thingDef_AlienRace.alienRace.generalSettings.alienPartGenerator;
+
             Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
 
             int layer = (int)TextureRenderLayer.Head;
@@ -1004,6 +1035,8 @@ namespace NareisLib
                 }
                 else
                     bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
+                Color colorOne = pawn.story.SkinColor;
+                Color colorTwo = alienPartGenerator != null ? alienPartGenerator.SkinColor(pawn, false) : Color.white;
 
                 foreach (MultiTexBatch batch in curDirection[layer])
                 {
@@ -1066,7 +1099,7 @@ namespace NareisLib
                     Vector3 dataOffset = data.DrawOffsetForRot(facing);
                     dataOffset.y *= 0.0001f;
                     Vector3 pos = headYOffset + offset + dataOffset;
-                    Material material = data.GetGraphic(batch.keyName, pattern, condition).MatAt(facing, null);
+                    Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition).MatAt(facing, null);
                     Material mat = GetHeadOverrideMat(material, instance, flags.FlagSet(PawnRenderFlags.Portrait), !flags.FlagSet(PawnRenderFlags.Cache));
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, drawNow);
                 }
@@ -1244,13 +1277,15 @@ namespace NareisLib
                         && !comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() 
                         && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(apparelTypeOriginalDefName))
                     {
+                        Color apparelColor = apparel.sourceApparel.DrawColor;
                         foreach (MultiTexBatch batch in curDirection[layer])
                         {
                             string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                             string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
                             if (typeOriginalDefName == apparelTypeOriginalDefName 
-                                && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName))
+                                && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
+                                && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(pawn, batch.keyName))
                             {
                                 TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                                 Mesh mesh = null;
@@ -1291,7 +1326,7 @@ namespace NareisLib
                                 Vector3 dataOffset = data.DrawOffsetForRot(facing);
                                 dataOffset.y *= 0.0001f;
                                 Vector3 pos = loc + dataOffset;
-                                Material material = data.GetGraphic(batch.keyName, pattern).MatAt(facing, null);
+                                Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern).MatAt(facing, null);
                                 Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                                     ? material
                                     : OverrideMaterialIfNeeded(instance, material, pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1307,6 +1342,7 @@ namespace NareisLib
         {
             //Log.Warning("run hair patch");
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
+            AlienPartGenerator.AlienComp alienComp = pawn.GetComp<AlienPartGenerator.AlienComp>();
             if (comp == null)
                 return;
             if (!comp.PrefixResolved)
@@ -1339,7 +1375,10 @@ namespace NareisLib
                 else
                     bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
 
-                Log.Warning("Hair hair hair : " + curDirection.Count);
+                Color colorOne = pawn.story.HairColor;
+                Color colorTwo = alienComp != null ? alienComp.GetChannel("hair").second : Color.white;
+
+                //Log.Warning("Hair hair hair : " + curDirection.Count);
 
                 foreach (MultiTexBatch batch in curDirection[layer])
                 {
@@ -1392,7 +1431,7 @@ namespace NareisLib
                     Vector3 dataOffset = data.DrawOffsetForRot(facing);
                     dataOffset.y *= 0.0001f;
                     Vector3 pos = hairPos + dataOffset;
-                    Material material = data.GetGraphic(batch.keyName, pattern).MatAt(facing, null);
+                    Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern).MatAt(facing, null);
                     Material mat = GetHairOverrideMat(material, instance, flags.FlagSet(PawnRenderFlags.Portrait), !flags.FlagSet(PawnRenderFlags.Cache));
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, drawNow);
                 }
@@ -1460,13 +1499,15 @@ namespace NareisLib
                         {
                             if (curDirection.ContainsKey(layer))
                             {
+                                Color apparelColor = apparel.sourceApparel.DrawColor;
                                 foreach (MultiTexBatch batch in curDirection[layer])
                                 {
                                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
                                     if (typeOriginalDefName == apparelTypeOriginalDefName 
-                                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName))
+                                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
+                                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(pawn, batch.keyName))
                                     {
                                         TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                                         Mesh mesh = null;
@@ -1507,7 +1548,7 @@ namespace NareisLib
                                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
                                         dataOffset.y *= 0.0001f;
                                         Vector3 pos = loc + dataOffset;
-                                        Material material = data.GetGraphic(batch.keyName, pattern).MatAt(facing, null);
+                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern).MatAt(facing, null);
                                         Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                                             ? material
                                             : OverrideMaterialIfNeeded(instance, material, pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1553,6 +1594,7 @@ namespace NareisLib
                 else
                     bodyMesh = __instance.graphics.nakedGraphic.MeshAt(facing);
 
+
                 foreach (MultiTexBatch batch in curDirection[(int)TextureRenderLayer.Overlay])
                 {
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
@@ -1565,6 +1607,9 @@ namespace NareisLib
                         continue;
 
                     TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
+                    Color colorOne = ((ThingDef)GenDefDatabase.GetDef(data.originalDefClass, data.originalDef)).graphicData != null ? 
+                                     ((ThingDef)GenDefDatabase.GetDef(data.originalDefClass, data.originalDef)).graphicData.color
+                                     : Color.white;
                     Mesh mesh = null;
                     Vector3 offset = Vector3.zero;
                     if (data.meshSize != Vector2.zero)
@@ -1607,7 +1652,7 @@ namespace NareisLib
                     Vector3 dataOffset = data.DrawOffsetForRot(facing);
                     dataOffset.y *= 0.0001f;
                     Vector3 pos = bodyLoc + offset + dataOffset;
-                    Material mat = data.GetGraphic(batch.keyName, pattern, condition).MatAt(facing, null);
+                    Material mat = data.GetGraphic(batch.keyName, colorOne, Color.white, pattern, condition).MatAt(facing, null);
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                 }
             }

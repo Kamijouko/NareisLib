@@ -28,6 +28,8 @@ namespace NareisLib
 
         //可选参数，设置特殊hediff所对应的名称前缀（根据hediff严重度）
         public List<TextureLevelHediffSet> hediffSets = new List<TextureLevelHediffSet>();
+        //是否在无Hediff时渲染
+        public bool rendNoHediff = true;
 
         //可选参数，设置特殊job所对应的名称前缀
         public TextureLevelJobSet jobSets;
@@ -71,12 +73,12 @@ namespace NareisLib
         public bool handDrawBehindShell = true;
 
         //可选参数，x、y、z分别表示正面侧面和背面，为1时会被渲染，为0时会被忽略
-        public Vector3 renderSwitch = Vector3.one;
+        public Vector3 renderSwitch = new Vector3(1f, 1f, 1f);
 
         //可选参数，设定某种前缀prefix的生成权重
         public Dictionary<string, int> weightOfThePrefix = new Dictionary<string, int>();
 
-        //可选参数，针对某张贴图的特定名称设定权重（不带文件格式后缀）
+        //可选参数，针对某张贴图的特定名称设定权重（不带文件格式以及前缀后缀）
         public Dictionary<string, int> weightOfTheName = new Dictionary<string, int>();
 
         //可选参数，当前层是否为袖子
@@ -339,7 +341,7 @@ namespace NareisLib
         //检查当前Pawn当前部位的hediff是否符合并对hediffPrefix赋值
         public bool ResolvePrefixForHediff(ExtendedGraphicsPawnWrapper pawn, string keyName)
         {
-            if (hediffSets == null || (bodyPart == null && bodyPartLabel == ""))
+            if (hediffSets.NullOrEmpty() || (bodyPart == null && bodyPartLabel == ""))
                 return true;
             int priority = 0;
             foreach (TextureLevelHediffSet set in hediffSets)
@@ -352,6 +354,8 @@ namespace NareisLib
                     priority = set.priority;
                 }
             }
+            if (hediffPrefix == "")
+                return rendNoHediff;
             return true;
         }
 
@@ -378,20 +382,22 @@ namespace NareisLib
         }
 
         //初始化，与基类的Init方法相同但显式
-        public void Initialization()
+        public void Initialization(Color one, Color two)
         {
             if (graphicClass == null)
             {
                 cacheGraphic = null;
                 return;
             }
-            ShaderTypeDef cutout = this.shaderType;
-            if (cutout == null)
+            ShaderTypeDef shaderType = this.shaderType;
+            if (shaderType == null)
             {
-                cutout = ShaderTypeDefOf.Cutout;
+                shaderType = ShaderTypeDefOf.CutoutComplex;
             }
-            Shader shader = cutout.Shader;
-            cacheGraphic = GraphicDatabase.Get(this.graphicClass, this.texPath, shader, this.drawSize, this.color, this.colorTwo, this, this.shaderParameters, this.maskPath);
+            Shader shader = shaderType.Shader;
+            color = color != Color.white ? color : one;
+            colorTwo = colorTwo != Color.white ? colorTwo : two;
+            cacheGraphic = GraphicDatabase.Get(this.graphicClass, this.texPath, shader, this.drawSize, color, colorTwo, this, this.shaderParameters, this.maskPath);
             if (onGroundRandomRotateAngle > 0.01f)
             {
                 cacheGraphic = new Graphic_RandomRotated(cacheGraphic, this.onGroundRandomRotateAngle);
@@ -414,13 +420,13 @@ namespace NareisLib
         }
 
         //取得graphic，修改了基类的属性Graphic，参数为完全处理完毕后多层渲染comp里记录的keyName（列表在MultiTexBatch里）
-        public Graphic GetGraphic(string keyName, int pattern = 0, string condition = "")
+        public Graphic GetGraphic(string keyName, Color color, Color colorTwo, int pattern = 0, string condition = "")
         {
             string path = Path.Combine(folder, GetFullKeyName(keyName, pattern, condition));
             if (texPath != path || cacheGraphic == null)
             {
                 texPath = path;
-                Initialization();
+                Initialization(color, colorTwo);
             }
             return cacheGraphic;
         }

@@ -12,13 +12,19 @@ namespace NareisLib
         //每个Epoch对应一个需要多层渲染的物体
 
         //原物体def
-        public string originalDef = "";
+        public string typeOriginalDefName = "";
 
         //之所以用list是因为序列化list比dictionary方便
         public List<MultiTexBatch> batches = new List<MultiTexBatch>();
+
+        public MultiTexEpoch(string typeOriginalDefName)
+        {
+            this.typeOriginalDefName = typeOriginalDefName;
+        }
+
         public void ExposeData()
         {
-            Scribe_Values.Look<string>(ref originalDef, "originalDef", "", false);
+            Scribe_Values.Look<string>(ref typeOriginalDefName, "typeOriginalDefName", "", false);
             Scribe_Collections.Look<MultiTexBatch>(ref batches, "batches", LookMode.Deep, Array.Empty<object>());
         }
     }

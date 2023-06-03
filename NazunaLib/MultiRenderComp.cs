@@ -33,7 +33,7 @@ namespace NareisLib
         //用于缓存以上三个dict的总和，
         //key为从multiTexBatch读取的TextureLevelName，
         //value为其对应的TextureLevels
-        public Dictionary<string, TextureLevels> cachedAllGraphicData = new Dictionary<string, TextureLevels>();
+        //public Dictionary<string, TextureLevels> cachedAllGraphicData = new Dictionary<string, TextureLevels>();
 
         //用于缓存具有随机状态的贴图的当前的pattern，
         //key为此贴图的Type_OriginalDefName_KeyName，
@@ -88,13 +88,13 @@ namespace NareisLib
             }
         }
 
-        public Dictionary<string, TextureLevels> GetAllGraphicDataDict
+        /*public Dictionary<string, TextureLevels> GetAllGraphicDataDict
         {
             get
             {
                 return cachedAllGraphicData;
             }
-        }
+        }*/
 
         public Dictionary<string, Dictionary<string, TextureLevels>> GetAllOriginalDefForGraphicDataDict
         {
@@ -216,7 +216,7 @@ namespace NareisLib
             }
 
             cachedAllOriginalDefForGraphicData = cachedBodyGraphicData.Concat(cachedHairGraphicData).Concat(cachedApparelGraphicData).ToDictionary(k => k.Key, v => v.Value);
-            cachedAllGraphicData = cachedAllOriginalDefForGraphicData.SelectMany(x => x.Value).ToDictionary(k => k.Key, v => v.Value);
+            //cachedAllGraphicData = cachedAllOriginalDefForGraphicData.SelectMany(x => x.Value).ToDictionary(k => k.Key, v => v.Value);
 
 
             //初始化randomPattern队列

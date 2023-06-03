@@ -29,12 +29,12 @@ namespace NareisLib
 
 
         //xml里无需设定并且设定无效
-        public MultiTexEpoch cacheOfLevels = new MultiTexEpoch();
+        //public MultiTexEpoch cacheOfLevels = new MultiTexEpoch();
 
         public override void ResolveReferences()
         {
             base.ResolveReferences();
-            cacheOfLevels.originalDef = originalDef;
+            //cacheOfLevels.typeOriginalDefName = originalDefClass.ToStringSafe() + "_" + originalDef;
         }
     }
 }
