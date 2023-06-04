@@ -52,10 +52,12 @@ namespace NareisLib
         //用于缓存当前手对应的持有装备角度
         public float holdEquipmentAngle = 0f;
 
+        public string pawnName = "";
+
         public int timeTickLineIndex = 0;
         public TextureLevelRandomPatternSet[] patternLine = new TextureLevelRandomPatternSet[] { };
 
-        public bool PrefixResolved { get; set; } = false;
+        public bool PrefixResolved = false;
 
 
         public MultiRenderCompProperties Props
@@ -108,10 +110,27 @@ namespace NareisLib
         {
             get
             {
-                return cachedOverrideBody.Concat(cachedOverrideHair).Concat(cachedOverrideApparel).ToList();
+                if (cachedOverrideBody != null)
+                {
+                    if (cachedOverrideHair != null)
+                    {
+                        if (cachedOverrideApparel != null)
+                            return cachedOverrideBody.Concat(cachedOverrideHair).Concat(cachedOverrideApparel).ToList();
+                        return cachedOverrideBody.Concat(cachedOverrideHair).ToList();
+                    }
+                    if (cachedOverrideApparel != null)
+                        return cachedOverrideBody.Concat(cachedOverrideApparel).ToList();
+                    return cachedOverrideBody;
+                }
+                return new List<string>();
             }
         }
 
+
+        public MultiRenderComp()
+        {
+
+        }
 
 
         public override void CompTick()
@@ -153,6 +172,9 @@ namespace NareisLib
         {
             List<MultiTexBatch> list = GetAllBatch;
             Log.Warning("batch:" + list.Count().ToString());
+            if (list.NullOrEmpty())
+                return;
+
             Dictionary<int, List<MultiTexBatch>> dataSouth = new Dictionary<int, List<MultiTexBatch>>();
             Dictionary<int, List<MultiTexBatch>> dataEast = new Dictionary<int, List<MultiTexBatch>>();
             Dictionary<int, List<MultiTexBatch>> dataNorth = new Dictionary<int, List<MultiTexBatch>>();
@@ -197,23 +219,35 @@ namespace NareisLib
             cachedDataNorth = dataNorth;
 
             
-            foreach (TextureRenderLayer t in cachedDataSouth.Keys)
+            if (!cachedDataSouth.NullOrEmpty())
             {
-                if (cachedDataSouth[(int)t].Count() > 1)
-                    cachedDataSouth[(int)t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe()+"_"+i.originalDefName][i.textureLevelsName].drawOffsetSouth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][j.textureLevelsName].drawOffsetSouth.Value.y));
+                foreach (int t in cachedDataSouth.Keys)
+                {
+                    if (cachedDataSouth[t].Count() > 1)
+                        cachedDataSouth[t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetSouth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetSouth.Value.y));
+                }
             }
-            foreach (TextureRenderLayer t in cachedDataEast.Keys)
+            if (!cachedDataEast.NullOrEmpty())
             {
-                if (cachedDataEast[(int)t].Count() > 1)
-                    cachedDataEast[(int)t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetEast.Value.y.CompareTo(ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][j.textureLevelsName].drawOffsetEast.Value.y));
-                if (cachedDataWest[(int)t].Count() > 1)
-                    cachedDataWest[(int)t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetWest.Value.y.CompareTo(ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][j.textureLevelsName].drawOffsetWest.Value.y));
+                foreach (int t in cachedDataEast.Keys)
+                {
+                    if (cachedDataEast[t].Count() > 1)
+                        cachedDataEast[t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetEast.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetEast.Value.y));
+                    if (cachedDataWest[t].Count() > 1)
+                        cachedDataWest[t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetWest.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetWest.Value.y));
+                }
             }
-            foreach (TextureRenderLayer t in cachedDataNorth.Keys)
+            if (!cachedDataNorth.NullOrEmpty())
             {
-                if (cachedDataNorth[(int)t].Count() > 1)
-                    cachedDataNorth[(int)t].Sort((i, j) => -ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetNorth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][j.textureLevelsName].drawOffsetNorth.Value.y));
+                foreach (int t in cachedDataNorth.Keys)
+                {
+                    if (cachedDataNorth[t].Count() > 1)
+                        cachedDataNorth[t].Sort((i, j) => -ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetNorth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetNorth.Value.y));
+                }
             }
+            
+            
+            
 
             cachedAllOriginalDefForGraphicData = cachedBodyGraphicData.Concat(cachedHairGraphicData).Concat(cachedApparelGraphicData).ToDictionary(k => k.Key, v => v.Value);
             //cachedAllGraphicData = cachedAllOriginalDefForGraphicData.SelectMany(x => x.Value).ToDictionary(k => k.Key, v => v.Value);
@@ -239,11 +273,26 @@ namespace NareisLib
         public override void PostExposeData()
         {
             base.PostExposeData();
+            //Log.Warning("Comp Loading");
             //GetAllBatch.Where(x => x.layer == TextureRenderLayer.Apparel).SelectMany(x => x.keyList).Distinct().ToList().Sort((x, y) => ThisModData.TexLevelsDatabase[x].DrawOffsetForRot(Rot4.South).y.CompareTo(ThisModData.TexLevelsDatabase[y].DrawOffsetForRot(Rot4.South).y));
-            Scribe_Values.Look<string>(ref storedHandDefName, "storedHandDefName", "", false);
-            Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataBody, "storedData", LookMode.Value, LookMode.Deep);
+            Scribe_Values.Look<string>(ref pawnName, "pawnName", null, false);
+            Scribe_Values.Look<string>(ref storedHandDefName, "storedHandDefName", null, false);
+            Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataBody, "storedDataBody", LookMode.Value, LookMode.Deep);
             Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataHair, "storedDataHair", LookMode.Value, LookMode.Deep);
             Scribe_Collections.Look<string, MultiTexEpoch>(ref storedDataApparel, "storedDataApparel", LookMode.Value, LookMode.Deep);
+
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                if (storedDataBody == null)
+                    storedDataBody = new Dictionary<string, MultiTexEpoch>();
+                if (storedDataHair == null)
+                    storedDataHair = new Dictionary<string, MultiTexEpoch>();
+                if (storedDataApparel == null)
+                    storedDataApparel = new Dictionary<string, MultiTexEpoch>();
+                //Log.Warning("Comp Load data Body : " + storedDataBody.Count);
+                //Log.Warning("Comp Load data Hair : " + storedDataHair.Count);
+                //Log.Warning("Comp Load data Apparel : " + storedDataApparel.Count);
+            }
         }
     }
 }

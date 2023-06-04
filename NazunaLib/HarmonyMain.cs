@@ -15,8 +15,6 @@ using Verse.AI.Group;
 using System.Reflection;
 using Verse.AI;
 using RimWorld.Planet;
-using System.Security.Cryptography;
-using static AlienRace.AlienPartGenerator;
 
 
 namespace NareisLib
@@ -28,6 +26,10 @@ namespace NareisLib
         {
             var harmonyInstance = new Harmony("NareisLib.kamijouko.nazunarei");
 
+            //harmonyInstance.Patch(AccessTools.Method(typeof(ThingWithComps), "PostMake", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "PostMakeAddCompPostfix", null), null, null);
+            //harmonyInstance.Patch(AccessTools.Method(typeof(ThingWithComps), "ExposeData", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "ExposeDataAddCompPostfix", null), null, null);
+            harmonyInstance.Patch(AccessTools.Method(typeof(ThingWithComps), "InitializeComps", null, null), new HarmonyMethod(typeof(PawnRenderPatchs), "InitializeCompsAddCompPrefix", null), null, null, null);
+            
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveAllGraphics", null, null), null, null, null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveAllGraphicsFinalizer", null));
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveApparelGraphics", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveHairGraphicsPostfix", null), null, null);
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveApparelGraphics", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveApparelGraphicsPostfix", null), null, null);
@@ -89,57 +91,45 @@ namespace NareisLib
 
     public class PawnRenderPatchs
     {
-
-        //[已停用]将根据层设定的渲染位置将keyName分配到Comp的列表里存储
-        public static void SwitchTexToComp(TextureRenderLayer layer, string key, ref MultiRenderComp comp)
+        //给所有Pawn添加多层渲染Comp，CompTick有触发条件所以不存在性能问题
+        public static bool InitializeCompsAddCompPrefix(ThingWithComps __instance/*, List<ThingComp> ___comps*/)
         {
-            /*switch (layer)
+            Pawn pawn = __instance as Pawn;
+            if (pawn == null || pawn.def.comps.Exists(x => x.GetType() == typeof(MultiRenderCompProperties)))
+                return true;
+            pawn.def.comps.Add(new MultiRenderCompProperties());
+            /*ThingComp comp = null;
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
-                case TextureRenderLayer.BehindTheBottomHair: comp.BehindTheBottomHair.Add(key); break;
-                case TextureRenderLayer.BottomHair: comp.BottomHair.Add(key); break;
-
-                case TextureRenderLayer.BehindTheShell: comp.BehindTheShell.Add(key); break;
-                case TextureRenderLayer.Shell: comp.Shell.Add(key); break;
-                case TextureRenderLayer.FrontOfShell: comp.FrontOfShell.Add(key); break;
-
-                case TextureRenderLayer.BehindTheBody: comp.BehindTheBody.Add(key); break;
-                case TextureRenderLayer.Body: comp.Body.Add(key); break;
-                case TextureRenderLayer.FrontOfBody: comp.FrontOfBody.Add(key); break;
-
-                case TextureRenderLayer.BehindTheApparel: comp.BehindTheApparel.Add(key); break;
-                case TextureRenderLayer.Apparel: comp.Apparel.Add(key); break;
-                case TextureRenderLayer.FrontOfApparel: comp.FrontOfApparel.Add(key); break;
-
-                case TextureRenderLayer.BehindTheHead: comp.BehindTheHead.Add(key); break;
-                case TextureRenderLayer.Head: comp.Head.Add(key); break;
-                case TextureRenderLayer.FrontOfHead: comp.FrontOfHead.Add(key); break;
-
-                case TextureRenderLayer.BehindTheMask: comp.BehindTheMask.Add(key); break;
-                case TextureRenderLayer.Mask: comp.Mask.Add(key); break;
-                case TextureRenderLayer.FrontOfMask: comp.FrontOfMask.Add(key); break;
-
-                case TextureRenderLayer.BehindTheHair: comp.BehindTheHair.Add(key); break;
-                case TextureRenderLayer.Hair: comp.Hair.Add(key); break;
-                case TextureRenderLayer.FrontOfHair: comp.FrontOfHair.Add(key); break;
-
-                case TextureRenderLayer.BehindTheHat: comp.BehindTheHat.Add(key); break;
-                case TextureRenderLayer.Hat: comp.Hat.Add(key); break;
-                case TextureRenderLayer.FrontOfHat: comp.FrontOfHat.Add(key); break;
+                //Log.Warning("Add new Comp");
+                comp = (ThingComp)Activator.CreateInstance(typeof(MultiRenderComp));
+                comp.parent = pawn;
+                //Traverse p = Traverse.Create(pawn);
+                //List<ThingComp> list = (List<ThingComp>)p.Field("comps").GetValue();
+                ___comps.Add(comp);
+                //p.Field("comps").SetValue(list);
+                comp.Initialize(new MultiRenderCompProperties());
             }*/
+            return true;
         }
 
-
-
-        //给所有Pawn添加多层渲染Comp，CompTick有触发条件所以不存在性能问题
-        public static void AddComp(ref MultiRenderComp comp, ref Pawn pawn)
+        public static void PostMakeAddCompPostfix(ThingWithComps __instance, List<ThingComp> ___comps)
         {
-            comp = (MultiRenderComp)Activator.CreateInstance(typeof(MultiRenderComp));
-            comp.parent = pawn;
-            Traverse p = Traverse.Create(pawn);
-            List<ThingComp> list = (List<ThingComp>)p.Field("comps").GetValue();
-            list.Add(comp);
-            p.Field("comps").SetValue(list);
-            comp.Initialize(new MultiRenderCompProperties());
+            Pawn pawn = __instance as Pawn;
+            if (pawn == null)
+                return;
+            ThingComp comp = null;
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                comp = (ThingComp)Activator.CreateInstance(typeof(MultiRenderComp));
+                comp.parent = pawn;
+                ___comps.Add(comp);
+                comp.Initialize(pawn.def.comps.Exists(x => x.GetType() == typeof(MultiRenderCompProperties))
+                                ? pawn.def.comps.First(x => x.GetType() == typeof(MultiRenderCompProperties))
+                                : new MultiRenderCompProperties());
+            }
+            if (comp != null)
+                comp.PostPostMake();
         }
 
 
@@ -188,7 +178,7 @@ namespace NareisLib
         //从comp的storedData里获取TextureLevels数据，用于处理读取存档时从已有的storedData字典中得到的epoch
         public static Dictionary<string, TextureLevels> GetLevelsDictFromEpoch(MultiTexEpoch epoch)
         {
-            return epoch.batches.ToDictionary(k => k.textureLevelsName, v => ResolveKeyNameForLevel(ThisModData.TexLevelsDatabase[v.originalDefClass.ToStringSafe()+"_"+v.originalDefName][v.textureLevelsName].Clone(), v.keyName));
+            return !epoch.batches.NullOrEmpty() ? epoch.batches.ToDictionary(k => k.textureLevelsName, v => ResolveKeyNameForLevel(ThisModData.TexLevelsDatabase[v.originalDefClass.ToStringSafe() + "_" + v.originalDefName][v.textureLevelsName].Clone(), v.keyName)) : new Dictionary<string, TextureLevels>();
         }
         //上方法的子方法，为获取到的TextureLevels进行赋值操作
         public static TextureLevels ResolveKeyNameForLevel(TextureLevels level, string key)
@@ -211,10 +201,10 @@ namespace NareisLib
                 return;
             RenderPlanDef def = ThisModData.RacePlansDatabase[race];
             string plan = def.defName;
-            
+
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
-                AddComp(ref comp, ref pawn);
+                return;//AddComp(ref comp, ref pawn);
             //comp.cachedRenderPlanDefName = plan;
 
             List<string> cachedOverride = new List<string>();
@@ -223,58 +213,61 @@ namespace NareisLib
             HeadTypeDef head = pawn.story.headType;
             string headName = head != null ? head.defName : "";
             string fullOriginalDefName = typeof(HeadTypeDef).ToStringSafe() + "_" + headName;
-            if (head != null && ThisModData.DefAndKeyDatabase.ContainsKey(plan) && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
+            if (ThisModData.DefAndKeyDatabase.ContainsKey(plan))
             {
-                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
-                if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(fullOriginalDefName))
+                if (head != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
                 {
-                    Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
-                    data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
-                    cachedGraphicData[fullOriginalDefName] = cachedData;
+                    MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
+                    if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(fullOriginalDefName))
+                    {
+                        Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                        data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                        cachedGraphicData[fullOriginalDefName] = cachedData;
+                    }
+                    else
+                    {
+                        data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
+                        cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
+                    }
+                    if (!multidef.renderOriginTex)
+                        cachedOverride.Add("Head");
                 }
-                else
+                BodyTypeDef body = pawn.story.bodyType;
+                string bodyName = body != null ? body.defName : "";
+                fullOriginalDefName = typeof(BodyTypeDef).ToStringSafe() + "_" + bodyName;
+                if (body != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
                 {
-                    data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
-                    cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
+                    MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
+                    if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(fullOriginalDefName))
+                    {
+                        Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                        data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                        cachedGraphicData[fullOriginalDefName] = cachedData;
+                    }
+                    else
+                    {
+                        data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
+                        cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
+                    }
+                    if (!multidef.renderOriginTex)
+                        cachedOverride.Add("Body");
                 }
-                if (!multidef.renderOriginTex)
-                    cachedOverride.Add("Head");
-            }
-            BodyTypeDef body = pawn.story.bodyType;
-            string bodyName = body != null ? body.defName : "";
-            fullOriginalDefName = typeof(BodyTypeDef).ToStringSafe() + "_" + bodyName;
-            if (body != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
-            {
-                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
-                if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(fullOriginalDefName))
+                string hand = comp.GetCurHandDefName;
+                fullOriginalDefName = typeof(HandTypeDef).ToStringSafe() + "_" + hand;
+                if (hand != "" && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
                 {
-                    Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
-                    data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
-                    cachedGraphicData[fullOriginalDefName] = cachedData;
-                }
-                else
-                {
-                    data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
-                    cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
-                }
-                if (!multidef.renderOriginTex)
-                    cachedOverride.Add("Body");
-            }
-            string hand = comp.GetCurHandDefName;
-            fullOriginalDefName = typeof(HandTypeDef).ToStringSafe() + "_" + hand;
-            if (hand != "" && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
-            {
-                MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
-                if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(fullOriginalDefName))
-                {
-                    Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
-                    data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
-                    cachedGraphicData[fullOriginalDefName] = cachedData;
-                }
-                else
-                {
-                    data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
-                    cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
+                    MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
+                    if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(fullOriginalDefName))
+                    {
+                        Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                        data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                        cachedGraphicData[fullOriginalDefName] = cachedData;
+                    }
+                    else
+                    {
+                        data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
+                        cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
+                    }
                 }
             }
             comp.cachedOverrideBody = cachedOverride;
@@ -282,6 +275,7 @@ namespace NareisLib
             comp.storedDataBody = data;
             comp.ResolveAllLayerBatch();
             comp.PrefixResolved = true;
+            comp.pawnName = pawn.Name.ToStringFull;
         }
 
         //预处理Pawn的头发，在发型变换时会执行
@@ -297,7 +291,7 @@ namespace NareisLib
             string plan = def.defName;
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
-                AddComp(ref comp, ref pawn);
+                return;//AddComp(ref comp, ref pawn);
 
             List<string> cachedOverride = new List<string>();
             Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
@@ -311,14 +305,23 @@ namespace NareisLib
                 MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
                 if (comp.storedDataHair.NullOrEmpty() || !comp.storedDataHair.ContainsKey(fullOriginalDefName))
                 {
+                    Log.Warning("Hair Respawning Hair Respawning Hair Respawning");
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
                     data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
                     cachedGraphicData[fullOriginalDefName] = cachedData;
                 }
                 else
                 {
+                    //Log.Warning("Hair Loading Hair Loading Hair Loading");
+                    //Log.Warning("TexLevelsDatabase : " + ThisModData.TexLevelsDatabase.Count);
                     data[fullOriginalDefName] = comp.storedDataHair[fullOriginalDefName];
-                    cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
+                    MultiTexBatch batch = comp.storedDataHair[fullOriginalDefName].batches.First();
+                    //Log.Warning("first key : " + batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName);
+                    //Log.Warning("TexLevelsDatabase has first key : " + ThisModData.TexLevelsDatabase.ContainsKey(batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName).ToStringSafe());
+                    //Log.Warning("second key : " + batch.textureLevelsName);
+                    //Log.Warning("TexLevelsDatabase has second key : " + ThisModData.TexLevelsDatabase[batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName].ContainsKey(batch.textureLevelsName).ToStringSafe());
+                    
+                    cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(comp.storedDataHair[fullOriginalDefName]);
                 }
                 if (!multidef.renderOriginTex)
                     cachedOverride.Add("Hair");
@@ -343,7 +346,7 @@ namespace NareisLib
             string plan = def.defName;
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
-                AddComp(ref comp, ref pawn);
+                return;//AddComp(ref comp, ref pawn);
 
             List<string> cachedOverride = new List<string>();
             Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
@@ -356,7 +359,6 @@ namespace NareisLib
                     string fullOriginalDefName = typeof(ThingDef).ToStringSafe() + "_" + keyName;
                     if (ThisModData.DefAndKeyDatabase.ContainsKey(plan) && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
                     {
-                        
                         MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
                         if (comp.storedDataApparel.NullOrEmpty() || !comp.storedDataApparel.ContainsKey(fullOriginalDefName))
                         {
@@ -999,29 +1001,31 @@ namespace NareisLib
         {
             //Log.Warning("run head patch");
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
-            if (comp == null)
-                return;
-            
-            if (!comp.PrefixResolved)
+
+            if (comp != null && !comp.PrefixResolved)
                 instance.graphics.ResolveAllGraphics();
 
-            ThingDef_AlienRace thingDef_AlienRace = pawn.def as ThingDef_AlienRace;
-            AlienPartGenerator alienPartGenerator = null;
-            if (thingDef_AlienRace != null)
-                alienPartGenerator = thingDef_AlienRace.alienRace.generalSettings.alienPartGenerator;
-
-            Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
+            Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
             int layer = (int)TextureRenderLayer.Head;
 
             //是否绘制原head贴图
-            if (curDirection.NullOrEmpty()
+            if (comp == null
+                || curDirection.NullOrEmpty()
                 || !curDirection.ContainsKey(layer) 
                 || comp.GetAllHideOriginalDefData.NullOrEmpty() 
                 || !comp.GetAllHideOriginalDefData.Contains("Head"))
             {
                 GenDraw.DrawMeshNowOrLater(headMesh, loc, quat, headMat, drawNow);
             }
+
+            if (comp == null)
+                return;
+
+            ThingDef_AlienRace thingDef_AlienRace = pawn.def as ThingDef_AlienRace;
+            AlienPartGenerator alienPartGenerator = null;
+            if (thingDef_AlienRace != null)
+                alienPartGenerator = thingDef_AlienRace.alienRace.generalSettings.alienPartGenerator;
 
             //绘制多层贴图
             if (!curDirection.NullOrEmpty() && curDirection.ContainsKey(layer))
@@ -1224,12 +1228,11 @@ namespace NareisLib
         public static void DrawHeadHairFaceMaskTranPatch(float angle, Vector3 vector, Vector3 headOffset, Rot4 facing, PawnRenderFlags flags, List<ApparelGraphicRecord> apparelGraphics, bool shouldDraw, Pawn pawn, PawnRenderer instance)
         {
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
-            if (comp == null)
-                return;
-            if (!comp.PrefixResolved)
+            
+            if (comp != null && !comp.PrefixResolved)
                 instance.graphics.ResolveAllGraphics();
 
-            Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
+            Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
             Mesh bodyMesh = null;
             Mesh hairMesh = null;
@@ -1263,13 +1266,17 @@ namespace NareisLib
                             loc.y += !(facing == Rot4.North) || apparel.sourceApparel.def.apparel.hatRenderedAboveBody ? 0.03185328f : 0.002895753f;
                     }
                     //是否绘制原装备的贴图
-                    if (comp.GetAllHideOriginalDefData.NullOrEmpty() 
+                    if (comp == null
+                        || comp.GetAllHideOriginalDefData.NullOrEmpty() 
                         || !comp.GetAllHideOriginalDefData.Contains(apparel.sourceApparel.def.defName))
                     {
                         Material original = apparel.graphic.MatAt(facing, null);
                         Material mat = flags.FlagSet(PawnRenderFlags.Cache) ? original : OverrideMaterialIfNeeded(original, pawn, instance, flags.FlagSet(PawnRenderFlags.Portrait));
                         GenDraw.DrawMeshNowOrLater(hairMesh, loc, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                     }
+
+                    if (comp == null)
+                        continue;
 
                     //如果是多层服装的话
                     string apparelTypeOriginalDefName = apparel.sourceApparel.def.GetType().ToStringSafe() + "_" + apparel.sourceApparel.def.defName;
@@ -1343,22 +1350,25 @@ namespace NareisLib
             //Log.Warning("run hair patch");
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             AlienPartGenerator.AlienComp alienComp = pawn.GetComp<AlienPartGenerator.AlienComp>();
-            if (comp == null)
-                return;
-            if (!comp.PrefixResolved)
+
+            if (comp != null && !comp.PrefixResolved)
                 instance.graphics.ResolveAllGraphics();
 
-            Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
+            Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
             int layer = (int)TextureRenderLayer.Hair;
             //是否绘制原头发贴图
-            if (curDirection.NullOrEmpty()
+            if (comp == null
+                || curDirection.NullOrEmpty()
                 || !curDirection.ContainsKey(layer) 
                 || comp.GetAllHideOriginalDefData.NullOrEmpty() 
                 || !comp.GetAllHideOriginalDefData.Contains("Hair"))
             {
                 GenDraw.DrawMeshNowOrLater(hairMesh, loc, quat, hairMat, drawNow);
             }
+
+            if (comp == null)
+                return;
 
             //绘制多层头发贴图
             if (!curDirection.NullOrEmpty() && curDirection.ContainsKey(layer))
@@ -1441,12 +1451,11 @@ namespace NareisLib
         public static void DrawHeadHairHeadMaskTranPatch(float angle, Vector3 vector, Vector3 headOffset, Rot4 facing, PawnRenderFlags flags, List<ApparelGraphicRecord> apparelGraphics, bool shouldDraw, Pawn pawn, PawnRenderer instance)
         {
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
-            if (comp == null)
-                return;
-            if (!comp.PrefixResolved)
+            
+            if (comp != null && !comp.PrefixResolved)
                 instance.graphics.ResolveAllGraphics();
 
-            Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
+            Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
             Mesh bodyMesh = null;
             Mesh hairMesh = null;
@@ -1481,12 +1490,17 @@ namespace NareisLib
                             loc.y += !(facing == Rot4.North) || apparel.sourceApparel.def.apparel.hatRenderedAboveBody ? 0.03185328f : 0.002895753f;
                     }
                     //是否绘制原装备的贴图
-                    if (comp.GetAllHideOriginalDefData.NullOrEmpty() || !comp.GetAllHideOriginalDefData.Contains(apparel.sourceApparel.def.defName))
+                    if (comp == null
+                        || comp.GetAllHideOriginalDefData.NullOrEmpty() 
+                        || !comp.GetAllHideOriginalDefData.Contains(apparel.sourceApparel.def.defName))
                     {
                         Material original = apparel.graphic.MatAt(facing, null);
                         Material mat = flags.FlagSet(PawnRenderFlags.Cache) ? original : OverrideMaterialIfNeeded(original, pawn, instance, flags.FlagSet(PawnRenderFlags.Portrait));
                         GenDraw.DrawMeshNowOrLater(hairMesh, loc, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                     }
+
+                    if (comp == null)
+                        continue;
 
                     //如果是多层服装的话
                     string apparelTypeOriginalDefName = apparel.sourceApparel.def.GetType().ToStringSafe() + "_" + apparel.sourceApparel.def.defName;
