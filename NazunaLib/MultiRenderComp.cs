@@ -254,7 +254,7 @@ namespace NareisLib
                 foreach (int t in cachedDataNorth.Keys)
                 {
                     if (cachedDataNorth[t].Count() > 1)
-                        cachedDataNorth[t].Sort((i, j) => -ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetNorth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetNorth.Value.y));
+                        cachedDataNorth[t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetNorth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetNorth.Value.y));
                 }
             }
             
