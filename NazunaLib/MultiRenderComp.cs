@@ -82,13 +82,7 @@ namespace NareisLib
             }
         }
 
-        public List<MultiTexBatch> GetAllBatch
-        {
-            get
-            {
-                return storedDataBody.Values.Concat(storedDataApparel.Values).Concat(storedDataHair.Values).SelectMany(x => x.batches).ToList();
-            }
-        }
+        
 
         /*public Dictionary<string, TextureLevels> GetAllGraphicDataDict
         {
@@ -123,6 +117,14 @@ namespace NareisLib
                     return cachedOverrideBody;
                 }
                 return new List<string>();
+            }
+        }
+
+        public List<MultiTexBatch> GetAllBatch
+        {
+            get
+            {
+                return storedDataBody.Values.Concat(storedDataApparel.Values).Concat(storedDataHair.Values).SelectMany(x => x.batches).ToList();
             }
         }
 
@@ -177,6 +179,7 @@ namespace NareisLib
 
             Dictionary<int, List<MultiTexBatch>> dataSouth = new Dictionary<int, List<MultiTexBatch>>();
             Dictionary<int, List<MultiTexBatch>> dataEast = new Dictionary<int, List<MultiTexBatch>>();
+            Dictionary<int, List<MultiTexBatch>> dataWest = new Dictionary<int, List<MultiTexBatch>>();
             Dictionary<int, List<MultiTexBatch>> dataNorth = new Dictionary<int, List<MultiTexBatch>>();
             foreach (MultiTexBatch batch in list)
             {
@@ -184,7 +187,7 @@ namespace NareisLib
                 {
                     if (dataSouth.NullOrEmpty() || !dataSouth.ContainsKey((int)batch.layer))
                         dataSouth[(int)batch.layer] = new List<MultiTexBatch>();
-                    dataSouth[(int)batch.layer].Add(batch);
+                    dataSouth[(int)batch.layer].Add(batch.Clone());
                 }
                 if (batch.renderSwitch.y != 0)
                 {
@@ -195,7 +198,10 @@ namespace NareisLib
                         layer = TextureRenderLayer.HandTwo;
                     if (dataEast.NullOrEmpty() || !dataEast.ContainsKey((int)layer))
                         dataEast[(int)layer] = new List<MultiTexBatch>();
-                    dataEast[(int)layer].Add(batch);
+                    if (dataWest.NullOrEmpty() || !dataWest.ContainsKey((int)layer))
+                        dataWest[(int)layer] = new List<MultiTexBatch>();
+                    dataEast[(int)layer].Add(batch.Clone());
+                    dataWest[(int)layer].Add(batch.Clone());
                 }
                 if (batch.renderSwitch.z != 0)
                 {
@@ -203,19 +209,19 @@ namespace NareisLib
                     if (batch.layer == TextureRenderLayer.BottomHair)
                         layer = TextureRenderLayer.Hair;
                     else if (batch.layer == TextureRenderLayer.BottomShell)
-                        layer = TextureRenderLayer.FaceMask;
-                    else if (batch.layer == TextureRenderLayer.FaceMask)
+                        layer = TextureRenderLayer.FrontShell;
+                    else if (batch.layer == TextureRenderLayer.FrontShell)
                         layer = TextureRenderLayer.BottomShell;
                     else if (batch.layer == TextureRenderLayer.Hair)
                         layer = TextureRenderLayer.BottomHair;
                     if (dataNorth.NullOrEmpty() || !dataNorth.ContainsKey((int)layer))
                         dataNorth[(int)layer] = new List<MultiTexBatch>();
-                    dataNorth[(int)layer].Add(batch);
+                    dataNorth[(int)layer].Add(batch.Clone());
                 }
             }
             cachedDataSouth = dataSouth;
             cachedDataEast = dataEast;
-            cachedDataWest = dataEast;
+            cachedDataWest = dataWest;
             cachedDataNorth = dataNorth;
 
             
@@ -233,6 +239,12 @@ namespace NareisLib
                 {
                     if (cachedDataEast[t].Count() > 1)
                         cachedDataEast[t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetEast.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetEast.Value.y));
+                }
+            }
+            if (!cachedDataWest.NullOrEmpty())
+            {
+                foreach (int t in cachedDataWest.Keys)
+                {
                     if (cachedDataWest[t].Count() > 1)
                         cachedDataWest[t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetWest.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetWest.Value.y));
                 }

@@ -48,8 +48,12 @@ namespace NareisLib
             keyName = key;
             textureLevelsName = levelsName;
             layer = la;
-            //keyList = list;
             renderSwitch = r;
+        }
+
+        public MultiTexBatch Clone()
+        {
+            return new MultiTexBatch(originalDefClass, originalDefName, multiTexDefName, keyName, textureLevelsName, layer, renderSwitch);
         }
 
         public void ExposeData()

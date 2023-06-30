@@ -97,7 +97,7 @@ namespace NareisLib
         public Dictionary<string, int> preFixWeights = new Dictionary<string, int>();
 
         //xml里无需设定并且设定无效
-        public Dictionary<string, int> texWeights = new Dictionary<string, int>();
+        public Dictionary<string, Dictionary<string, int>> texWeights = new Dictionary<string, Dictionary<string, int>>();
 
         //xml里无需设定并且设定无效
         public Dictionary<string, string[]> preFixToTexName = new Dictionary<string, string[]>();
@@ -216,8 +216,6 @@ namespace NareisLib
             List<ModContentPack> mods = LoadedModManager.RunningModsListForReading;
             string[] folderAbsDir = mods.Select(x => Path.Combine(x.RootDir, "Textures", folder)).Where(x => Directory.Exists(x)).ToArray();
 
-            string[] names = new string[] { };
-
             //处理prefix对应的图层的全名并且赋予它prefix预设权重列表所对应的权重
             if (!prefix.NullOrEmpty())
             {
@@ -229,8 +227,7 @@ namespace NareisLib
                     {
                         Log.Warning(fullName[0]);
                         string[] resolvedName = fullName.Select(x => ResolveKeyName(Path.GetFileNameWithoutExtension(x))).Distinct().ToArray();
-                        preFixToTexName[pre] = resolvedName;
-                        names = names.Concat(resolvedName).ToArray();
+                        preFixToTexName[pre] = resolvedName;;
                         ResolvePrefixWeights(pre);
                     }
                 }
@@ -238,20 +235,18 @@ namespace NareisLib
             
 
             //处理路径全名为不带后缀的名称，并且如果有针对特定名称列表的话就给特定名称赋予权重
-            if (names.Length > 0)
+            if (!preFixToTexName.NullOrEmpty())
             {
                 if (!ThisModData.TexLevelsDatabase[type_originalDefName].ContainsKey(textureLevelsName))
                 {
-                    foreach (string name in names)
+                    foreach (string pre in preFixToTexName.Keys)
                     {
-                        //Log.Warning(name);
-                        /*if (!ThisModData.TexLevelsDatabase.ContainsKey(name))
+                        if (preFixToTexName[pre].NullOrEmpty())
+                            continue;
+                        foreach (string name in preFixToTexName[pre])
                         {
-                            //GraphicData data = this;
-                            //texPath = Path.Combine(folderPath, name);
-                            //keyName = name;
-                        }*/
-                        ResolveSingleTexWeights(name);
+                            ResolveSingleTexWeights(pre, name);
+                        }
                     }
                     ThisModData.TexLevelsDatabase[type_originalDefName][textureLevelsName] = this;
                 }
@@ -260,17 +255,19 @@ namespace NareisLib
         } 
 
         //赋予特定名称权重
-        public void ResolveSingleTexWeights(string keyName)
+        public void ResolveSingleTexWeights(string pre, string keyName)
         {
+            if (!texWeights.ContainsKey(pre))
+                texWeights[pre] = new Dictionary<string, int>();
             if (!weightOfTheName.NullOrEmpty())
             {
                 if (weightOfTheName.ContainsKey(keyName))
-                    texWeights[keyName] = weightOfTheName[keyName];
+                    texWeights[pre][keyName] = weightOfTheName[keyName];
                 else
-                    texWeights[keyName] = normalWeight;
+                    texWeights[pre][keyName] = normalWeight;
             }
             else
-                texWeights[keyName] = normalWeight;
+                texWeights[pre][keyName] = normalWeight;
         }
 
         //赋予prefix权重

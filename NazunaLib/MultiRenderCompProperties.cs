@@ -10,7 +10,7 @@ namespace NareisLib
 {
     public class MultiRenderCompProperties : CompProperties
     {
-        public Dictionary<string, int> handDefNameAndWeights = new Dictionary<string, int>();
+        public Dictionary<string, int> handDefNameAndWeights;
 
         public MultiRenderCompProperties()
         {
