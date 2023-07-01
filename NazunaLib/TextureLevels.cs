@@ -48,6 +48,10 @@ namespace NareisLib
         public bool renderMale = false;
         public bool renderFemale = false;
 
+        //是否使用在整体y轴上调整
+        //开启此选项后在各方向上的偏移将反应在整个Pawn上
+        public bool usePublicYOffset = false;
+
         //可选参数，链接到身体部位，与下面的label二选一
         public BodyPartDef bodyPart = null;
 
@@ -70,7 +74,7 @@ namespace NareisLib
         public bool hasStump = false;
 
         //可选参数，如果该贴图为手部层，则这个选项控制Hand层和HandTwo层是否绘制在shell层下方
-        public bool handDrawBehindShell = true;
+        public bool handDrawHigherOfShell = true;
 
         //可选参数，x、y、z分别表示正面侧面和背面，为1时会被渲染，为0时会被忽略
         public Vector3 renderSwitch = new Vector3(1f, 1f, 1f);
@@ -86,7 +90,7 @@ namespace NareisLib
         //可选参数，和上方参数联动，当前袖子对应哪个手部的贴图，填入手部贴图名称（不带前后缀）
         public List<string> sleeveTexList = new List<string>();
         //可选参数，设置袖子是否在shell层下方
-        public bool sleeveDrawBehindShell = true;
+        public bool sleeveDrawHigherOfShell = true;
 
         //默认的权重（在未设定权重的情况下所有贴图的权重均为1）常数，无法更改
         public const int normalWeight = 1;
@@ -143,6 +147,7 @@ namespace NareisLib
             result.hasGender = hasGender;
             result.renderMale = renderMale;
             result.renderFemale = renderFemale;
+            result.usePublicYOffset = usePublicYOffset;
             result.bodyPart = bodyPart;
             result.bodyPartLabel = bodyPartLabel;
             result.renderOnGround = renderOnGround;
@@ -150,13 +155,13 @@ namespace NareisLib
             result.hasRotting = hasRotting;
             result.hasDessicated = hasDessicated;
             result.hasStump = hasStump;
-            result.handDrawBehindShell = handDrawBehindShell;
+            result.handDrawHigherOfShell = handDrawHigherOfShell;
             result.renderSwitch = renderSwitch;
             result.weightOfThePrefix = weightOfThePrefix;
             result.weightOfTheName = weightOfTheName;
             result.isSleeve = isSleeve;
             result.sleeveTexList = sleeveTexList;
-            result.sleeveDrawBehindShell = sleeveDrawBehindShell;
+            result.sleeveDrawHigherOfShell = sleeveDrawHigherOfShell;
 
             result.preFixWeights = preFixWeights;
             result.texWeights = texWeights;

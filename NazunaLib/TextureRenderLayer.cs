@@ -29,27 +29,29 @@ namespace NareisLib
         Body,
 
 
-        //在描绘侧面时为HandTwo层
-        //在描绘背面时不变
-        //该手部层正面背面均会在衣服层下绘制
+        //在描绘正面侧面时为HandOne层
+        //此层作为给HandOne层变换所用，不应该直接设定为该层
+        //该手部层侧面会在衣服层上绘制，默认在shell下绘制，可在TextureLevels里设置绘制在shell层上
         //使用为PawnRenderer类的DrawPawnBody方法打的Finalizer补丁进行渲染
-        HandOne,
+        //HandTwo,
+
 
         //各方向都不变
         //对于最后一层是shell层以外的衣服使用为PawnRenderer类的DrawPawnBody方法打的Finalizer补丁进行渲染，shell层使用DrawBodyApparel方法打的Prefix方法进行渲染
         //用于服装的渲染，其他部位设置此层不会生效
         Apparel,
 
+        //在描绘背面时为HandTwo层
+        //该手部层正面背面均会在衣服层下绘制
+        //使用为PawnRenderer类的DrawPawnBody方法打的Finalizer补丁进行渲染
+        //HandOne,
+
         //各方向不变
         //该手部层正面背面均会在衣服层上绘制，默认在shell下绘制，可在TextureLevels里设置绘制在shell层上
         //使用为PawnRenderer类的DrawPawnBody方法打的Finalizer补丁进行渲染
         Hand,
 
-        //在描绘正面时为HandOne层
-        //此层作为给HandOne层变换所用，不应该直接设定为该层
-        //该手部层侧面会在衣服层上绘制，默认在shell下绘制，可在TextureLevels里设置绘制在shell层上
-        //使用为PawnRenderer类的DrawPawnBody方法打的Finalizer补丁进行渲染
-        HandTwo,
+        
 
         //各方向都不变
         //使用IL语言在PawnRenderer类的DrawPawnInternal中修改头部进行渲染

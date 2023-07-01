@@ -12,6 +12,8 @@ namespace NareisLib
     {
         public Dictionary<string, int> handDefNameAndWeights;
 
+        public float apparelInterval = 0.0014478763f;
+
         public MultiRenderCompProperties()
         {
             compClass = typeof(MultiRenderComp);

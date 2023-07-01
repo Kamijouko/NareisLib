@@ -194,8 +194,6 @@ namespace NareisLib
                     TextureRenderLayer layer = batch.layer;
                     if (batch.layer == TextureRenderLayer.BottomHair)
                         layer = TextureRenderLayer.Hair;
-                    else if (batch.layer == TextureRenderLayer.HandOne)
-                        layer = TextureRenderLayer.HandTwo;
                     if (dataEast.NullOrEmpty() || !dataEast.ContainsKey((int)layer))
                         dataEast[(int)layer] = new List<MultiTexBatch>();
                     if (dataWest.NullOrEmpty() || !dataWest.ContainsKey((int)layer))
@@ -210,6 +208,8 @@ namespace NareisLib
                         layer = TextureRenderLayer.Hair;
                     else if (batch.layer == TextureRenderLayer.BottomShell)
                         layer = TextureRenderLayer.FrontShell;
+                    /*else if (batch.layer == TextureRenderLayer.HandOne)
+                        layer = TextureRenderLayer.HandTwo;*/
                     else if (batch.layer == TextureRenderLayer.FrontShell)
                         layer = TextureRenderLayer.BottomShell;
                     else if (batch.layer == TextureRenderLayer.Hair)
