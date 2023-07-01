@@ -500,6 +500,8 @@ namespace NareisLib
                         if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
                             condition = "Dessicated";
                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                        if (data.useStaticYOffset)
+                            local.y = dataOffset.y * 0.01f;
                         if (data.usePublicYOffset)
                             dataOffset.y *= 0.01f;
                         else
@@ -700,6 +702,8 @@ namespace NareisLib
                             handOffset.y = 0.02027027f - 0.001f;
                         }
                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                        if (data.useStaticYOffset)
+                            vector.y = dataOffset.y * 0.01f;
                         if (data.usePublicYOffset)
                             dataOffset.y *= 0.01f;
                         else
@@ -978,6 +982,8 @@ namespace NareisLib
                                         if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
                                             pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
                                         Vector3 dataOffset = data.DrawOffsetForRot(bodyFacing);
+                                        if (data.useStaticYOffset)
+                                            local.y = dataOffset.y * 0.01f;
                                         if (data.usePublicYOffset)
                                             dataOffset.y *= 0.01f;
                                         else
@@ -1073,6 +1079,8 @@ namespace NareisLib
                     if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
                         pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
                     Vector3 dataOffset = data.DrawOffsetForRot(bodyFacing);
+                    if (data.useStaticYOffset)
+                        loc.y = dataOffset.y * 0.01f;
                     if (data.usePublicYOffset)
                         dataOffset.y *= 0.01f;
                     else
@@ -1256,6 +1264,8 @@ namespace NareisLib
                     if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
                         condition = "Dessicated";
                     Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                    if (data.useStaticYOffset)
+                        headYOffset.y = dataOffset.y * 0.01f;
                     if (data.usePublicYOffset)
                         dataOffset.y *= 0.01f;
                     else
@@ -1492,6 +1502,8 @@ namespace NareisLib
                                 if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
                                     pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
                                 Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                                if (data.useStaticYOffset)
+                                    loc.y = dataOffset.y * 0.01f;
                                 if (data.usePublicYOffset)
                                     dataOffset.y *= 0.01f;
                                 else
@@ -1607,6 +1619,8 @@ namespace NareisLib
                     if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
                         pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
                     Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                    if (data.useStaticYOffset)
+                        hairPos.y = dataOffset.y * 0.01f;
                     if (data.usePublicYOffset)
                         dataOffset.y *= 0.01f;
                     else
@@ -1734,6 +1748,8 @@ namespace NareisLib
                                         if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
                                             pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
                                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                                        if (data.useStaticYOffset)
+                                            loc.y = dataOffset.y * 0.01f;
                                         if (data.usePublicYOffset)
                                             dataOffset.y *= 0.01f;
                                         else
@@ -1844,6 +1860,8 @@ namespace NareisLib
                     if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
                         condition = "Dessicated";
                     Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                    if (data.useStaticYOffset)
+                        bodyLoc.y = dataOffset.y * 0.01f;
                     if (data.usePublicYOffset)
                         dataOffset.y *= 0.01f;
                     else

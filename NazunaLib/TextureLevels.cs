@@ -52,6 +52,10 @@ namespace NareisLib
         //开启此选项后在各方向上的偏移将反应在整个Pawn上
         public bool usePublicYOffset = false;
 
+        //使各方向设置的偏移为一个固定的y轴高度
+        //不建议同时开启usePublicYOffset
+        public bool useStaticYOffset = false;
+
         //可选参数，链接到身体部位，与下面的label二选一
         public BodyPartDef bodyPart = null;
 
@@ -148,6 +152,7 @@ namespace NareisLib
             result.renderMale = renderMale;
             result.renderFemale = renderFemale;
             result.usePublicYOffset = usePublicYOffset;
+            result.useStaticYOffset = useStaticYOffset;
             result.bodyPart = bodyPart;
             result.bodyPartLabel = bodyPartLabel;
             result.renderOnGround = renderOnGround;
