@@ -501,7 +501,7 @@ namespace NareisLib
                             condition = "Dessicated";
                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
                         if (data.useStaticYOffset)
-                            local.y = dataOffset.y * 0.01f;
+                            local.y = rootLoc.y + dataOffset.y * 0.01f;
                         if (data.usePublicYOffset)
                             dataOffset.y *= 0.01f;
                         else
@@ -614,6 +614,8 @@ namespace NareisLib
                 if (level == (int)TextureRenderLayer.Hand)
                     Log.Warning(" Hand层: 从" + vector.y.ToString() + "开始");
 
+                Vector3 locVec = vector;
+
                 if (curDirection.ContainsKey(level))
                 {
                     Color colorOne = ___pawn.story.SkinColor;
@@ -703,12 +705,12 @@ namespace NareisLib
                         }
                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
                         if (data.useStaticYOffset)
-                            vector.y = dataOffset.y * 0.01f;
+                            locVec.y = rootLoc.y + dataOffset.y * 0.01f;
                         if (data.usePublicYOffset)
                             dataOffset.y *= 0.01f;
                         else
                             dataOffset.y *= 0.0001f;
-                        Vector3 pos = vector + offset + handOffset + dataOffset;
+                        Vector3 pos = locVec + offset + handOffset + dataOffset;
                         Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition).MatAt(facing, null);
                         Material mat = (___pawn.RaceProps.IsMechanoid 
                             && ___pawn.Faction != null 
@@ -728,6 +730,8 @@ namespace NareisLib
                 Log.Warning(" ");
                 Log.Warning("从 " + vector.y.ToString() + " 开始渲染衣服(包含渲染在头后方的Shell层的衣服)");
                 Log.Warning("每层间间隔为 " + comp.Props.apparelInterval.ToString() + "，换算在xml里的间隔为 " + (comp.Props.apparelInterval * 100).ToString());
+
+                
 
                 for (int i = 0; i < __instance.graphics.apparelGraphics.Count; i++)
                 {
@@ -816,6 +820,8 @@ namespace NareisLib
                                         if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
                                             condition = "Dessicated";
                                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
+                                        if (data.useStaticYOffset)
+                                            local.y = rootLoc.y + dataOffset.y * 0.01f;
                                         if (data.usePublicYOffset)
                                             dataOffset.y *= 0.01f;
                                         else
@@ -932,7 +938,7 @@ namespace NareisLib
                                 }
                                 else
                                 {
-                                    Log.Warning(" Apparel(Shell)层: 从" + loc.y.ToString() + "开始");
+                                    Log.Warning(" Apparel(Shell)层: 从" + local.y.ToString() + "开始");
                                 }
 
                                 foreach (MultiTexBatch batch in curDirection[layer])
@@ -983,7 +989,7 @@ namespace NareisLib
                                             pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
                                         Vector3 dataOffset = data.DrawOffsetForRot(bodyFacing);
                                         if (data.useStaticYOffset)
-                                            local.y = dataOffset.y * 0.01f;
+                                            local.y = shellLoc.y - (bodyFacing != Rot4.North ? 0.02027027f : 0.023166021f) + dataOffset.y * 0.01f;
                                         if (data.usePublicYOffset)
                                             dataOffset.y *= 0.01f;
                                         else
@@ -1080,7 +1086,7 @@ namespace NareisLib
                         pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
                     Vector3 dataOffset = data.DrawOffsetForRot(bodyFacing);
                     if (data.useStaticYOffset)
-                        loc.y = dataOffset.y * 0.01f;
+                        loc.y = shellLoc.y - (bodyFacing != Rot4.North ? 0.02027027f : 0.023166021f) + dataOffset.y * 0.01f;
                     if (data.usePublicYOffset)
                         dataOffset.y *= 0.01f;
                     else
@@ -1265,7 +1271,7 @@ namespace NareisLib
                         condition = "Dessicated";
                     Vector3 dataOffset = data.DrawOffsetForRot(facing);
                     if (data.useStaticYOffset)
-                        headYOffset.y = dataOffset.y * 0.01f;
+                        headYOffset.y = headYOffset.y - (facing != Rot4.North ? 0.023166021f : 0.02027027f) - dataOffset.y * 0.01f;
                     if (data.usePublicYOffset)
                         dataOffset.y *= 0.01f;
                     else
@@ -1503,7 +1509,7 @@ namespace NareisLib
                                     pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
                                 Vector3 dataOffset = data.DrawOffsetForRot(facing);
                                 if (data.useStaticYOffset)
-                                    loc.y = dataOffset.y * 0.01f;
+                                    loc.y = vector.y + dataOffset.y * 0.01f;
                                 if (data.usePublicYOffset)
                                     dataOffset.y *= 0.01f;
                                 else
@@ -1620,7 +1626,7 @@ namespace NareisLib
                         pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
                     Vector3 dataOffset = data.DrawOffsetForRot(facing);
                     if (data.useStaticYOffset)
-                        hairPos.y = dataOffset.y * 0.01f;
+                        hairPos.y = vector.y + dataOffset.y * 0.01f;
                     if (data.usePublicYOffset)
                         dataOffset.y *= 0.01f;
                     else
@@ -1749,7 +1755,7 @@ namespace NareisLib
                                             pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
                                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
                                         if (data.useStaticYOffset)
-                                            loc.y = dataOffset.y * 0.01f;
+                                            loc.y = vector.y + dataOffset.y * 0.01f;
                                         if (data.usePublicYOffset)
                                             dataOffset.y *= 0.01f;
                                         else
@@ -1861,7 +1867,7 @@ namespace NareisLib
                         condition = "Dessicated";
                     Vector3 dataOffset = data.DrawOffsetForRot(facing);
                     if (data.useStaticYOffset)
-                        bodyLoc.y = dataOffset.y * 0.01f;
+                        bodyLoc.y = rootLoc.y + dataOffset.y * 0.01f;
                     if (data.usePublicYOffset)
                         dataOffset.y *= 0.01f;
                     else
