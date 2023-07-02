@@ -1305,7 +1305,7 @@ namespace NareisLib
 
 
 
-        //FaceMask Hair HeadMask Hat DrawHeadHairTranspiler
+        //FaceMask Hair HeadMask Hat ，头发显示控制DrawHeadHairTranspiler
         public static IEnumerable<CodeInstruction> DrawHeadHairPatchTranspiler(IEnumerable<CodeInstruction> instructions)
         {
             MethodInfo drawMeshNowOrLater = AccessTools.Method(typeof(GenDraw), "DrawMeshNowOrLater", new Type[] { typeof(Mesh), typeof(Vector3), typeof(Quaternion), typeof(Material), typeof(bool) }, null);
@@ -1313,12 +1313,13 @@ namespace NareisLib
             MethodInfo drawHeadHairHeadTranPatch = AccessTools.Method(typeof(PawnRenderPatchs), "DrawHeadHairHairTranPatch", null, null);
             MethodInfo drawHeadHairFaceMaskTranPatch = AccessTools.Method(typeof(PawnRenderPatchs), "DrawHeadHairFaceMaskTranPatch", null, null);
             MethodInfo drawHeadHairHeadMaskTranPatch = AccessTools.Method(typeof(PawnRenderPatchs), "DrawHeadHairHeadMaskTranPatch", null, null);
+            MethodInfo drawHeadHairDisplaySwitchPatch = AccessTools.Method(typeof(PawnRenderPatchs), "DrawHeadHairDisplaySwitchPatch", null, null);
             List<CodeInstruction> instructionList = instructions.ToList<CodeInstruction>();
             int num;
             for (int i = 0; i < instructionList.Count; i = num + 1)
             {
                 CodeInstruction instruction = instructionList[i];
-                if (i > 10 && instructionList[i - 2].opcode == OpCodes.Ldloc_S && instructionList[i - 2].OperandIs(6) && instructionList[i - 3].OperandIs(drawMeshNowOrLater))
+                if (i > 10 && instructionList[i - 1].opcode == OpCodes.Brfalse_S && instructionList[i - 2].opcode == OpCodes.Ldloc_S /*&& instructionList[i - 2].OperandIs(6)*/ && instructionList[i - 3].OperandIs(drawMeshNowOrLater))
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_3);//angle
 
@@ -1345,10 +1346,13 @@ namespace NareisLib
                     i += 34;
                 }
 
-
-                if (instruction.OperandIs(drawMeshNowOrLater) && instructionList[i - 37].opcode == OpCodes.Ldloc_2/* && instructionList[i + 4].OperandIs(6)*/)
+                if (i > 10 && instructionList[i - 1].opcode == OpCodes.Ldloc_2 && instructionList[i + 1].opcode == OpCodes.Ldarg_0)
                 {
-                    //Log.Warning("RunPatched");
+                    yield return new CodeInstruction(OpCodes.Call, drawHeadHairDisplaySwitchPatch);
+                }
+
+                if (i > 40 && instruction.OperandIs(drawMeshNowOrLater) && instructionList[i - 37].opcode == OpCodes.Ldloc_2/* && instructionList[i + 4].OperandIs(6)*/)
+                {
                     yield return new CodeInstruction(OpCodes.Ldarg_1);//rootLoc vector
 
                     yield return new CodeInstruction(OpCodes.Ldarg_2);//headOffset
@@ -1368,7 +1372,7 @@ namespace NareisLib
                     i++;
                 }
 
-                if (i > 10 && instructionList[i - 2].opcode == OpCodes.Ldloc_S && instructionList[i - 2].OperandIs(6) && instructionList[i - 6].OperandIs(drawMeshNowOrLater))
+                if (i > 10 && instructionList[i - 1].opcode == OpCodes.Brfalse && instructionList[i - 2].opcode == OpCodes.Ldloc_S/* && instructionList[i - 2].OperandIs(6)*/ && instructionList[i - 6].OperandIs(drawMeshNowOrLater))
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_3);//angle
 
@@ -1402,6 +1406,8 @@ namespace NareisLib
 
         public static void DrawHeadHairFaceMaskTranPatch(float angle, Vector3 vector, Vector3 headOffset, Rot4 facing, PawnRenderFlags flags, List<ApparelGraphicRecord> apparelGraphics, bool shouldDraw, Pawn pawn, PawnRenderer instance)
         {
+            //Log.Warning("HeadGear RunPatched");
+
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             
             if (comp != null && !comp.PrefixResolved)
@@ -1424,9 +1430,10 @@ namespace NareisLib
             Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
             Vector3 hairYOffset = vector + headOffset;
             hairYOffset.y += 0.028957527f;
-            int layer = (int)TextureRenderLayer.FaceMask;
 
             Log.Warning(" FaceMask层: 从" + hairYOffset.y.ToString() + "开始");
+
+            int layer = (int)TextureRenderLayer.FaceMask;
 
             for (int index = 0; index < apparelGraphics.Count; index++)
             {
@@ -1528,9 +1535,10 @@ namespace NareisLib
             }
         }
 
-        public static void DrawHeadHairHairTranPatch(Mesh hairMesh, Vector3 loc, Quaternion quat, Material hairMat, bool drawNow, Vector3 vector, Vector3 headOffset, Rot4 facing, PawnRenderFlags flags, Pawn pawn, PawnRenderer instance)//
+        public static void DrawHeadHairHairTranPatch(Mesh hairMesh, Vector3 loc, Quaternion quat, Material hairMat, bool drawNow, Vector3 vector, Vector3 headOffset, Rot4 facing, PawnRenderFlags flags, Pawn pawn, PawnRenderer instance)
         {
-            //Log.Warning("run hair patch");
+            //Log.Warning("Hair RunPatched");
+
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             AlienPartGenerator.AlienComp alienComp = pawn.GetComp<AlienPartGenerator.AlienComp>();
 
@@ -1642,6 +1650,8 @@ namespace NareisLib
 
         public static void DrawHeadHairHeadMaskTranPatch(float angle, Vector3 vector, Vector3 headOffset, Rot4 facing, PawnRenderFlags flags, List<ApparelGraphicRecord> apparelGraphics, bool shouldDraw, Pawn pawn, PawnRenderer instance)
         {
+            //Log.Warning("Hat RunPatched");
+
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             
             if (comp != null && !comp.PrefixResolved)
@@ -1774,6 +1784,11 @@ namespace NareisLib
                     }
                 }
             }
+        }
+
+        public static bool DrawHeadHairDisplaySwitchPatch(bool flag1)
+        {
+            return true;
         }
 
 
