@@ -1,7 +1,6 @@
 # NareisLib
 # 这是一个基于原版和外星人模组HumanAlienRace（以下简称HAR）的自定义多层级渲染模组
 
-## 首先介绍一下模组的具体功能
 ### 1.针对原版的每个Def定义其图像
 例如：  
     对于一个defName为Test_Hair的HairDef；  
