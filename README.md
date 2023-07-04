@@ -1,4 +1,3 @@
-# README施工中...
 # NareisLib
 # 这是一个基于原版和外星人模组HumanAlienRace（以下简称HAR）的自定义多层贴图渲染模组
 
