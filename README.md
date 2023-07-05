@@ -9,7 +9,7 @@
     我们可以在MultiTexDef里设置许多图层，当游戏渲染我们关联的HairDef的时候，就会自动检测到我们在MultiTexDef里定义的图层并一起渲染。  
     （此为大致举例流程，实际使用请看[wiki操作介绍](https://github.com/Kamijouko/NareisLib/wiki)） 
   
-  可以作用于pawn身上的Def包括：BodyDef，HeadDef，HairDef，Apparel(衣服)  
+  可以作用于pawn身上的Def包括：BodyDef，HeadDef，HairDef，Apparel(衣服)，HandTypeDef  
 ### 2.自定义多层图像  
 如字面意思，可以在MultiTexDef中定义多个相同或不同图层的图像；  
 
