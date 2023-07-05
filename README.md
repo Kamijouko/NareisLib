@@ -39,7 +39,14 @@
     13.Overlay  
 其中的Body、Apparel、Head、FaceMask、Hair均为原版Pawn的身体部件，它们分别代表Pawn的身体、服装/装备/头部装备、头、脸妆/胡须、头发，而其他图层则是围绕这几个部件展开的。它们的默认渲染顺序也同上方展示的一致。  
 以上列出的图层并不是指最多只能设置13个层，以上层所起的作用是确定图层的y轴偏移基准。  
-通过在xml里指定图像为以上的任意图层，然后修改它的各项属性，由此达到多图层渲染的目的即为本模组的功能。
+通过在xml里指定图像为以上的任意图层，然后修改它的各项属性，由此达到多图层渲染的目的即为本模组的功能。  
+### 3.已知问题  
+与大部分修改了渲染逻辑的模组冲突；  
+已知冲突的有：  
+> [Hats Display Selection](https://steamcommunity.com/sharedfiles/filedetails/?id=1542291825)  
+> [[CAT]Show Hair With Hats or Hide All Hats](https://steamcommunity.com/sharedfiles/filedetails/?id=2879080074)  
+  
+针对模组不兼容，目前此框架使游戏内的所有头发强制显示，后续会加入自定义设置。
   
     
 
