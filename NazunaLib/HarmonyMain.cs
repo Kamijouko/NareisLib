@@ -1977,7 +1977,7 @@ namespace NareisLib
     //初始化AB包加载（暂时停用）
     //[HarmonyPatch(typeof(Root))]
     //[HarmonyPatch("CheckGlobalInit")]
-    public class DAL_GameObjectPrefabLoadPatch
+    /*public class DAL_GameObjectPrefabLoadPatch
     {
         static void Postfix()
         {
@@ -1987,12 +1987,12 @@ namespace NareisLib
             }
             DAL_DynamicGameObjectPrefabManager.InitGameObjectToList();
         }
-    }
+    }*/
 
 
 
     //DAL_WorldCurrent构建
-    [HarmonyPatch(typeof(World))]
+    /*[HarmonyPatch(typeof(World))]
     [HarmonyPatch("ConstructComponents")]
     public class DAL_WorldCurrentConstructPatch
     {
@@ -2000,6 +2000,6 @@ namespace NareisLib
         {
             DAL_WorldCurrent.GOM = new DAL_DynamicGameObjectManager();
         }
-    }
+    }*/
 
 }

@@ -297,14 +297,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DAL_DynamicGameObjectManager.cs" />
-    <Compile Include="DAL_DynamicGameObjectPrefabManager.cs" />
-    <Compile Include="DAL_GameObject.cs" />
-    <Compile Include="DAL_GameObjectPlanData.cs" />
-    <Compile Include="DAL_GameObjectPlanDef.cs" />
-    <Compile Include="GameObjectPlanListDef.cs" />
-    <Compile Include="GOPListDefOf.cs" />
-    <Compile Include="DAL_Graphic_Dynamic.cs" />
     <Compile Include="HandTypeDef.cs" />
     <Compile Include="ModStaticMethod.cs" />
     <Compile Include="MultiRenderComp.cs" />
@@ -314,7 +306,6 @@
     <Compile Include="MultiTexEpoch.cs" />
     <Compile Include="TextureLevelRandomPatternSet.cs" />
     <Compile Include="RenderPlanDef.cs" />
-    <Compile Include="RenderBatch.cs" />
     <Compile Include="RenderClass.cs" />
     <Compile Include="TextureLevelHediffSet.cs" />
     <Compile Include="TextureLevelHediffSeveritySet.cs" />
@@ -323,7 +314,6 @@
     <Compile Include="TextureLevels.cs" />
     <Compile Include="TextureRenderLayer.cs" />
     <Compile Include="ThisModBase.cs" />
-    <Compile Include="DAL_WorldCurrent.cs" />
     <Compile Include="HarmonyMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ThisModData.cs" />
