@@ -81,7 +81,7 @@ namespace NareisLib
         public bool handDrawHigherOfShell = true;
 
         //可选参数，x、y、z分别表示正面侧面和背面，为1时会被渲染，为0时会被忽略
-        public Vector3 renderSwitch = new Vector3(1f, 1f, 1f);
+        public Vector3 renderSwitch = Vector3.one;
 
         //可选参数，设定某种前缀prefix的生成权重
         public Dictionary<string, int> weightOfThePrefix = new Dictionary<string, int>();

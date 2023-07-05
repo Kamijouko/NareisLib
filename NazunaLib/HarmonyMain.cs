@@ -397,8 +397,8 @@ namespace NareisLib
             AlienPartGenerator.AlienComp alienComp = ___pawn.GetComp<AlienPartGenerator.AlienComp>();
             if (comp == null)
                 return __state = true;
-            if (!comp.PrefixResolved)
-                __instance.graphics.ResolveAllGraphics();
+            //if (!comp.PrefixResolved)
+                //__instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
             if (curDirection.NullOrEmpty())
@@ -570,8 +570,8 @@ namespace NareisLib
             MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 return;
-            if (!comp.PrefixResolved)
-                __instance.graphics.ResolveAllGraphics();
+            //if (!comp.PrefixResolved)
+                //__instance.graphics.ResolveAllGraphics();
 
             ThingDef_AlienRace thingDef_AlienRace = ___pawn.def as ThingDef_AlienRace;
             AlienPartGenerator alienPartGenerator = null;
@@ -891,8 +891,8 @@ namespace NareisLib
             MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 return true;
-            if (!comp.PrefixResolved)
-                __instance.graphics.ResolveAllGraphics();
+            //if (!comp.PrefixResolved)
+                //__instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(bodyFacing);
             if (curDirection.NullOrEmpty())
@@ -1205,8 +1205,8 @@ namespace NareisLib
             //Log.Warning("run head patch");
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
 
-            if (comp != null && !comp.PrefixResolved)
-                instance.graphics.ResolveAllGraphics();
+            //if (comp != null && !comp.PrefixResolved)
+                //instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
@@ -1454,8 +1454,8 @@ namespace NareisLib
 
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             
-            if (comp != null && !comp.PrefixResolved)
-                instance.graphics.ResolveAllGraphics();
+            //if (comp != null && !comp.PrefixResolved)
+                //instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
@@ -1590,8 +1590,8 @@ namespace NareisLib
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             AlienPartGenerator.AlienComp alienComp = pawn.GetComp<AlienPartGenerator.AlienComp>();
 
-            if (comp != null && !comp.PrefixResolved)
-                instance.graphics.ResolveAllGraphics();
+            //if (comp != null && !comp.PrefixResolved)
+                //instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
@@ -1706,8 +1706,8 @@ namespace NareisLib
 
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             
-            if (comp != null && !comp.PrefixResolved)
-                instance.graphics.ResolveAllGraphics();
+            //if (comp != null && !comp.PrefixResolved)
+                //instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
@@ -1854,8 +1854,8 @@ namespace NareisLib
             MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 return;
-            if (!comp.PrefixResolved)
-                __instance.graphics.ResolveAllGraphics();
+            //if (!comp.PrefixResolved)
+                //__instance.graphics.ResolveAllGraphics();
             Rot4 facing = bodyFacing;
             Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
             if (curDirection.NullOrEmpty())
