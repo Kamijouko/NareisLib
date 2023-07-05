@@ -1744,7 +1744,8 @@ namespace NareisLib
                     {
                         loc = vector + headOffset;
                         if (apparel.sourceApparel.def.apparel.hatRenderedBehindHead)
-                            loc.y += 0.02216602f;
+                            //loc.y += 0.02216602f;
+                            loc.y += 0.0236138963f;
                         else
                             loc.y += !(facing == Rot4.North) || apparel.sourceApparel.def.apparel.hatRenderedAboveBody ? 0.03185328f : 0.002895753f;
                     }
