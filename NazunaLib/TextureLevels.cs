@@ -235,7 +235,7 @@ namespace NareisLib
                     
                     if (fullName.Length > 0)
                     {
-                        Log.Warning(fullName[0]);
+                        //Log.Warning(fullName[0]);
                         string[] resolvedName = fullName.Select(x => ResolveKeyName(Path.GetFileNameWithoutExtension(x))).Distinct().ToArray();
                         preFixToTexName[pre] = resolvedName;;
                         ResolvePrefixWeights(pre);

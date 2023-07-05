@@ -173,7 +173,8 @@ namespace NareisLib
         public void ResolveAllLayerBatch()
         {
             List<MultiTexBatch> list = GetAllBatch;
-            Log.Warning("batch:" + list.Count().ToString());
+            if (ModStaticMethod.ThisMod.debugToggle)
+                Log.Warning("batch:" + list.Count().ToString());
             if (list.NullOrEmpty())
                 return;
 
@@ -272,12 +273,15 @@ namespace NareisLib
             cachedRandomGraphicPattern.Clear();
             timeTickLineIndex = 0;
 
-            Log.Warning("south:" + cachedDataSouth.SelectMany(x => x.Value).Count().ToString());
-            Log.Warning("east:" + cachedDataEast.SelectMany(x => x.Value).Count().ToString());
-            Log.Warning("north:" + cachedDataNorth.SelectMany(x => x.Value).Count().ToString());
-            Log.Warning("AllGraphicData:" + GetAllOriginalDefForGraphicDataDict.Values.SelectMany(x => x.Values).Count().ToString());
-            Log.Warning("levels:" + ThisModData.TexLevelsDatabase.Values.SelectMany(x => x.Values).Count().ToString());
-            Log.Warning("plans:" + ThisModData.DefAndKeyDatabase.Values.SelectMany(x => x.Values).Count().ToString());
+            if (ModStaticMethod.ThisMod.debugToggle)
+            {
+                Log.Warning("south:" + cachedDataSouth.SelectMany(x => x.Value).Count().ToString());
+                Log.Warning("east:" + cachedDataEast.SelectMany(x => x.Value).Count().ToString());
+                Log.Warning("north:" + cachedDataNorth.SelectMany(x => x.Value).Count().ToString());
+                Log.Warning("AllGraphicData:" + GetAllOriginalDefForGraphicDataDict.Values.SelectMany(x => x.Values).Count().ToString());
+                Log.Warning("levels:" + ThisModData.TexLevelsDatabase.Values.SelectMany(x => x.Values).Count().ToString());
+                Log.Warning("plans:" + ThisModData.DefAndKeyDatabase.Values.SelectMany(x => x.Values).Count().ToString());
+            }
         }
 
 

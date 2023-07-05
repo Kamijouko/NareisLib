@@ -6,12 +6,31 @@ using System.Threading.Tasks;
 using RimWorld;
 using Verse;
 using HugsLib;
+using HarmonyLib;
+using AlienRace;
+using HugsLib.Settings;
 
 namespace NareisLib
 {
+    [EarlyInit]
     public class ThisModBase : ModBase
     {
         public override string ModIdentifier { get; } = "NareisLib.kamijouko.nazunarei";
+
+
+        //给所有Pawn添加多层渲染Comp，CompTick有触发条件所以不存在性能问题
+        [HarmonyPatch(typeof(ThingDef))]
+        [HarmonyPatch("ResolveReferences")]
+        public class InitialModThingDefCompPatch
+        {
+            static bool Prefix(ThingDef __instance)
+            {
+                if (__instance.thingClass != typeof(Pawn) || __instance.comps.Exists(x => x.GetType() == typeof(MultiRenderCompProperties)))
+                    return true;
+                __instance.comps.Add(new MultiRenderCompProperties());
+                return true;
+            }
+        }
 
         public override void DefsLoaded()
         {
@@ -22,6 +41,18 @@ namespace NareisLib
                 LoadAndResolveAllPlanDefs();
                 ModStaticMethod.AllLevelsLoaded = true;
             }
+
+            debugToggle = Settings.GetHandle<bool>(
+                "displayDebugInfo",
+                "displayDebugInfo_title".Translate(),
+                "displayDebugInfo_desc".Translate(),
+                false);
+
+            apparelLevelsDisplayToggle = Settings.GetHandle<bool>(
+                "displayLevelsInfo",
+                "displayLevelsInfo_title".Translate(),
+                "displayLevelsInfo_desc".Translate(),
+                false);
         }
 
         public static void LoadAndResolveAllPlanDefs()
@@ -78,5 +109,9 @@ namespace NareisLib
                 }
             }
         }
+
+        public SettingHandle<bool> debugToggle;
+        public SettingHandle<bool> apparelLevelsDisplayToggle;
+
     }
 }

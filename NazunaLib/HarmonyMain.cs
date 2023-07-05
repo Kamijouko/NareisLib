@@ -31,7 +31,7 @@ namespace NareisLib
 
             //harmonyInstance.Patch(AccessTools.Method(typeof(ThingWithComps), "PostMake", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "PostMakeAddCompPostfix", null), null, null);
             //harmonyInstance.Patch(AccessTools.Method(typeof(ThingWithComps), "ExposeData", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "ExposeDataAddCompPostfix", null), null, null);
-            harmonyInstance.Patch(AccessTools.Method(typeof(ThingWithComps), "InitializeComps", null, null), new HarmonyMethod(typeof(PawnRenderPatchs), "InitializeCompsAddCompPrefix", null), null, null, null);
+            //harmonyInstance.Patch(AccessTools.Method(typeof(ThingWithComps), "InitializeComps", null, null), new HarmonyMethod(typeof(PawnRenderPatchs), "InitializeCompsAddCompPrefix", null), null, null, null);
             
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveAllGraphics", null, null), null, null, null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveAllGraphicsFinalizer", null));
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveApparelGraphics", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveHairGraphicsPostfix", null), null, null);
@@ -95,14 +95,14 @@ namespace NareisLib
     public class PawnRenderPatchs
     {
         //给所有Pawn添加多层渲染Comp，CompTick有触发条件所以不存在性能问题
-        public static bool InitializeCompsAddCompPrefix(ThingWithComps __instance/*, List<ThingComp> ___comps*/)
+        /*public static bool InitializeCompsAddCompPrefix(ThingWithComps __instance)
         {
             Pawn pawn = __instance as Pawn;
             if (pawn == null || pawn.def.comps.Exists(x => x.GetType() == typeof(MultiRenderCompProperties)))
                 return true;
             pawn.def.comps.Add(new MultiRenderCompProperties());
             return true;
-        }
+        }*/
 
         public static void PostMakeAddCompPostfix(ThingWithComps __instance, List<ThingComp> ___comps)
         {
@@ -152,8 +152,11 @@ namespace NareisLib
                     if (!batches.Exists(x => x.textureLevelsName == level.textureLevelsName))
                         batches.Add(new MultiTexBatch(def.originalDefClass, def.originalDef, def.defName, keyName, level.textureLevelsName, level.renderLayer, level.renderSwitch));
 
-                    Log.Warning("render switch : " + level.renderSwitch.ToStringSafe());
-                    Log.Warning("render layer : " + level.renderLayer.ToStringSafe());
+                    if (ModStaticMethod.ThisMod.debugToggle)
+                    {
+                        Log.Warning("render switch : " + level.renderSwitch.ToStringSafe());
+                        Log.Warning("render layer : " + level.renderLayer.ToStringSafe());
+                    }
 
                     string type_defName = def.originalDefClass.ToStringSafe() + "_" + def.originalDef;
                     if (ThisModData.TexLevelsDatabase.ContainsKey(type_defName) && ThisModData.TexLevelsDatabase[type_defName].ContainsKey(level.textureLevelsName))
@@ -307,7 +310,7 @@ namespace NareisLib
                 MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
                 if (comp.storedDataHair.NullOrEmpty() || !comp.storedDataHair.ContainsKey(fullOriginalDefName))
                 {
-                    Log.Warning("Hair Respawning Hair Respawning Hair Respawning");
+                    //Log.Warning("Hair Respawning Hair Respawning Hair Respawning");
                     Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
                     data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
                     cachedGraphicData[fullOriginalDefName] = cachedData;
@@ -421,9 +424,15 @@ namespace NareisLib
             else
                 bodyMesh = __instance.graphics.nakedGraphic.MeshAt(facing);
 
-            Log.Warning(" ");
-            Log.Warning("-------------------------------------------------------------------");
-            Log.Warning("从 " + vector.y.ToString() + " 开始渲染底部图层");
+            bool displayLevelInfo = ModStaticMethod.ThisMod.apparelLevelsDisplayToggle;
+
+            if (displayLevelInfo)
+            {
+                Log.Warning(" ");
+                Log.Warning("-------------------------------------------------------------------");
+                Log.Warning("从 " + vector.y.ToString() + " 开始渲染底部图层");
+            }
+            
 
             List<int> renderLayers = new List<int>() { (int)TextureRenderLayer.BottomOverlay, (int)TextureRenderLayer.BottomHair }; 
             
@@ -433,10 +442,17 @@ namespace NareisLib
                 if (level == (int)TextureRenderLayer.BottomOverlay)
                 {
                     local.y -= 0.002f;
-                    Log.Warning(" BottomOverlay层: 从" + local.y.ToString() + "开始");
+                    if (displayLevelInfo)
+                        Log.Warning(" BottomOverlay层: 从" + local.y.ToString() + "开始");
                 }
                 else
-                    Log.Warning(" BottomHair层: 从" + local.y.ToString() + "开始");
+                {
+                    if (displayLevelInfo)
+                        Log.Warning(" BottomHair层: 从" + local.y.ToString() + "开始");
+                    if (___pawn.story.headType == HeadTypeDefOf.Stump)
+                        continue;
+                }
+                    
 
                 if (curDirection.ContainsKey(level))
                 {
@@ -509,7 +525,8 @@ namespace NareisLib
                         Vector3 pos = local + offset + dataOffset;
                         Material mat = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition).MatAt(facing, null);
                         GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
-                        Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
+                        if (displayLevelInfo)
+                            Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
                     }
                 }
             }
@@ -565,6 +582,8 @@ namespace NareisLib
             if (curDirection.NullOrEmpty())
                 return;
 
+            bool displayLevelInfo = ModStaticMethod.ThisMod.apparelLevelsDisplayToggle;
+
             Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
             Vector3 vector = rootLoc;
             vector.y += 0.008687258f;
@@ -599,8 +618,12 @@ namespace NareisLib
             }
 
             //绘制（身体）和手臂
-            Log.Warning(" ");
-            Log.Warning("从 " + vector.y.ToString() + " 开始渲染身体图层");
+            if (displayLevelInfo)
+            {
+                Log.Warning(" ");
+                Log.Warning("从 " + vector.y.ToString() + " 开始渲染身体图层");
+            }
+                
 
             List<int> renderLayers;
             if (__state)
@@ -609,10 +632,13 @@ namespace NareisLib
                 renderLayers = new List<int>() { (int)TextureRenderLayer.Body, (int)TextureRenderLayer.Hand };
             foreach (int level in renderLayers)
             {
-                if (level == (int)TextureRenderLayer.Body)
-                    Log.Warning(" Body层: 从" + vector.y.ToString() + "开始");
-                if (level == (int)TextureRenderLayer.Hand)
-                    Log.Warning(" Hand层: 从" + vector.y.ToString() + "开始");
+                if (displayLevelInfo)
+                {
+                    if (level == (int)TextureRenderLayer.Body)
+                        Log.Warning(" Body层: 从" + vector.y.ToString() + "开始");
+                    if (level == (int)TextureRenderLayer.Hand)
+                        Log.Warning(" Hand层: 从" + vector.y.ToString() + "开始");
+                }
 
                 Vector3 locVec = vector;
 
@@ -716,7 +742,8 @@ namespace NareisLib
                             && ___pawn.Faction != null 
                             && ___pawn.Faction != Faction.OfMechanoids) ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor) : material;
                         GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
-                        Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
+                        if (displayLevelInfo)
+                            Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
                     }
                 }
             }
@@ -727,10 +754,12 @@ namespace NareisLib
             //绘制衣服(非shell)
             if (!__state && flags.FlagSet(PawnRenderFlags.Clothes) && curDirection.ContainsKey((int)TextureRenderLayer.Apparel))
             {
-                Log.Warning(" ");
-                Log.Warning("从 " + vector.y.ToString() + " 开始渲染衣服(包含渲染在头后方的Shell层的衣服)");
-                Log.Warning("每层间间隔为 " + comp.Props.apparelInterval.ToString() + "，换算在xml里的间隔为 " + (comp.Props.apparelInterval * 100).ToString());
-
+                if (displayLevelInfo)
+                {
+                    Log.Warning(" ");
+                    Log.Warning("从 " + vector.y.ToString() + " 开始渲染衣服(包含渲染在头后方的Shell层的衣服)");
+                    Log.Warning("每层间间隔为 " + comp.Props.apparelInterval.ToString() + "，换算在xml里的间隔为 " + (comp.Props.apparelInterval * 100).ToString());
+                }
                 
 
                 for (int i = 0; i < __instance.graphics.apparelGraphics.Count; i++)
@@ -835,7 +864,8 @@ namespace NareisLib
                                             ? mat
                                             : OverrideMaterialIfNeeded(__instance, mat, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
                                         GenDraw.DrawMeshNowOrLater(mesh, pos, quat, apparelMat, flags.FlagSet(PawnRenderFlags.DrawNow));
-                                        Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
+                                        if (displayLevelInfo)
+                                            Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
                                     }
                                 }
                             }
@@ -868,6 +898,8 @@ namespace NareisLib
             if (curDirection.NullOrEmpty())
                 return true;
 
+            bool displayLevelInfo = ModStaticMethod.ThisMod.apparelLevelsDisplayToggle;
+
             Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
             Mesh hairMesh = null;
             Mesh headMesh = null;
@@ -889,7 +921,8 @@ namespace NareisLib
             {
                 patchResult = false;
 
-                Log.Warning("从 " + shellLoc.y.ToString() + " 开始渲染外套(不渲染在头后方的Shell层的衣服)");
+                if (displayLevelInfo)
+                    Log.Warning("从 " + shellLoc.y.ToString() + " 开始渲染外套(不渲染在头后方的Shell层的衣服)");
 
                 for (int i = 0; i < apparelGraphics.Count; i++)
                 {
@@ -934,11 +967,13 @@ namespace NareisLib
                                 if (layer == (int)TextureRenderLayer.BottomShell)
                                 {
                                     local.y = 0.005687258f;
-                                    Log.Warning(" BottomShell层: 从" + local.y.ToString() + "开始");
+                                    if (displayLevelInfo)
+                                        Log.Warning(" BottomShell层: 从" + local.y.ToString() + "开始");
                                 }
                                 else
                                 {
-                                    Log.Warning(" Apparel(Shell)层: 从" + local.y.ToString() + "开始");
+                                    if (displayLevelInfo)
+                                        Log.Warning(" Apparel(Shell)层: 从" + local.y.ToString() + "开始");
                                 }
 
                                 foreach (MultiTexBatch batch in curDirection[layer])
@@ -1000,7 +1035,8 @@ namespace NareisLib
                                             ? material
                                             : OverrideMaterialIfNeeded(__instance, material, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
                                         GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
-                                        Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
+                                        if (displayLevelInfo)
+                                            Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
                                     }
                                 }
                             }
@@ -1032,7 +1068,8 @@ namespace NareisLib
                 Vector3 loc = shellLoc;
                 loc.y += 0.0304054035f;
 
-                Log.Warning(" FrontShell层: 从" + loc.y.ToString() + "开始");
+                if (displayLevelInfo)
+                    Log.Warning(" FrontShell层: 从" + loc.y.ToString() + "开始");
 
                 foreach (MultiTexBatch batch in curDirection[(int)TextureRenderLayer.FrontShell])
                 {
@@ -1097,7 +1134,8 @@ namespace NareisLib
                         ? material
                         : OverrideMaterialIfNeeded(__instance, material, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
-                    Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
+                    if (displayLevelInfo)
+                        Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
                 }
             }
 
@@ -1172,6 +1210,8 @@ namespace NareisLib
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
+            bool displayLevelInfo = ModStaticMethod.ThisMod.apparelLevelsDisplayToggle;
+
             int layer = (int)TextureRenderLayer.Head;
 
             //是否绘制原head贴图
@@ -1195,9 +1235,12 @@ namespace NareisLib
             //绘制多层贴图
             if (!curDirection.NullOrEmpty() && curDirection.ContainsKey(layer))
             {
-                Log.Warning(" ");
-                Log.Warning("从 " + headYOffset.y.ToString() + " 开始渲染头部图层");
-                Log.Warning(" Head层: 从" + headYOffset.y.ToString() + "开始");
+                if (displayLevelInfo)
+                {
+                    Log.Warning(" ");
+                    Log.Warning("从 " + headYOffset.y.ToString() + " 开始渲染头部图层");
+                    Log.Warning(" Head层: 从" + headYOffset.y.ToString() + "开始");
+                } 
 
                 Mesh bodyMesh = null;
                 Mesh hairMesh = null;
@@ -1280,7 +1323,8 @@ namespace NareisLib
                     Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition).MatAt(facing, null);
                     Material mat = GetHeadOverrideMat(material, instance, flags.FlagSet(PawnRenderFlags.Portrait), !flags.FlagSet(PawnRenderFlags.Cache));
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, drawNow);
-                    Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
+                    if (displayLevelInfo)
+                        Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
                 }
             }
         }
@@ -1427,11 +1471,14 @@ namespace NareisLib
             else
                 bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
 
+            bool displayLevelInfo = ModStaticMethod.ThisMod.apparelLevelsDisplayToggle;
+
             Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
             Vector3 hairYOffset = vector + headOffset;
             hairYOffset.y += 0.028957527f;
 
-            Log.Warning(" FaceMask层: 从" + hairYOffset.y.ToString() + "开始");
+            if (displayLevelInfo)
+                Log.Warning(" FaceMask层: 从" + hairYOffset.y.ToString() + "开始");
 
             int layer = (int)TextureRenderLayer.FaceMask;
 
@@ -1527,7 +1574,8 @@ namespace NareisLib
                                     ? material
                                     : OverrideMaterialIfNeeded(instance, material, pawn, flags.FlagSet(PawnRenderFlags.Portrait));
                                 GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
-                                Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
+                                if (displayLevelInfo)
+                                    Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
                             }
                         }
                     }
@@ -1546,6 +1594,8 @@ namespace NareisLib
                 instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
+
+            bool displayLevelInfo = ModStaticMethod.ThisMod.apparelLevelsDisplayToggle;
 
             int layer = (int)TextureRenderLayer.Hair;
             //是否绘制原头发贴图
@@ -1582,7 +1632,8 @@ namespace NareisLib
                 Color colorOne = pawn.story.HairColor;
                 Color colorTwo = alienComp != null ? alienComp.GetChannel("hair").second : Color.white;
 
-                Log.Warning(" Hair层: 从" + hairYOffset.y.ToString() + "开始");
+                if (displayLevelInfo)
+                    Log.Warning(" Hair层: 从" + hairYOffset.y.ToString() + "开始");
 
                 foreach (MultiTexBatch batch in curDirection[layer])
                 {
@@ -1643,7 +1694,8 @@ namespace NareisLib
                     Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern).MatAt(facing, null);
                     Material mat = GetHairOverrideMat(material, instance, flags.FlagSet(PawnRenderFlags.Portrait), !flags.FlagSet(PawnRenderFlags.Cache));
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, drawNow);
-                    Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
+                    if (displayLevelInfo)
+                        Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
                 }
             }
         }
@@ -1671,11 +1723,14 @@ namespace NareisLib
             else
                 bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
 
+            bool displayLevelInfo = ModStaticMethod.ThisMod.apparelLevelsDisplayToggle;
+
             Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
             Vector3 hairYOffset = vector + headOffset;
             hairYOffset.y += 0.028957527f;
 
-            Log.Warning(" HeadMask, Hat层: 从" + hairYOffset.y.ToString() + "开始");
+            if (displayLevelInfo)
+                Log.Warning(" HeadMask, Hat层: 从" + hairYOffset.y.ToString() + "开始");
 
             for (int index = 0; index < apparelGraphics.Count; index++)
             {
@@ -1776,7 +1831,8 @@ namespace NareisLib
                                             ? material
                                             : OverrideMaterialIfNeeded(instance, material, pawn, flags.FlagSet(PawnRenderFlags.Portrait));
                                         GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
-                                        Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
+                                        if (displayLevelInfo)
+                                            Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
                                     }
                                 }
                             }
@@ -1804,8 +1860,7 @@ namespace NareisLib
             Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
             if (curDirection.NullOrEmpty())
                 return;
-
-            Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
+            
             Mesh bodyMesh = null;
             Mesh hairMesh = null;
             Mesh headMesh = null;
@@ -1818,13 +1873,20 @@ namespace NareisLib
             else
                 bodyMesh = __instance.graphics.nakedGraphic.MeshAt(facing);
 
+            bool displayLevelInfo = ModStaticMethod.ThisMod.apparelLevelsDisplayToggle;
+
+            Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
+
             if (curDirection.ContainsKey((int)TextureRenderLayer.Overlay))
             {
                 Vector3 bodyLoc = rootLoc;
                 bodyLoc.y += 0.037644785f;
 
-                Log.Warning(" ");
-                Log.Warning("从 " + bodyLoc.y.ToString() + " 开始渲染顶部图层");
+                if (displayLevelInfo)
+                {
+                    Log.Warning(" ");
+                    Log.Warning("从 " + bodyLoc.y.ToString() + " 开始渲染顶部图层");
+                }
 
                 foreach (MultiTexBatch batch in curDirection[(int)TextureRenderLayer.Overlay])
                 {
@@ -1890,7 +1952,8 @@ namespace NareisLib
                     Vector3 pos = bodyLoc + offset + dataOffset;
                     Material mat = data.GetGraphic(batch.keyName, colorOne, Color.white, pattern, condition).MatAt(facing, null);
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
-                    Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
+                    if (displayLevelInfo)
+                        Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
                 }
             }
         }
