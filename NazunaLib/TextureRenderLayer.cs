@@ -16,16 +16,16 @@ namespace NareisLib
 
         //在描绘侧面时为Hair层
         //在描绘背面时为Hair层
-        //使用为PawnRenderer类的DrawPawnBody方法打的Prefix补丁进行渲染
+        //使用IL语言在PawnRenderer类的DrawHeadHair中修改头发进行渲染
         BottomHair,
 
         //在描绘侧面时不变
         //在描绘背面时为FrontShell层
-        //使用为PawnRenderer类的DrawPawnBody方法打的Prefix补丁进行渲染
+        //使用为PawnRenderer类的DrawPawnBody方法打的Prefix补丁以及使用为PawnRenderer类的DrawBodyApparel方法打的Prefix补丁进行渲染
         BottomShell,
 
         //各方向都不变，如果不关闭原版身体的渲染的话会渲染在原版的身体之下
-        //使用为PawnRenderer类的DrawPawnBody方法打的Prefix补丁进行渲染，并且对PawnGraphicSet类的MatsBodyBaseAt方法进行Prefix补丁
+        //使用为PawnRenderer类的DrawPawnBody方法打的Finalizer补丁进行渲染
         Body,
 
 
@@ -76,7 +76,7 @@ namespace NareisLib
 
         //在描绘侧面时不变
         //在描绘背面时为BottmShell层
-        //使用IL语言在PawnRenderer类的DrawHeadHair中渲染头发后渲染装备前进行渲染
+        //使用PawnRenderer类的DrawBodyApparel方法打的Prefix方法进行渲染
         //用于服装的渲染，其他部位设置此层不会生效
         FrontShell,
 

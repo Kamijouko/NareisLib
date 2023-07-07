@@ -74,8 +74,14 @@ namespace NareisLib
         //可选参数，该贴图是否有骨架版本
         public bool hasDessicated = false;
 
-        //可选参数，该贴图是否有断头版本
+        //可选参数，该贴图是否有断头版本，只可用于Body层
         public bool hasStump = false;
+
+        //可选参数，使用相对躯体类型的贴图版本，不可与useHeadType同时使用
+        public bool useBodyType = false;
+
+        //可选参数，使用相对头部类型的贴图版本，不可与useBodyType同时使用
+        public bool useHeadType = false;
 
         //可选参数，如果该贴图为手部层，则这个选项控制Hand层和HandTwo层是否绘制在shell层下方
         public bool handDrawHigherOfShell = true;
@@ -160,6 +166,8 @@ namespace NareisLib
             result.hasRotting = hasRotting;
             result.hasDessicated = hasDessicated;
             result.hasStump = hasStump;
+            result.useBodyType = useBodyType;
+            result.useHeadType = useHeadType;
             result.handDrawHigherOfShell = handDrawHigherOfShell;
             result.renderSwitch = renderSwitch;
             result.weightOfThePrefix = weightOfThePrefix;
@@ -167,6 +175,11 @@ namespace NareisLib
             result.isSleeve = isSleeve;
             result.sleeveTexList = sleeveTexList;
             result.sleeveDrawHigherOfShell = sleeveDrawHigherOfShell;
+
+            result.drawOffsetNorth = drawOffsetNorth;
+            result.drawOffsetEast = drawOffsetEast;
+            result.drawOffsetSouth = drawOffsetSouth;
+            result.drawOffsetWest = drawOffsetWest;
 
             result.preFixWeights = preFixWeights;
             result.texWeights = texWeights;
@@ -416,20 +429,24 @@ namespace NareisLib
         }
 
         //取得完整的贴图名称，前缀顺序为pattern，job，hediff
-        public string GetFullKeyName(string keyName, int pattern = 0, string condition = "")
+        public string GetFullKeyName(string keyName, int pattern = 0, string condition = "", string bodyType = "", string headType = "")
         {
             string patternPrefix = "";
             if (pattern > 0)
                 patternPrefix = "Pattern" + pattern.ToString() + "_";
             if (condition != "")
                 condition = "_" + condition;
-            return patternPrefix + jobPrefix + hediffPrefix + keyName + genderSuffix + condition;
+            if (bodyType != "" && headType == "")
+                bodyType = "_" + bodyType;
+            if (headType != "" && bodyType == "")
+                headType = "_" + headType;
+            return patternPrefix + jobPrefix + hediffPrefix + keyName + genderSuffix + bodyType + headType + condition;
         }
 
         //取得graphic，修改了基类的属性Graphic，参数为完全处理完毕后多层渲染comp里记录的keyName（列表在MultiTexBatch里）
-        public Graphic GetGraphic(string keyName, Color color, Color colorTwo, int pattern = 0, string condition = "")
+        public Graphic GetGraphic(string keyName, Color color, Color colorTwo, int pattern = 0, string condition = "", string bodyType = "", string headType = "")
         {
-            string path = Path.Combine(folder, GetFullKeyName(keyName, pattern, condition));
+            string path = Path.Combine(folder, GetFullKeyName(keyName, pattern, condition, bodyType, headType));
             if (texPath != path || cacheGraphic == null)
             {
                 texPath = path;
