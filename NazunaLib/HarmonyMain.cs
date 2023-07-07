@@ -847,11 +847,11 @@ namespace NareisLib
                                         int pattern = 0;
                                         if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
                                             pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
-                                        string condition = "";
+                                        /*string condition = "";
                                         if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
                                             condition = "Rotting";
                                         if (data.hasDessicated && bodyDrawType == RotDrawMode.Dessicated)
-                                            condition = "Dessicated";
+                                            condition = "Dessicated";*/
                                         string bodyType = "";
                                         if (data.useBodyType)
                                             bodyType = ___pawn.story.bodyType.defName;
@@ -863,7 +863,7 @@ namespace NareisLib
                                         else
                                             dataOffset.y *= 0.0001f;
                                         Vector3 pos = local + offset + dataOffset;
-                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, condition, bodyType).MatAt(facing, null);
+                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", bodyType).MatAt(facing, null);
                                         Material mat = (___pawn.RaceProps.IsMechanoid && ___pawn.Faction != null && ___pawn.Faction != Faction.OfMechanoids)
                                             ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor)
                                             : material;
