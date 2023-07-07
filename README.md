@@ -3,13 +3,13 @@
 
 ### 1.针对原版的Def定义其图像
 例如：  
-* 对于一个defName为Test_Hair的HairDef；  
-* 我们在另一个xml文件中定义一个MultiTexDef，defName随意，设置其originalDef属性为Test_Hair;  
-* 这表示此MultiTexDef是针对这个名为Test_Hair的HairDef创建的，现在它们被关联在了一起；  
-* 我们可以在MultiTexDef里设置许多图层，当游戏渲染我们关联的HairDef的时候，就会自动检测到我们在MultiTexDef里定义的图层并一起渲染。  
+* 对于一个`defName`为`Test_Hair`的`HairDef`；  
+* 我们在另一个xml文件中定义一个`MultiTexDef`，`defName`随意，设置其`originalDef`属性为`Test_Hair`;  
+* 这表示此`MultiTexDef`是针对这个名为`Test_Hair`的`HairDef`创建的，现在它们被关联在了一起；  
+* 我们可以在`MultiTexDef`里设置许多图层，当游戏渲染我们关联的`HairDef`的时候，就会自动检测到我们在`MultiTexDef`里定义的图层并一起渲染。  
     （此为大致举例流程，实际使用请看[wiki操作介绍](https://github.com/Kamijouko/NareisLib/wiki)） 
   
-  可以作用于pawn身上的Def包括：BodyDef，HeadDef，HairDef，Apparel(衣服)，HandTypeDef  
+  可以作用于Pawn身上的Def包括：`BodyDef`，`HeadDef`，`HairDef`，`Apparel`(衣服)，`HandTypeDef`。  
 ### 2.自定义多层图像  
 如字面意思，可以在MultiTexDef中定义多个相同或不同图层的图像；  
 
