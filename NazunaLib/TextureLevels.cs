@@ -326,7 +326,7 @@ namespace NareisLib
             key = key.Replace("_Stump", "");
             //List<string> list = DefDatabase<BodyTypeDef>.AllDefsListForReading.Select(x => x.defName).Concat(DefDatabase<HeadTypeDef>.AllDefsListForReading.Select(x => x.defName)).ToList();
             foreach (string surffix in ThisModData.SuffixList)
-                key = key.Replace(surffix, "");
+                key = key.Replace("_" + surffix, "");
             return key;
         }
 
