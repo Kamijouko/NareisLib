@@ -801,7 +801,7 @@ namespace NareisLib
                             {
                                 Vector3 local = vector;
                                 if (layer == (int)TextureRenderLayer.BottomShell)
-                                    local.y = rootLoc.y + 0.005687258f;
+                                    local.y = rootLoc.y + 0.006687258f;
 
                                 foreach (MultiTexBatch batch in curDirection[layer])
                                 {
@@ -973,7 +973,7 @@ namespace NareisLib
                                 Vector3 local = loc;
                                 if (layer == (int)TextureRenderLayer.BottomShell)
                                 {
-                                    local.y = shellLoc.y - (bodyFacing != Rot4.North ? 0.02027027f : 0.023166021f) + 0.006687258f;
+                                    local.y = shellLoc.y - (bodyFacing != Rot4.North ? 0.02027027f : 0.023166021f) + 0.005687258f;
                                     if (displayLevelInfo)
                                         Log.Warning(" BottomShell层: 从" + local.y.ToString() + "开始");
                                 }
