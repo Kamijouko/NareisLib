@@ -9,6 +9,7 @@ using HugsLib;
 using HarmonyLib;
 using AlienRace;
 using HugsLib.Settings;
+using System.Diagnostics;
 
 namespace NareisLib
 {
@@ -53,6 +54,12 @@ namespace NareisLib
                 "displayLevelsInfo_title".Translate(),
                 "displayLevelsInfo_desc".Translate(),
                 false);
+
+            pawnCurJobDisplayToggle = Settings.GetHandle<bool>(
+                "pawnCurJobInfo",
+                "pawnCurJobInfo_title".Translate(),
+                "pawnCurJobInfo_desc".Translate(),
+                false);
         }
 
         public static void LoadAndResolveAllPlanDefs()
@@ -85,16 +92,15 @@ namespace NareisLib
                 if (plan.plans.NullOrEmpty())
                     continue;
                 
-                string planDef = plan.defName;
-                if (!ThisModData.DefAndKeyDatabase.ContainsKey(planDef))
-                    ThisModData.DefAndKeyDatabase[planDef] = new Dictionary<string, MultiTexDef>();
+                if (!ThisModData.DefAndKeyDatabase.ContainsKey(plan.defName))
+                    ThisModData.DefAndKeyDatabase[plan.defName] = new Dictionary<string, MultiTexDef>();
 
                 foreach (MultiTexDef def in plan.plans)
                 {
                     if (def.levels.NullOrEmpty() 
                         || def.originalDefClass == null 
                         || def.originalDef == null 
-                        || ThisModData.DefAndKeyDatabase[planDef].ContainsKey(def.originalDefClass.ToStringSafe() + "_" + def.originalDef))
+                        || ThisModData.DefAndKeyDatabase[plan.defName].ContainsKey(def.originalDefClass.ToStringSafe() + "_" + def.originalDef))
                         continue;
 
                     string type_originalDefName = def.originalDefClass.ToStringSafe() + "_" + def.originalDef;
@@ -107,13 +113,17 @@ namespace NareisLib
                         level.GetAllGraphicDatas(def);
                     }
 
-                    ThisModData.DefAndKeyDatabase[planDef][type_originalDefName] = def;
+                    ThisModData.DefAndKeyDatabase[plan.defName][type_originalDefName] = def;
                 }
+                
             }
+            list = null;
+            GC.Collect();
         }
 
         public SettingHandle<bool> debugToggle;
         public SettingHandle<bool> apparelLevelsDisplayToggle;
+        public SettingHandle<bool> pawnCurJobDisplayToggle;
 
     }
 }

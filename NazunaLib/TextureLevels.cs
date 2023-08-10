@@ -24,6 +24,15 @@ namespace NareisLib
         //渲染的层级信息
         public TextureRenderLayer renderLayer = TextureRenderLayer.None;
 
+        //可选参数,设定该层是否会由于方向改变等原因自动变更为其他层，
+        //例：Hair层在渲染北面时会自动变为BottomHair层
+        public bool staticLayer = false;
+
+        //可选参数，开启后此图层采用水平翻转绘制
+        public bool flipped = false;
+
+        //可选参数，与上选项搭配使用，开启后将交换东西方向的贴图
+        public bool switchEastWest = false;
 
 
         //可选参数，设置特殊hediff所对应的名称前缀（根据hediff严重度）
@@ -31,8 +40,16 @@ namespace NareisLib
         //是否在无Hediff时渲染
         public bool rendNoHediff = true;
 
-        //可选参数，设置特殊job所对应的名称前缀
+        //可选参数，可系统性的为图层创建条件需求，
+        //使用此ActionManager会使jobSets失效
+        public ActionManager actionManager = new ActionManager();
+
+        //可选参数，设置特殊job所对应的名称前缀，
+        //在与actionManager同时设定时优先使用actionManager
         public TextureLevelJobSet jobSets;
+
+        //在使用以上两个动作条件设置时，控制是否在Pawn无job时渲染
+        public bool rendNoJob = true;
 
         //可选参数，设置此层的贴图具有的pattern以及随机时间的间隔
         public TextureLevelRandomPatternSet patternSets;
@@ -132,6 +149,9 @@ namespace NareisLib
         public string jobPrefix = "";
 
         //xml里无需设定并且设定无效
+        public string exPath = "";
+
+        //xml里无需设定并且设定无效
         public string genderSuffix = "";
 
         //xml里无需设定并且设定无效
@@ -149,9 +169,18 @@ namespace NareisLib
             result.textureLevelsName = textureLevelsName;
             result.prefix = prefix;
             result.renderLayer = renderLayer;
-            result.hediffSets = hediffSets;
-            result.jobSets = jobSets;
-            result.patternSets = patternSets;
+            result.staticLayer = staticLayer;            //
+            result.flipped = flipped;                   //
+            result.switchEastWest = switchEastWest;     //
+            if (!hediffSets.NullOrEmpty())
+                result.hediffSets = new List<TextureLevelHediffSet>(hediffSets);
+            result.actionManager = actionManager.Clone();//
+            if (jobSets != null)
+                result.jobSets = jobSets.Clone();
+            if (patternSets != null)
+                result.patternSets = patternSets.Clone();
+            result.rendNoJob = rendNoJob;               //
+            result.rendNoHediff = rendNoHediff;         //
             result.meshType = meshType;
             result.meshSize = meshSize;
             result.hasGender = hasGender;
@@ -189,6 +218,7 @@ namespace NareisLib
             result.originalDef = originalDef;
             result.hediffPrefix = hediffPrefix;
             result.jobPrefix = jobPrefix;
+            result.exPath = exPath;
             result.genderSuffix = genderSuffix;
             result.folder = folder;
             return result;
@@ -326,7 +356,7 @@ namespace NareisLib
             key = key.Replace("_Stump", "");
             //List<string> list = DefDatabase<BodyTypeDef>.AllDefsListForReading.Select(x => x.defName).Concat(DefDatabase<HeadTypeDef>.AllDefsListForReading.Select(x => x.defName)).ToList();
             foreach (string surffix in ThisModData.SuffixList)
-                key = key.Replace("_" + surffix, "");
+                key = key.Replace("_" + surffix + "_", "_");
             return key;
         }
 
@@ -351,14 +381,26 @@ namespace NareisLib
         //检查当前Pawn的job是否符合并对jobPrefix赋值
         public bool ResolvePrefixForJob(ExtendedGraphicsPawnWrapper pawn, string keyName)
         {
-            if (jobSets == null)
+            if (jobSets == null && actionManager.def == null)
                 return true;
             if (pawn.CurJob != null)
             {
-                TextureLevelJobDataSet data;
-                return !jobSets.JobMap.TryGetValue(pawn.CurJob.def, out data) || (data.texList.Contains(keyName) && data.IsApplicable(pawn, out jobPrefix));
+                if (actionManager.def == null)
+                {
+                    TextureLevelJobDataSet data;
+                    return !jobSets.JobMap.TryGetValue(pawn.CurJob.def, out data) || (data.texList.Contains(keyName) && data.IsApplicable(pawn, out jobPrefix));
+                }
+                else
+                {
+                    jobPrefix = "";
+                    actionManager.StateUpdate(pawn, pawn.CurJob.def, keyName);
+                    exPath = actionManager.GetExPath;
+                    return actionManager.IsApplicable(pawn);
+                }
             }
-            return jobSets.rendNoJob;
+            exPath = "";
+            jobPrefix = "";
+            return rendNoJob;
         }
 
         //检查当前Pawn当前部位的hediff是否符合并对hediffPrefix赋值
@@ -369,7 +411,7 @@ namespace NareisLib
             int priority = 0;
             foreach (TextureLevelHediffSet set in hediffSets)
             {
-                if (!set.texList.Contains(keyName))
+                if (!set.texList.Contains(keyName) || (exPath != "" && !set.enableWithJob))
                     continue;
                 if (set.priority >= priority)
                 {
@@ -433,17 +475,22 @@ namespace NareisLib
 
         //取得完整的贴图名称，前缀顺序为pattern，job，hediff
         public string GetFullKeyName(string keyName, int pattern = 0, string condition = "", string bodyType = "", string headType = "")
-        {
+        {            
             string patternPrefix = "";
             if (pattern > 0)
                 patternPrefix = "Pattern" + pattern.ToString() + "_";
-            if (condition != "")
-                condition = "_" + condition;
+            if (jobPrefix != "")
+                jobPrefix = jobPrefix + "_";
+            if (hediffPrefix != "")
+                hediffPrefix = hediffPrefix + "_";
             if (bodyType != "" && headType == "")
                 bodyType = "_" + bodyType;
             if (headType != "" && bodyType == "")
                 headType = "_" + headType;
-            return patternPrefix + jobPrefix + hediffPrefix + keyName + genderSuffix + bodyType + headType + condition;
+            if (condition != "")
+                condition = "_" + condition;
+            string result = new StringBuilder().Append(new string[] { patternPrefix, jobPrefix, hediffPrefix, keyName, genderSuffix, bodyType, headType, condition }.SelectMany(x => x).ToArray()).ToString();
+            return Path.Combine(exPath, result);
         }
 
         //取得graphic，修改了基类的属性Graphic，参数为完全处理完毕后多层渲染comp里记录的keyName（列表在MultiTexBatch里）

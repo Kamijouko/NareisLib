@@ -25,6 +25,8 @@ namespace NareisLib
 
         public TextureRenderLayer layer;
 
+        public bool staticLayer;
+
         //public List<string> keyList = new List<string>();
 
         //public List<string> keyListSouth = new List<string>();
@@ -40,7 +42,7 @@ namespace NareisLib
 
         }
 
-        public MultiTexBatch(System.Type type, string original, string def, string key, string levelsName, TextureRenderLayer la, Vector3 r/*, List<string> list*/)
+        public MultiTexBatch(System.Type type, string original, string def, string key, string levelsName, TextureRenderLayer la, Vector3 r, bool stLayer/*, List<string> list*/)
         {
             originalDefClass = type;
             originalDefName = original;
@@ -49,11 +51,12 @@ namespace NareisLib
             textureLevelsName = levelsName;
             layer = la;
             renderSwitch = r;
+            staticLayer = stLayer;
         }
 
         public MultiTexBatch Clone()
         {
-            return new MultiTexBatch(originalDefClass, originalDefName, multiTexDefName, keyName, textureLevelsName, layer, renderSwitch);
+            return new MultiTexBatch(originalDefClass, originalDefName, multiTexDefName, keyName, textureLevelsName, layer, renderSwitch, staticLayer);
         }
 
         public void ExposeData()

@@ -10,9 +10,6 @@ namespace NareisLib
 {
     public class TextureLevelJobSet
     {
-        //是否在无job时渲染
-        public bool rendNoJob = true;
-
         private Dictionary<JobDef, TextureLevelJobDataSet> jobMap = new Dictionary<JobDef, TextureLevelJobDataSet>();
         public Dictionary<JobDef, TextureLevelJobDataSet> JobMap
         {
@@ -28,5 +25,13 @@ namespace NareisLib
         }
 
         public List<TextureLevelJobDataSet> jobs = new List<TextureLevelJobDataSet>();
+
+        public TextureLevelJobSet Clone()
+        {
+            TextureLevelJobSet result = new TextureLevelJobSet();
+            if (!jobs.NullOrEmpty())
+                result.jobs = new List<TextureLevelJobDataSet>(jobs);
+            return result;
+        }
     }
 }

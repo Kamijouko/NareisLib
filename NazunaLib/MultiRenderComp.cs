@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Verse;
 using RimWorld;
 using UnityEngine;
+using AlienRace.ExtendedGraphics;
 
 namespace NareisLib
 {
@@ -34,6 +35,7 @@ namespace NareisLib
         //key为从multiTexBatch读取的TextureLevelName，
         //value为其对应的TextureLevels
         //public Dictionary<string, TextureLevels> cachedAllGraphicData = new Dictionary<string, TextureLevels>();
+        public List<TextureLevels> cachedAllOriginalDefForGraphicDataList = new List<TextureLevels>();
 
         //用于缓存具有随机状态的贴图的当前的pattern，
         //key为此贴图的Type_OriginalDefName_KeyName，
@@ -51,6 +53,8 @@ namespace NareisLib
 
         //用于缓存当前手对应的持有装备角度
         public float holdEquipmentAngle = 0f;
+
+        ExtendedGraphicsPawnWrapper obj = null;
 
         public string pawnName = "";
 
@@ -129,6 +133,21 @@ namespace NareisLib
         }
 
 
+        protected Pawn PawnOwner
+        {
+            get
+            {
+                Pawn result;
+                if ((result = (parent as Pawn)) != null)
+                {
+                    return result;
+                }
+                return null;
+            }
+        }
+
+
+
         public MultiRenderComp()
         {
 
@@ -139,7 +158,24 @@ namespace NareisLib
         {
             base.CompTick();
 
-            //根据初始化的randomPattern队列来执行随机变换，每次random执行后向队列添加下次random的值，并且将cachedActionTimeOfTicks作为时间轴进行排序
+            /*if (parent as Pawn != null && (parent as Pawn).Faction != null && (parent as Pawn).Faction.IsPlayer)
+                Log.Warning("手臂：" + GetCurHandDefName);*/
+            if (!parent.Spawned)
+                return;
+            if (obj == null)
+            {
+                if (parent as Pawn != null && (parent as Pawn).Faction != null && (parent as Pawn).Faction.IsPlayer)
+                    obj = new ExtendedGraphicsPawnWrapper((Pawn)parent);
+            }
+            else if (ModStaticMethod.ThisMod.pawnCurJobDisplayToggle)
+            {
+                if (obj.CurJob != null)
+                    Log.Warning(pawnName + "当前工作：" + obj.CurJob.def.defName);
+                else
+                    Log.Warning(pawnName + "当前工作：Null");
+            }
+
+            /*//根据初始化的randomPattern队列来执行随机变换，每次random执行后向队列添加下次random的值，并且将cachedActionTimeOfTicks作为时间轴进行排序
             //随机出的pattern值被保存在cachedTandomGraphicPattern字典中，通过贴图名称查询
             //实验性质，可能会导致卡顿
             int tick = Find.TickManager.TicksGame;
@@ -151,7 +187,7 @@ namespace NareisLib
                 patternLine.Append(set);
                 patternLine.SortStable((i, j) => i.cachedActionTimeOfTicks.CompareTo(j.cachedActionTimeOfTicks));
                 timeTickLineIndex++;
-            }
+            }*/
         }
 
 
@@ -193,7 +229,7 @@ namespace NareisLib
                 if (batch.renderSwitch.y != 0)
                 {
                     TextureRenderLayer layer = batch.layer;
-                    if (batch.layer == TextureRenderLayer.BottomHair)
+                    if (!batch.staticLayer && batch.layer == TextureRenderLayer.BottomHair)
                         layer = TextureRenderLayer.Hair;
                     if (dataEast.NullOrEmpty() || !dataEast.ContainsKey((int)layer))
                         dataEast[(int)layer] = new List<MultiTexBatch>();
@@ -205,16 +241,19 @@ namespace NareisLib
                 if (batch.renderSwitch.z != 0)
                 {
                     TextureRenderLayer layer = batch.layer;
-                    if (batch.layer == TextureRenderLayer.BottomHair)
-                        layer = TextureRenderLayer.Hair;
-                    else if (batch.layer == TextureRenderLayer.BottomShell)
-                        layer = TextureRenderLayer.FrontShell;
-                    /*else if (batch.layer == TextureRenderLayer.HandOne)
-                        layer = TextureRenderLayer.HandTwo;*/
-                    else if (batch.layer == TextureRenderLayer.FrontShell)
-                        layer = TextureRenderLayer.BottomShell;
-                    else if (batch.layer == TextureRenderLayer.Hair)
-                        layer = TextureRenderLayer.BottomHair;
+                    if (!batch.staticLayer)
+                    {
+                        if (batch.layer == TextureRenderLayer.BottomHair)
+                            layer = TextureRenderLayer.Hair;
+                        else if (batch.layer == TextureRenderLayer.BottomShell)
+                            layer = TextureRenderLayer.FrontShell;
+                        /*else if (batch.layer == TextureRenderLayer.HandOne)
+                            layer = TextureRenderLayer.HandTwo;*/
+                        else if (batch.layer == TextureRenderLayer.FrontShell)
+                            layer = TextureRenderLayer.BottomShell;
+                        else if (batch.layer == TextureRenderLayer.Hair)
+                            layer = TextureRenderLayer.BottomHair;
+                    }
                     if (dataNorth.NullOrEmpty() || !dataNorth.ContainsKey((int)layer))
                         dataNorth[(int)layer] = new List<MultiTexBatch>();
                     dataNorth[(int)layer].Add(batch.Clone());
@@ -263,6 +302,7 @@ namespace NareisLib
             
 
             cachedAllOriginalDefForGraphicData = cachedBodyGraphicData.Concat(cachedHairGraphicData).Concat(cachedApparelGraphicData).ToDictionary(k => k.Key, v => v.Value);
+            cachedAllOriginalDefForGraphicDataList = cachedAllOriginalDefForGraphicData.Values.SelectMany(x => x.Values).ToList();
             //cachedAllGraphicData = cachedAllOriginalDefForGraphicData.SelectMany(x => x.Value).ToDictionary(k => k.Key, v => v.Value);
 
 
@@ -284,6 +324,41 @@ namespace NareisLib
             }
         }
 
+
+
+        public override IEnumerable<Gizmo> CompGetGizmosExtra()
+        {
+            foreach (Gizmo gizmo in base.CompGetGizmosExtra())
+            {
+                yield return gizmo;
+            }
+            foreach (Gizmo gizmo in GetGizmos())
+            {
+                yield return gizmo;
+            }
+            yield break;
+        }
+
+        private IEnumerable<Gizmo> GetGizmos()
+        {;
+            if (PawnOwner != null && PawnOwner.Faction == Faction.OfPlayer && Find.Selector.SingleSelectedThing == PawnOwner)
+            {
+                List<ActionManager> actionManagers = cachedAllOriginalDefForGraphicDataList.Where(x => x.actionManager.def != null).Select(x => x.actionManager).ToList();
+                foreach (ActionManager actionManager in actionManagers)
+                {
+                    yield return new Command_Action
+                    {
+                        defaultLabel = actionManager.gizmoLabel,
+                        icon = actionManager.GetGizmoIcon,
+                        action = () =>
+                        {
+                            Find.WindowStack.Add(new Page_Setting_CurBehavior());
+                        }
+                    };
+                }
+            }
+            yield break;
+        }
 
 
         public override void PostExposeData()

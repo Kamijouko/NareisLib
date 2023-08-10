@@ -27,5 +27,15 @@ namespace NareisLib
             cachedPattern = Rand.Range(1, patterns);
             return cachedActionTimeOfTicks = Rand.Range(tick + timeIntervalOfTicks.x, tick + timeIntervalOfTicks.y);
         }
+
+        public TextureLevelRandomPatternSet Clone()
+        {
+            TextureLevelRandomPatternSet result = new TextureLevelRandomPatternSet();
+            result.texList = texList;
+            result.patterns = patterns;
+            result.timeIntervalOfTicks = timeIntervalOfTicks;
+            result.typeOriginalDefNameKeyName = typeOriginalDefNameKeyName;
+            return result;
+        }
     }
 }

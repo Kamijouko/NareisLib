@@ -47,6 +47,7 @@
       <HintPath>L:\SteamLibrary\steamapps\workshop\content\294100\818773962\Assemblies\HugsLib.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="System" />
     <Reference Include="Unity.TextMeshPro">
       <HintPath>L:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Unity.TextMeshPro.dll</HintPath>
       <Private>False</Private>
@@ -297,6 +298,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActionDef.cs" />
+    <Compile Include="ActionManager.cs" />
+    <Compile Include="Behavior.cs" />
     <Compile Include="HandTypeDef.cs" />
     <Compile Include="ModStaticMethod.cs" />
     <Compile Include="MultiRenderComp.cs" />
@@ -304,6 +308,10 @@
     <Compile Include="MultiTexBatch.cs" />
     <Compile Include="MultiTexDef.cs" />
     <Compile Include="MultiTexEpoch.cs" />
+    <Compile Include="NareisLib_MeshPool.cs" />
+    <Compile Include="NareisLib_GraphicMeshSet.cs" />
+    <Compile Include="NareisLib_MeshPoolUtility.cs" />
+    <Compile Include="Page_Setting_CurBehavior.cs" />
     <Compile Include="TextureLevelRandomPatternSet.cs" />
     <Compile Include="RenderPlanDef.cs" />
     <Compile Include="RenderClass.cs" />

@@ -18,7 +18,8 @@ using RimWorld.Planet;
 using UnityEngine.UIElements;
 using static HarmonyLib.Code;
 using UnityEngine.SocialPlatforms;
-
+using UnityEngine.UIElements.Experimental;
+using UnityEngine.Assertions.Must;
 
 namespace NareisLib
 {
@@ -150,7 +151,7 @@ namespace NareisLib
                     }
 
                     if (!batches.Exists(x => x.textureLevelsName == level.textureLevelsName))
-                        batches.Add(new MultiTexBatch(def.originalDefClass, def.originalDef, def.defName, keyName, level.textureLevelsName, level.renderLayer, level.renderSwitch));
+                        batches.Add(new MultiTexBatch(def.originalDefClass, def.originalDef, def.defName, keyName, level.textureLevelsName, level.renderLayer, level.renderSwitch, level.staticLayer));
 
                     if (ModStaticMethod.ThisMod.debugToggle)
                     {
@@ -408,13 +409,14 @@ namespace NareisLib
             Vector3 vector = rootLoc;
             vector.y += 0.002687258f;/*原身体为0.008687258f，反映精度为0.0003f*/
             Mesh bodyMesh = null;
-            Mesh hairMesh = null;
-            Mesh headMesh = null;
+            NareisLib_GraphicMeshSet bodyMeshSet = null;
+            NareisLib_GraphicMeshSet hairMeshSet = null;
+            NareisLib_GraphicMeshSet headMeshSet = null;
             if (___pawn.RaceProps.Humanlike)
             {
-                bodyMesh = HumanlikeMeshPoolUtility.GetHumanlikeBodySetForPawn(___pawn).MeshAt(facing);
-                headMesh = HumanlikeMeshPoolUtility.GetHumanlikeHeadSetForPawn(___pawn).MeshAt(facing);
-                hairMesh = HumanlikeMeshPoolUtility.GetHumanlikeHairSetForPawn(___pawn).MeshAt(facing);/*__instance.graphics.HairMeshSet.MeshAt(facing);*/
+                bodyMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeBodySetForPawn(___pawn);
+                headMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHeadSetForPawn(___pawn);
+                hairMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHairSetForPawn(___pawn);
             }
             else
                 bodyMesh = __instance.graphics.nakedGraphic.MeshAt(facing);
@@ -473,7 +475,7 @@ namespace NareisLib
                     Vector3 offset = Vector3.zero;
                     if (data.meshSize != Vector2.zero)
                     {
-                        mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                        mesh = NareisLib_MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing, data.flipped);
                         switch (data.meshType)
                         {
                             case "Head": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
@@ -486,13 +488,15 @@ namespace NareisLib
                         {
                             switch (data.meshType)
                             {
-                                case "Body": mesh = bodyMesh; break;
+                                case "Body": 
+                                    mesh = bodyMeshSet.MeshAt(facing, data.flipped); 
+                                    break;
                                 case "Head":
-                                    mesh = headMesh;
+                                    mesh = headMeshSet.MeshAt(facing, data.flipped);
                                     offset = quat * __instance.BaseHeadOffsetAt(facing);
                                     break;
                                 case "Hair":
-                                    mesh = hairMesh;
+                                    mesh = hairMeshSet.MeshAt(facing, data.flipped);
                                     offset = quat * __instance.BaseHeadOffsetAt(facing);
                                     break;
                             }
@@ -522,7 +526,8 @@ namespace NareisLib
                     else
                         dataOffset.y *= 0.0001f;
                     Vector3 pos = local + offset + dataOffset;
-                    Material mat = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition, bodyType, headType).MatAt(facing, null);
+                    Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
+                    Material mat = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition, bodyType, headType).MatAt(matFacing, null);
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                     if (displayLevelInfo)
                         Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
@@ -555,16 +560,21 @@ namespace NareisLib
         static void DrawPawnBodyFinalizer(PawnRenderer __instance, Pawn ___pawn, bool __state, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags, out Mesh bodyMesh)
         {
             bodyMesh = null;
-            Mesh hairMesh = null;
-            Mesh headMesh = null;
+            NareisLib_GraphicMeshSet bodyMeshSet = null;
+            NareisLib_GraphicMeshSet hairMeshSet = null;
+            NareisLib_GraphicMeshSet headMeshSet = null;
             if (___pawn.RaceProps.Humanlike)
             {
-                bodyMesh = HumanlikeMeshPoolUtility.GetHumanlikeBodySetForPawn(___pawn).MeshAt(facing);
-                headMesh = HumanlikeMeshPoolUtility.GetHumanlikeHeadSetForPawn(___pawn).MeshAt(facing);
-                hairMesh = HumanlikeMeshPoolUtility.GetHumanlikeHairSetForPawn(___pawn).MeshAt(facing);
+                bodyMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeBodySetForPawn(___pawn);
+                headMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHeadSetForPawn(___pawn);
+                hairMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHairSetForPawn(___pawn);
+                bodyMesh = bodyMeshSet.MeshAt(facing);
             }
             else
+            {
                 bodyMesh = __instance.graphics.nakedGraphic.MeshAt(facing);
+            }
+                
 
             MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
             if (comp == null)
@@ -661,7 +671,7 @@ namespace NareisLib
                         Vector3 offset = Vector3.zero;
                         if (data.meshSize != Vector2.zero)
                         {
-                            mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                            mesh = NareisLib_MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing, data.flipped);
                             switch (data.meshType)
                             {
                                 case "Head": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
@@ -674,19 +684,21 @@ namespace NareisLib
                             {
                                 switch (data.meshType)
                                 {
-                                    case "Body": mesh = bodyMesh; break;
+                                    case "Body": 
+                                        mesh = bodyMeshSet.MeshAt(facing, data.flipped); 
+                                        break;
                                     case "Head":
-                                        mesh = headMesh;
+                                        mesh = headMeshSet.MeshAt(facing, data.flipped);
                                         offset = quat * __instance.BaseHeadOffsetAt(facing);
                                         break;
                                     case "Hair":
-                                        mesh = hairMesh;
+                                        mesh = hairMeshSet.MeshAt(facing, data.flipped);
                                         offset = quat * __instance.BaseHeadOffsetAt(facing);
                                         break;
                                 }
                             }
                             else
-                                mesh = bodyMesh;
+                                mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(__instance.graphics.nakedGraphic, facing) : bodyMesh;
                         }
                         int pattern = 0;
                         if (data.isSleeve)
@@ -711,27 +723,31 @@ namespace NareisLib
                         if (data.useBodyType)
                             bodyType = ___pawn.story.bodyType.defName;
                         Vector3 handOffset = Vector3.zero;
-                        if (data.handDrawHigherOfShell && !data.isSleeve)
+                        if (!data.useStaticYOffset && !data.usePublicYOffset)
                         {
-                            if (facing != Rot4.North)
-                                handOffset.y = 0.02027027f + 0.0028957527f + comp.Props.apparelInterval;
+                            if (data.handDrawHigherOfShell && !data.isSleeve)
+                            {
+                                if (facing != Rot4.North)
+                                    handOffset.y = 0.02027027f + 0.0028957527f + comp.Props.apparelInterval;
+                                else
+                                    handOffset.y = 0.023166021f + 0.0028957527f + comp.Props.apparelInterval;
+                            }
+                            else if (data.sleeveDrawHigherOfShell && data.isSleeve)
+                            {
+                                if (facing != Rot4.North)
+                                    handOffset.y = 0.02027027f + 0.0028957527f + comp.Props.apparelInterval * 2;
+                                else
+                                    handOffset.y = 0.023166021f + 0.0028957527f + comp.Props.apparelInterval * 2;
+                            }
+                            else if (!data.isSleeve)
+                            {
+                                handOffset.y = 0.02027027f - 0.0015f;
+                            }
                             else
-                                handOffset.y = 0.023166021f + 0.0028957527f + comp.Props.apparelInterval;
-                        }
-                        else if (data.sleeveDrawHigherOfShell && data.isSleeve)
-                        {
-                            if (facing != Rot4.North)
-                                handOffset.y = 0.02027027f + 0.0028957527f + comp.Props.apparelInterval * 2;
-                            else
-                                handOffset.y = 0.023166021f + 0.0028957527f + comp.Props.apparelInterval * 2;
-                        }
-                        else if (!data.isSleeve)
-                        {
-                            handOffset.y = 0.02027027f - 0.0015f;
-                        }
-                        else
-                        {
-                            handOffset.y = 0.02027027f - 0.001f;
+                            {
+                                handOffset.y = 0.02027027f - 0.001f;
+                            }
+                            handOffset.y -= 0.008687258f;
                         }
                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
                         if (data.useStaticYOffset)
@@ -741,7 +757,8 @@ namespace NareisLib
                         else
                             dataOffset.y *= 0.0001f;
                         Vector3 pos = locVec + offset + handOffset + dataOffset;
-                        Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition, bodyType).MatAt(facing, null);
+                        Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
+                        Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition, bodyType).MatAt(matFacing, null);
                         Material mat = (___pawn.RaceProps.IsMechanoid 
                             && ___pawn.Faction != null 
                             && ___pawn.Faction != Faction.OfMechanoids) ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor) : material;
@@ -817,7 +834,7 @@ namespace NareisLib
                                         Vector3 offset = Vector3.zero;
                                         if (data.meshSize != Vector2.zero)
                                         {
-                                            mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                                            mesh = NareisLib_MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing, data.flipped);
                                             switch (data.meshType)
                                             {
                                                 case "Head": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
@@ -830,19 +847,19 @@ namespace NareisLib
                                             {
                                                 switch (data.meshType)
                                                 {
-                                                    case "Body": mesh = bodyMesh; break;
+                                                    case "Body": mesh = bodyMeshSet.MeshAt(facing, data.flipped); break;
                                                     case "Head":
-                                                        mesh = headMesh;
+                                                        mesh = headMeshSet.MeshAt(facing, data.flipped);
                                                         offset = quat * __instance.BaseHeadOffsetAt(facing);
                                                         break;
                                                     case "Hair":
-                                                        mesh = hairMesh;
+                                                        mesh = hairMeshSet.MeshAt(facing, data.flipped);
                                                         offset = quat * __instance.BaseHeadOffsetAt(facing);
                                                         break;
                                                 }
                                             }
                                             else
-                                                mesh = bodyMesh;
+                                                mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(__instance.graphics.nakedGraphic, facing) : bodyMesh;
                                         }
                                         int pattern = 0;
                                         if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
@@ -863,7 +880,8 @@ namespace NareisLib
                                         else
                                             dataOffset.y *= 0.0001f;
                                         Vector3 pos = local + offset + dataOffset;
-                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", bodyType).MatAt(facing, null);
+                                        Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
+                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", bodyType).MatAt(matFacing, null);
                                         Material mat = (___pawn.RaceProps.IsMechanoid && ___pawn.Faction != null && ___pawn.Faction != Faction.OfMechanoids)
                                             ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor)
                                             : material;
@@ -908,14 +926,16 @@ namespace NareisLib
             bool displayLevelInfo = ModStaticMethod.ThisMod.apparelLevelsDisplayToggle;
 
             Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
-            Mesh hairMesh = null;
-            Mesh headMesh = null;
+
+            NareisLib_GraphicMeshSet bodyMeshSet = null;
+            NareisLib_GraphicMeshSet hairMeshSet = null;
+            NareisLib_GraphicMeshSet headMeshSet = null;
             if (___pawn.RaceProps.Humanlike)
             {
-                headMesh = HumanlikeMeshPoolUtility.GetHumanlikeHeadSetForPawn(___pawn).MeshAt(bodyFacing);
-                hairMesh = HumanlikeMeshPoolUtility.GetHumanlikeHairSetForPawn(___pawn).MeshAt(bodyFacing);
+                bodyMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeBodySetForPawn(___pawn);
+                headMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHeadSetForPawn(___pawn);
+                hairMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHairSetForPawn(___pawn);
             }
-
 
             List<ApparelGraphicRecord> apparelGraphics = __instance.graphics.apparelGraphics;
 
@@ -998,7 +1018,7 @@ namespace NareisLib
                                         Vector3 offset = Vector3.zero;
                                         if (data.meshSize != Vector2.zero)
                                         {
-                                            mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(bodyFacing);
+                                            mesh = NareisLib_MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(bodyFacing, data.flipped);
                                             switch (data.meshType)
                                             {
                                                 case "Head": offset = quat * __instance.BaseHeadOffsetAt(bodyFacing); break;
@@ -1011,19 +1031,21 @@ namespace NareisLib
                                             {
                                                 switch (data.meshType)
                                                 {
-                                                    case "Body": mesh = bodyMesh; break;
+                                                    case "Body": 
+                                                        mesh = bodyMeshSet.MeshAt(bodyFacing, data.flipped); 
+                                                        break;
                                                     case "Head":
-                                                        mesh = headMesh;
+                                                        mesh = headMeshSet.MeshAt(bodyFacing, data.flipped);
                                                         offset = quat * __instance.BaseHeadOffsetAt(bodyFacing);
                                                         break;
                                                     case "Hair":
-                                                        mesh = hairMesh;
+                                                        mesh = hairMeshSet.MeshAt(bodyFacing, data.flipped);
                                                         offset = quat * __instance.BaseHeadOffsetAt(bodyFacing);
                                                         break;
                                                 }
                                             }
                                             else
-                                                mesh = bodyMesh;
+                                                mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(__instance.graphics.nakedGraphic, bodyFacing) : bodyMesh;
                                         }
                                         //Log.Warning("has mesh mesh mesh : " + (bodyMesh != null).ToStringSafe());
                                         int pattern = 0;
@@ -1040,7 +1062,8 @@ namespace NareisLib
                                         else
                                             dataOffset.y *= 0.0001f;
                                         Vector3 pos = local + offset + dataOffset;
-                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "" , bodyType).MatAt(bodyFacing, null);
+                                        Rot4 matFacing = data.switchEastWest && (bodyFacing == Rot4.East || bodyFacing == Rot4.West) ? new Rot4(4 - bodyFacing.AsInt) : bodyFacing;
+                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "" , bodyType).MatAt(matFacing, null);
                                         Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                                             ? material
                                             : OverrideMaterialIfNeeded(__instance, material, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1100,7 +1123,7 @@ namespace NareisLib
                     Vector3 offset = Vector3.zero;
                     if (data.meshSize != Vector2.zero)
                     {
-                        mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(bodyFacing);
+                        mesh = NareisLib_MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(bodyFacing, data.flipped);
                         switch (data.meshType)
                         {
                             case "Head": offset = quat * __instance.BaseHeadOffsetAt(bodyFacing); break;
@@ -1113,19 +1136,21 @@ namespace NareisLib
                         {
                             switch (data.meshType)
                             {
-                                case "Body": mesh = bodyMesh; break;
+                                case "Body":
+                                    mesh = bodyMeshSet.MeshAt(bodyFacing, data.flipped);
+                                    break;
                                 case "Head":
-                                    mesh = headMesh;
+                                    mesh = headMeshSet.MeshAt(bodyFacing, data.flipped);
                                     offset = quat * __instance.BaseHeadOffsetAt(bodyFacing);
                                     break;
                                 case "Hair":
-                                    mesh = hairMesh;
+                                    mesh = hairMeshSet.MeshAt(bodyFacing, data.flipped);
                                     offset = quat * __instance.BaseHeadOffsetAt(bodyFacing);
                                     break;
                             }
                         }
                         else
-                            mesh = bodyMesh;
+                            mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(__instance.graphics.nakedGraphic, bodyFacing) : bodyMesh;
                     }
                     //Log.Warning("has mesh mesh mesh : " + (bodyMesh != null).ToStringSafe());
                     int pattern = 0;
@@ -1142,7 +1167,8 @@ namespace NareisLib
                     else
                         dataOffset.y *= 0.0001f;
                     Vector3 pos = loc + offset + dataOffset;
-                    Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", bodyType).MatAt(bodyFacing, null);
+                    Rot4 matFacing = data.switchEastWest && (bodyFacing == Rot4.East || bodyFacing == Rot4.West) ? new Rot4(4 - bodyFacing.AsInt) : bodyFacing;
+                    Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", bodyType).MatAt(matFacing, null);
                     Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                         ? material
                         : OverrideMaterialIfNeeded(__instance, material, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1256,14 +1282,18 @@ namespace NareisLib
                 } 
 
                 Mesh bodyMesh = null;
-                Mesh hairMesh = null;
+                NareisLib_GraphicMeshSet bodyMeshSet = null;
+                NareisLib_GraphicMeshSet hairMeshSet = null;
+                NareisLib_GraphicMeshSet headMeshSet = null;
                 if (pawn.RaceProps.Humanlike)
                 {
-                    bodyMesh = HumanlikeMeshPoolUtility.GetHumanlikeBodySetForPawn(pawn).MeshAt(facing);
-                    hairMesh = HumanlikeMeshPoolUtility.GetHumanlikeHairSetForPawn(pawn).MeshAt(facing);
+                    bodyMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeBodySetForPawn(pawn);
+                    headMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHeadSetForPawn(pawn);
+                    hairMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHairSetForPawn(pawn);
                 }
                 else
                     bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
+
                 Color colorOne = pawn.story.SkinColor;
                 Color colorTwo = alienPartGenerator != null ? alienPartGenerator.SkinColor(pawn, false) : Color.white;
 
@@ -1283,7 +1313,7 @@ namespace NareisLib
                     Vector3 offset = Vector3.zero;
                     if (data.meshSize != Vector2.zero)
                     {
-                        mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                        mesh = NareisLib_MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing, data.flipped);
                         switch (data.meshType)
                         {
                             case "Head": offset = quat * instance.BaseHeadOffsetAt(facing); break;
@@ -1296,19 +1326,21 @@ namespace NareisLib
                         {
                             switch (data.meshType)
                             {
-                                case "Body": mesh = bodyMesh; break;
+                                case "Body": 
+                                    mesh = bodyMeshSet.MeshAt(facing, data.flipped); 
+                                    break;
                                 case "Head":
-                                    mesh = headMesh;
+                                    mesh = data.flipped ? headMeshSet.MeshAt(facing, data.flipped) : headMesh;
                                     offset = quat * instance.BaseHeadOffsetAt(facing);
                                     break;
                                 case "Hair":
-                                    mesh = hairMesh;
+                                    mesh = hairMeshSet.MeshAt(facing, data.flipped);
                                     offset = quat * instance.BaseHeadOffsetAt(facing);
                                     break;
                             }
                         }
                         else
-                            mesh = bodyMesh;
+                            mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(instance.graphics.nakedGraphic, facing) : bodyMesh;
                     }
                     int pattern = 0;
                     if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
@@ -1336,7 +1368,8 @@ namespace NareisLib
                     else
                         dataOffset.y *= 0.0001f;
                     Vector3 pos = headYOffset + offset + dataOffset;
-                    Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition, "", headType).MatAt(facing, null);
+                    Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
+                    Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition, "", headType).MatAt(matFacing, null);
                     Material mat = GetHeadOverrideMat(material, instance, flags.FlagSet(PawnRenderFlags.Portrait), !flags.FlagSet(PawnRenderFlags.Cache));
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, drawNow);
                     if (displayLevelInfo)
@@ -1476,13 +1509,14 @@ namespace NareisLib
             Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
             Mesh bodyMesh = null;
-            Mesh hairMesh = null;
-            Mesh headMesh = null;
+            NareisLib_GraphicMeshSet bodyMeshSet = null;
+            NareisLib_GraphicMeshSet hairMeshSet = null;
+            NareisLib_GraphicMeshSet headMeshSet = null;
             if (pawn.RaceProps.Humanlike)
             {
-                bodyMesh = HumanlikeMeshPoolUtility.GetHumanlikeBodySetForPawn(pawn).MeshAt(facing);
-                headMesh = HumanlikeMeshPoolUtility.GetHumanlikeHeadSetForPawn(pawn).MeshAt(facing);
-                hairMesh = HumanlikeMeshPoolUtility.GetHumanlikeHairSetForPawn(pawn).MeshAt(facing);
+                bodyMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeBodySetForPawn(pawn);
+                headMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHeadSetForPawn(pawn);
+                hairMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHairSetForPawn(pawn);
             }
             else
                 bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
@@ -1519,7 +1553,7 @@ namespace NareisLib
                     {
                         Material original = apparel.graphic.MatAt(facing, null);
                         Material mat = flags.FlagSet(PawnRenderFlags.Cache) ? original : OverrideMaterialIfNeeded(original, pawn, instance, flags.FlagSet(PawnRenderFlags.Portrait));
-                        GenDraw.DrawMeshNowOrLater(hairMesh, loc, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
+                        GenDraw.DrawMeshNowOrLater(hairMeshSet.MeshAt(facing), loc, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                     }
 
                     if (comp == null)
@@ -1545,7 +1579,7 @@ namespace NareisLib
                                 Mesh mesh = null;
                                 if (data.meshSize != Vector2.zero)
                                 {
-                                    mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                                    mesh = NareisLib_MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing, data.flipped);
                                     if (data.meshType == "Body")
                                     {
                                         loc.x = vector.x;
@@ -1559,17 +1593,17 @@ namespace NareisLib
                                         switch (data.meshType)
                                         {
                                             case "Body": 
-                                                mesh = bodyMesh;
+                                                mesh = bodyMeshSet.MeshAt(facing, data.flipped);
                                                 loc.x = vector.x;
                                                 loc.z = vector.z;
                                                 break;
-                                            case "Head": mesh = headMesh; break;
-                                            case "Hair": mesh = hairMesh; break;
+                                            case "Head": mesh = headMeshSet.MeshAt(facing, data.flipped); break;
+                                            case "Hair": mesh = hairMeshSet.MeshAt(facing, data.flipped); break;
                                         }
                                     }
                                     else
                                     {
-                                        mesh = bodyMesh;
+                                        mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(instance.graphics.nakedGraphic, facing) : bodyMesh;
                                         loc.x = vector.x;
                                         loc.z = vector.z;
                                     }
@@ -1588,7 +1622,8 @@ namespace NareisLib
                                 else
                                     dataOffset.y *= 0.0001f;
                                 Vector3 pos = loc + dataOffset;
-                                Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", "", headType).MatAt(facing, null);
+                                Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
+                                Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", "", headType).MatAt(matFacing, null);
                                 Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                                     ? material
                                     : OverrideMaterialIfNeeded(instance, material, pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1631,11 +1666,14 @@ namespace NareisLib
 
             Vector3 hairYOffset = vector + headOffset;
             Mesh bodyMesh = null;
-            Mesh headMesh = null;
+            NareisLib_GraphicMeshSet bodyMeshSet = null;
+            NareisLib_GraphicMeshSet hairMeshSet = null;
+            NareisLib_GraphicMeshSet headMeshSet = null;
             if (pawn.RaceProps.Humanlike)
             {
-                bodyMesh = HumanlikeMeshPoolUtility.GetHumanlikeBodySetForPawn(pawn).MeshAt(facing);
-                headMesh = HumanlikeMeshPoolUtility.GetHumanlikeHeadSetForPawn(pawn).MeshAt(facing);
+                bodyMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeBodySetForPawn(pawn);
+                headMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHeadSetForPawn(pawn);
+                hairMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHairSetForPawn(pawn);
             }
             else
                 bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
@@ -1681,7 +1719,7 @@ namespace NareisLib
                         
                         if (data.meshSize != Vector2.zero)
                         {
-                            mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                            mesh = NareisLib_MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing, data.flipped);
                             if (data.meshType == "Body")
                             {
                                 hairPos.x = vector.x;
@@ -1695,17 +1733,19 @@ namespace NareisLib
                                 switch (data.meshType)
                                 {
                                     case "Body":
-                                        mesh = bodyMesh;
+                                        mesh = bodyMeshSet.MeshAt(facing, data.flipped);
                                         hairPos.x = vector.x;
                                         hairPos.z = vector.z;
                                         break;
-                                    case "Head": mesh = headMesh; break;
-                                    case "Hair": mesh = hairMesh; break;
+                                    case "Head": mesh = headMeshSet.MeshAt(facing, data.flipped); break;
+                                    case "Hair": 
+                                        mesh = data.flipped ? hairMeshSet.MeshAt(facing, data.flipped) : hairMesh; 
+                                        break;
                                 }
                             }
                             else
                             {
-                                mesh = bodyMesh;
+                                mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(instance.graphics.nakedGraphic, facing) : bodyMesh;
                                 hairPos.x = vector.x;
                                 hairPos.z = vector.z;
                             }
@@ -1726,7 +1766,8 @@ namespace NareisLib
                         else
                             dataOffset.y *= 0.0001f;
                         Vector3 pos = hairPos + dataOffset;
-                        Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, "", "", headType).MatAt(facing, null);
+                        Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
+                        Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, "", "", headType).MatAt(matFacing, null);
                         Material mat = GetHairOverrideMat(material, instance, flags.FlagSet(PawnRenderFlags.Portrait), !flags.FlagSet(PawnRenderFlags.Cache));
                         GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, drawNow);
                         if (displayLevelInfo)
@@ -1750,13 +1791,14 @@ namespace NareisLib
             Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
             Mesh bodyMesh = null;
-            Mesh hairMesh = null;
-            Mesh headMesh = null;
+            NareisLib_GraphicMeshSet bodyMeshSet = null;
+            NareisLib_GraphicMeshSet hairMeshSet = null;
+            NareisLib_GraphicMeshSet headMeshSet = null;
             if (pawn.RaceProps.Humanlike)
             {
-                bodyMesh = HumanlikeMeshPoolUtility.GetHumanlikeBodySetForPawn(pawn).MeshAt(facing);
-                headMesh = HumanlikeMeshPoolUtility.GetHumanlikeHeadSetForPawn(pawn).MeshAt(facing);
-                hairMesh = HumanlikeMeshPoolUtility.GetHumanlikeHairSetForPawn(pawn).MeshAt(facing);
+                bodyMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeBodySetForPawn(pawn);
+                headMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHeadSetForPawn(pawn);
+                hairMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHairSetForPawn(pawn);
             }
             else
                 bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
@@ -1795,7 +1837,7 @@ namespace NareisLib
                     {
                         Material original = apparel.graphic.MatAt(facing, null);
                         Material mat = flags.FlagSet(PawnRenderFlags.Cache) ? original : OverrideMaterialIfNeeded(original, pawn, instance, flags.FlagSet(PawnRenderFlags.Portrait));
-                        GenDraw.DrawMeshNowOrLater(hairMesh, loc, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
+                        GenDraw.DrawMeshNowOrLater(hairMeshSet.MeshAt(facing), loc, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                     }
 
                     if (comp == null)
@@ -1826,7 +1868,7 @@ namespace NareisLib
                                         Mesh mesh = null;
                                         if (data.meshSize != Vector2.zero)
                                         {
-                                            mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                                            mesh = NareisLib_MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing, data.flipped);
                                             if (data.meshType == "Body")
                                             {
                                                 loc.x = vector.x;
@@ -1840,17 +1882,17 @@ namespace NareisLib
                                                 switch (data.meshType)
                                                 {
                                                     case "Body":
-                                                        mesh = bodyMesh;
+                                                        mesh = bodyMeshSet.MeshAt(facing, data.flipped);
                                                         loc.x = vector.x;
                                                         loc.z = vector.z;
                                                         break;
-                                                    case "Head": mesh = headMesh; break;
-                                                    case "Hair": mesh = hairMesh; break;
+                                                    case "Head": mesh = headMeshSet.MeshAt(facing, data.flipped); break;
+                                                    case "Hair": mesh = hairMeshSet.MeshAt(facing, data.flipped); break;
                                                 }
                                             }
                                             else
                                             {
-                                                mesh = bodyMesh;
+                                                mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(instance.graphics.nakedGraphic, facing) : bodyMesh;
                                                 loc.x = vector.x;
                                                 loc.z = vector.z;
                                             }
@@ -1869,7 +1911,8 @@ namespace NareisLib
                                         else
                                             dataOffset.y *= 0.0001f;
                                         Vector3 pos = loc + dataOffset;
-                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", "", headType).MatAt(facing, null);
+                                        Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
+                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", "", headType).MatAt(matFacing, null);
                                         Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                                             ? material
                                             : OverrideMaterialIfNeeded(instance, material, pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1905,13 +1948,14 @@ namespace NareisLib
                 return;
             
             Mesh bodyMesh = null;
-            Mesh hairMesh = null;
-            Mesh headMesh = null;
+            NareisLib_GraphicMeshSet bodyMeshSet = null;
+            NareisLib_GraphicMeshSet hairMeshSet = null;
+            NareisLib_GraphicMeshSet headMeshSet = null;
             if (___pawn.RaceProps.Humanlike)
             {
-                bodyMesh = HumanlikeMeshPoolUtility.GetHumanlikeBodySetForPawn(___pawn).MeshAt(facing);
-                headMesh = HumanlikeMeshPoolUtility.GetHumanlikeHeadSetForPawn(___pawn).MeshAt(facing);
-                hairMesh = HumanlikeMeshPoolUtility.GetHumanlikeHairSetForPawn(___pawn).MeshAt(facing);
+                bodyMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeBodySetForPawn(___pawn);
+                headMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHeadSetForPawn(___pawn);
+                hairMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHairSetForPawn(___pawn);
             }
             else
                 bodyMesh = __instance.graphics.nakedGraphic.MeshAt(facing);
@@ -1950,7 +1994,7 @@ namespace NareisLib
                     Vector3 offset = Vector3.zero;
                     if (data.meshSize != Vector2.zero)
                     {
-                        mesh = MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing);
+                        mesh = NareisLib_MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing, data.flipped);
                         switch (data.meshType)
                         {
                             case "Head": offset = quat * __instance.BaseHeadOffsetAt(facing); break;
@@ -1963,19 +2007,21 @@ namespace NareisLib
                         {
                             switch (data.meshType)
                             {
-                                case "Body": mesh = bodyMesh; break;
+                                case "Body": 
+                                    mesh = bodyMeshSet.MeshAt(facing, data.flipped); 
+                                    break;
                                 case "Head":
-                                    mesh = headMesh;
+                                    mesh = headMeshSet.MeshAt(facing, data.flipped);
                                     offset = quat * __instance.BaseHeadOffsetAt(facing);
                                     break;
                                 case "Hair":
-                                    mesh = hairMesh;
+                                    mesh = hairMeshSet.MeshAt(facing, data.flipped);
                                     offset = quat * __instance.BaseHeadOffsetAt(facing);
                                     break;
                             }
                         }
                         else
-                            mesh = bodyMesh;
+                            mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(__instance.graphics.nakedGraphic, facing) : bodyMesh;
                     }
                     int pattern = 0;
                     if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
@@ -1999,7 +2045,8 @@ namespace NareisLib
                     else
                         dataOffset.y *= 0.0001f;
                     Vector3 pos = bodyLoc + offset + dataOffset;
-                    Material mat = data.GetGraphic(batch.keyName, colorOne, Color.white, pattern, condition, bodyType, headType).MatAt(facing, null);
+                    Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
+                    Material mat = data.GetGraphic(batch.keyName, colorOne, Color.white, pattern, condition, bodyType, headType).MatAt(matFacing, null);
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                     if (displayLevelInfo)
                         Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
@@ -2012,7 +2059,7 @@ namespace NareisLib
         //备用随机算法
         public static string GetRandom(System.Random rand, Dictionary<string, int> list)
         {
-            int i = rand.Next(list.Values.Max() + 1);
+            int i = rand.Next(list.Values.Max());
             List<string> result = list.Keys.Where(x => list[x] >= i).ToList();
             return result.RandomElement();
         }
