@@ -54,7 +54,7 @@ namespace NareisLib
         //用于缓存当前手对应的持有装备角度
         public float holdEquipmentAngle = 0f;
 
-        ExtendedGraphicsPawnWrapper obj = null;
+        ExtendedGraphicsPawnWrapper pawnWarpper = null;
 
         public string pawnName = "";
 
@@ -71,7 +71,6 @@ namespace NareisLib
                 return (MultiRenderCompProperties)props;
             }
         }
-
         public string GetCurHandDefName
         {
             get
@@ -85,17 +84,6 @@ namespace NareisLib
                 storedHandDefName = value;
             }
         }
-
-        
-
-        /*public Dictionary<string, TextureLevels> GetAllGraphicDataDict
-        {
-            get
-            {
-                return cachedAllGraphicData;
-            }
-        }*/
-
         public Dictionary<string, Dictionary<string, TextureLevels>> GetAllOriginalDefForGraphicDataDict
         {
             get
@@ -103,7 +91,6 @@ namespace NareisLib
                 return cachedAllOriginalDefForGraphicData;
             }
         }
-
         public List<string> GetAllHideOriginalDefData
         {
             get
@@ -123,7 +110,6 @@ namespace NareisLib
                 return new List<string>();
             }
         }
-
         public List<MultiTexBatch> GetAllBatch
         {
             get
@@ -131,8 +117,6 @@ namespace NareisLib
                 return storedDataBody.Values.Concat(storedDataApparel.Values).Concat(storedDataHair.Values).SelectMany(x => x.batches).ToList();
             }
         }
-
-
         protected Pawn PawnOwner
         {
             get
@@ -145,7 +129,18 @@ namespace NareisLib
                 return null;
             }
         }
-
+        public Texture2D GetGizmoIcon
+        {
+            get
+            {
+                Texture2D result = TexCommand.Install;
+                if (!ThisModData.RacePlansDatabase[PawnOwner.def.defName].actionSettingGizmo_IconPath.NullOrEmpty())
+                {
+                    result = ContentFinder<Texture2D>.Get(ThisModData.RacePlansDatabase[PawnOwner.def.defName].actionSettingGizmo_IconPath, true);
+                }
+                return result;
+            }
+        }
 
 
         public MultiRenderComp()
@@ -162,15 +157,15 @@ namespace NareisLib
                 Log.Warning("手臂：" + GetCurHandDefName);*/
             if (!parent.Spawned)
                 return;
-            if (obj == null)
+            if (pawnWarpper == null)
             {
                 if (parent as Pawn != null && (parent as Pawn).Faction != null && (parent as Pawn).Faction.IsPlayer)
-                    obj = new ExtendedGraphicsPawnWrapper((Pawn)parent);
+                    pawnWarpper = new ExtendedGraphicsPawnWrapper((Pawn)parent);
             }
             else if (ModStaticMethod.ThisMod.pawnCurJobDisplayToggle)
             {
-                if (obj.CurJob != null)
-                    Log.Warning(pawnName + "当前工作：" + obj.CurJob.def.defName);
+                if (pawnWarpper.CurJob != null)
+                    Log.Warning(pawnName + "当前工作：" + pawnWarpper.CurJob.def.defName);
                 else
                     Log.Warning(pawnName + "当前工作：Null");
             }
@@ -332,30 +327,24 @@ namespace NareisLib
             {
                 yield return gizmo;
             }
-            foreach (Gizmo gizmo in GetGizmos())
-            {
-                yield return gizmo;
-            }
-            yield break;
-        }
-
-        private IEnumerable<Gizmo> GetGizmos()
-        {;
             if (PawnOwner != null && PawnOwner.Faction == Faction.OfPlayer && Find.Selector.SingleSelectedThing == PawnOwner)
             {
-                List<ActionManager> actionManagers = cachedAllOriginalDefForGraphicDataList.Where(x => x.actionManager.def != null).Select(x => x.actionManager).ToList();
-                foreach (ActionManager actionManager in actionManagers)
+                List<TextureLevels> levels = cachedAllOriginalDefForGraphicDataList.Where(x => x.actionManager.def != null).ToList();
+
+                foreach (TextureLevels level in levels)
                 {
-                    yield return new Command_Action
-                    {
-                        defaultLabel = actionManager.gizmoLabel,
-                        icon = actionManager.GetGizmoIcon,
-                        action = () =>
-                        {
-                            Find.WindowStack.Add(new Page_Setting_CurBehavior());
-                        }
-                    };
+                    
                 }
+                yield return new Command_Action
+                {
+                    defaultLabel = ThisModData.RacePlansDatabase[PawnOwner.def.defName].actionSettingGizmo_Label,
+                    defaultDesc = ThisModData.RacePlansDatabase[PawnOwner.def.defName].actionSettingGizmo_Desc,
+                    icon = GetGizmoIcon,
+                    action = () =>
+                    {
+                        Find.WindowStack.Add(new Page_Setting_CurBehavior(this));
+                    }
+                };
             }
             yield break;
         }

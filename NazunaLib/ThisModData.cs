@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 using Verse;
 
 namespace NareisLib
@@ -27,6 +28,9 @@ namespace NareisLib
 
         //用于存储身体和头部的所有类型的defName
         public static List<string> SuffixList = new List<string>();
+
+        //用于缓存ActionManager窗口每次拖拽后的位置
+        public static Vector2 CachedActionSettingWindowPos = new Vector2((UI.screenWidth - 700f) / 2, (UI.screenHeight - 800f) / 2);
 
         //此为当TextureLevels所指定的prefix列表中没有图像或者没有指定的时候，根据原有参数texPath生成的图像所对应的自动生成的名称带的编号
         public static int TmpLevelID = 0;

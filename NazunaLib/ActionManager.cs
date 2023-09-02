@@ -3,6 +3,7 @@ using HugsLib;
 using RimWorld;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,10 +17,8 @@ namespace NareisLib
         //使用的行为树，填入defName
         public ActionDef def = null;
 
-        public string gizmoLabel = "";
-        public string gizmoIconPath = "";
-
-        string exPath = "";
+        string valuePath;
+        string fullPath;
         //string curPrefix = "";
         JobDef curJob = null;
         Behavior curBehavior = null;
@@ -30,24 +29,19 @@ namespace NareisLib
         int tickDelay = 10;
         Action tickAction = null;
 
-        public Texture2D GetGizmoIcon
+        public string GetCurPath
         {
             get
             {
-                Texture2D result = TexCommand.GatherSpotActive;
-                if (!gizmoIconPath.NullOrEmpty())
-                {
-                    result = ContentFinder<Texture2D>.Get(gizmoIconPath, true);
-                }
-                return result;
+                return valuePath;
             }
         }
 
-        public string GetExPath
+        public string GetFullPath
         {
             get
             {
-                return exPath;
+                return fullPath;
             }
         }
 
@@ -70,19 +64,37 @@ namespace NareisLib
         }
 
 
-        public void StateUpdate(ExtendedGraphicsPawnWrapper pawn, JobDef job, string key)
+        public void StateUpdate(ExtendedGraphicsPawnWrapper pawn, Pawn obj, JobDef job, string key)
         {
             if (job == null || key == null || key == "")
                 return;
 
             if ((curJob != job || curBehavior == null) && def.behaviors.TryGetValue(job, out curBehavior) && curBehavior.textures.Contains(key))
             {
+                if (curBehavior.linkedWithAction)
+                {
+                    MultiRenderComp comp = obj.GetComp<MultiRenderComp>();
+                    if (comp != null 
+                        && !comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
+                        && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(curBehavior.type_originalDefName)
+                        && comp.GetAllOriginalDefForGraphicDataDict[curBehavior.type_originalDefName].ContainsKey(curBehavior.textureLevelsName))
+                    {
+                        valuePath = "";
+                        fullPath = Path.Combine(
+                            curBehavior.exPath,
+                            valuePath = comp.GetAllOriginalDefForGraphicDataDict[curBehavior.type_originalDefName][curBehavior.textureLevelsName].actionManager.GetCurPath
+                            );
+                        return;
+                    }
+                    
+                }
                 //exPath = curBehavior.exPath;
                 //curPrefix = "";
-                exPath = "";
-                List<string> list;
+                valuePath = "";
+                fullPath = "";
+                List<string> list = new List<string> { "" };
                 if (!curBehavior.pathDict.TryGetValue(pawn.GetPosture(), out list) || !list.NullOrEmpty())
-                    exPath = list.First();
+                    fullPath = Path.Combine(curBehavior.exPath, valuePath = list.RandomElement());
 
                 if (curBehavior.randomChange)
                 {
@@ -90,18 +102,22 @@ namespace NareisLib
                         UnregisterBehavior();
                     behaviorAction = () =>
                     {
-                        exPath = "";
-                        List<string> paths;
+                        valuePath = "";
+                        fullPath = "";
+                        List<string> paths = new List<string> { "" }; ;
                         if (!curBehavior.pathDict.TryGetValue(pawn.GetPosture(), out paths) || !paths.NullOrEmpty())
-                            exPath = paths.RandomElement();
+                            fullPath = Path.Combine(curBehavior.exPath, valuePath = list.RandomElement());
                     };
                     RegisterBehavior();
                 }
             }
-            else
-                exPath = "";
+            else 
+                fullPath = "";
         }
 
+        /// <summary>
+        /// 注册随机行为以及随机时间
+        /// </summary>
         private void RegisterBehavior()
         {
             
@@ -130,7 +146,7 @@ namespace NareisLib
         {
             ActionManager result = new ActionManager();
             result.def = def;
-            result.exPath = exPath;
+            result.fullPath = fullPath;
             //result.curPrefix = curPrefix;
             result.curJob = curJob;
             result.curBehavior = curBehavior;

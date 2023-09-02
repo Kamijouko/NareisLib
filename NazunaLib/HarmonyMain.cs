@@ -579,13 +579,7 @@ namespace NareisLib
             MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 return;
-            //if (!comp.PrefixResolved)
-                //__instance.graphics.ResolveAllGraphics();
-
-            ThingDef_AlienRace thingDef_AlienRace = ___pawn.def as ThingDef_AlienRace;
-            AlienPartGenerator alienPartGenerator = null;
-            if (thingDef_AlienRace != null)
-                alienPartGenerator = thingDef_AlienRace.alienRace.generalSettings.alienPartGenerator;
+            AlienPartGenerator.AlienComp alienComp = ___pawn.GetComp<AlienPartGenerator.AlienComp>();
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(facing);
             if (curDirection.NullOrEmpty())
@@ -653,8 +647,8 @@ namespace NareisLib
 
                 if (curDirection.ContainsKey(level))
                 {
-                    Color colorOne = ___pawn.story.SkinColor;
-                    Color colorTwo = alienPartGenerator != null ? alienPartGenerator.SkinColor(___pawn, false) : Color.white;
+                    Color colorOne = alienComp == null ? ___pawn.story.SkinColor : alienComp.GetChannel("skin").first;
+                    Color colorTwo = alienComp == null ? Color.white : alienComp.GetChannel("skin").second;
                     foreach (MultiTexBatch batch in curDirection[level])
                     {
                         string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
@@ -1243,9 +1237,9 @@ namespace NareisLib
         {
             //Log.Warning("run head patch");
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
-
+            AlienPartGenerator.AlienComp alienComp = pawn.GetComp<AlienPartGenerator.AlienComp>();
             //if (comp != null && !comp.PrefixResolved)
-                //instance.graphics.ResolveAllGraphics();
+            //instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
@@ -1265,11 +1259,6 @@ namespace NareisLib
 
             if (comp == null)
                 return;
-
-            ThingDef_AlienRace thingDef_AlienRace = pawn.def as ThingDef_AlienRace;
-            AlienPartGenerator alienPartGenerator = null;
-            if (thingDef_AlienRace != null)
-                alienPartGenerator = thingDef_AlienRace.alienRace.generalSettings.alienPartGenerator;
 
             //绘制多层贴图
             if (!curDirection.NullOrEmpty() && curDirection.ContainsKey(layer))
@@ -1294,8 +1283,8 @@ namespace NareisLib
                 else
                     bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
 
-                Color colorOne = pawn.story.SkinColor;
-                Color colorTwo = alienPartGenerator != null ? alienPartGenerator.SkinColor(pawn, false) : Color.white;
+                Color colorOne = alienComp == null ? pawn.story.SkinColor : alienComp.GetChannel("skin").first;
+                Color colorTwo = alienComp == null ? Color.white : alienComp.GetChannel("skin").second;
 
                 foreach (MultiTexBatch batch in curDirection[layer])
                 {

@@ -14,7 +14,7 @@ namespace NareisLib
     {    
         //此行为所使用的贴图是否具有额外路径，
         //注意此路径所指定的文件夹必须包含在TextureLevels所指定的文件夹内
-        // string exPath;
+        public string exPath;
 
         //只有此列表中所指定的贴图才能触发此行为，
         //例如当TextureLevels里指定了随机的贴图时，只有这个列表里也包含了随机到的贴图时才会触发此行为
@@ -43,6 +43,18 @@ namespace NareisLib
         //与上上一项联动，上上一项关闭时此设置才生效，
         //表示固定的贴图变换时间间隔
         public float actionStaticChangeSeconds = 10f;
+
+        //是否与另一个Behavior的状态相关联
+        //此设置开启后上方除exPath和textures以外所有选项将不再具有作用，当前Behavior将使用下面指定的textureLevels的ActionManager里产生的结果
+        public bool linkedWithAction = false;
+        //与上一项联动，上一项开启后此设置才生效
+        //与其关联的MultiTexDef表示方法，例如手臂应设置为"HandTypeDef_Comp里设置的手臂defName"
+        //其中"_"前的部分表示MultiTexDef里设置的原Def的类型，比如"ThingDef"
+        //"_"后的部分表示MultiTexDef里设置的原Def的defName
+        public string type_originalDefName;
+        //与上上一项联动，上上一项开启后此设置才生效
+        //表示其关联的那层TextureLevels的textureLevelsName，与MultiTexDef的levels列表里设置的相对应
+        public string textureLevelsName;
 
 
         public int GetActionRandomChangeTick()

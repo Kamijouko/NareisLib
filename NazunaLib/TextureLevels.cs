@@ -266,8 +266,7 @@ namespace NareisLib
             }
 
             //组合指定的文件夹路径
-            List<ModContentPack> mods = LoadedModManager.RunningModsListForReading;
-            string[] folderAbsDir = mods.Select(x => Path.Combine(x.RootDir, "Textures", folder)).Where(x => Directory.Exists(x)).ToArray();
+            string[] folderAbsDir = LoadedModManager.RunningModsListForReading.Select(x => Path.Combine(x.RootDir, "Textures", folder)).Where(x => Directory.Exists(x)).ToArray();
 
             //处理prefix对应的图层的全名并且赋予它prefix预设权重列表所对应的权重
             if (!prefix.NullOrEmpty())
@@ -379,7 +378,7 @@ namespace NareisLib
         }
 
         //检查当前Pawn的job是否符合并对jobPrefix赋值
-        public bool ResolvePrefixForJob(ExtendedGraphicsPawnWrapper pawn, string keyName)
+        public bool ResolvePrefixForJob(ExtendedGraphicsPawnWrapper pawn, Pawn obj, string keyName)
         {
             if (jobSets == null && actionManager.def == null)
                 return true;
@@ -393,8 +392,8 @@ namespace NareisLib
                 else
                 {
                     jobPrefix = "";
-                    actionManager.StateUpdate(pawn, pawn.CurJob.def, keyName);
-                    exPath = actionManager.GetExPath;
+                    actionManager.StateUpdate(pawn, obj, pawn.CurJob.def, keyName);
+                    exPath = actionManager.GetFullPath;
                     return actionManager.IsApplicable(pawn);
                 }
             }
@@ -443,7 +442,7 @@ namespace NareisLib
         public bool CanRender(Pawn pawn, string keyName)
         {
             ExtendedGraphicsPawnWrapper obj = new ExtendedGraphicsPawnWrapper(pawn);
-            return RequiredBodyPartExistsFor(obj) && VisibleForPostureOf(obj) && ResolvePrefixForJob(obj, keyName) && ResolvePrefixForHediff(obj, keyName) && ResolveSuffixForGenderOf(obj);
+            return RequiredBodyPartExistsFor(obj) && VisibleForPostureOf(obj) && ResolvePrefixForJob(obj, pawn, keyName) && ResolvePrefixForHediff(obj, keyName) && ResolveSuffixForGenderOf(obj);
         }
 
         //初始化，与基类的Init方法相同但显式
@@ -490,13 +489,13 @@ namespace NareisLib
             if (condition != "")
                 condition = "_" + condition;
             string result = new StringBuilder().Append(new string[] { patternPrefix, jobPrefix, hediffPrefix, keyName, genderSuffix, bodyType, headType, condition }.SelectMany(x => x).ToArray()).ToString();
-            return Path.Combine(exPath, result);
+            return result;
         }
 
         //取得graphic，修改了基类的属性Graphic，参数为完全处理完毕后多层渲染comp里记录的keyName（列表在MultiTexBatch里）
         public Graphic GetGraphic(string keyName, Color color, Color colorTwo, int pattern = 0, string condition = "", string bodyType = "", string headType = "")
         {
-            string path = Path.Combine(folder, GetFullKeyName(keyName, pattern, condition, bodyType, headType));
+            string path = exPath == "" ? Path.Combine(folder, GetFullKeyName(keyName, pattern, condition, bodyType, headType)) : Path.Combine(exPath, GetFullKeyName(keyName, pattern, condition, bodyType, headType));
             if (texPath != path || cacheGraphic == null)
             {
                 texPath = path;
