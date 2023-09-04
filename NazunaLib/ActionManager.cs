@@ -1,4 +1,5 @@
 ﻿using AlienRace.ExtendedGraphics;
+using HarmonyLib;
 using HugsLib;
 using RimWorld;
 using System;
@@ -17,17 +18,17 @@ namespace NareisLib
         //使用的行为树，填入defName
         public ActionDef def = null;
 
-        string valuePath;
-        string fullPath;
+        private string valuePath;
+        private string fullPath;
         //string curPrefix = "";
-        JobDef curJob = null;
-        Behavior curBehavior = null;
-        Action behaviorAction = null;
+        private JobDef curJob = null;
+        private Behavior curBehavior = null;
+        private Action behaviorAction = null;
 
-        
 
-        int tickDelay = 10;
-        Action tickAction = null;
+
+        private int tickDelay = 10;
+        private Action tickAction = null;
 
         public string GetCurPath
         {
@@ -45,74 +46,89 @@ namespace NareisLib
             }
         }
 
-        /*public string GetCurPrefix
-        {
-            get
-            {
-                return curPrefix;
-            }
-        }*/
-
         public ActionManager()
         {
 
         }
 
+        /// <summary>
+        /// 最终确认是否渲染
+        /// </summary>
+        /// <param name="pawn">包装后的Pawn信息获取器</param>
+        /// <returns></returns>
         public bool IsApplicable(ExtendedGraphicsPawnWrapper pawn)
         {
             return curBehavior == null || ((curBehavior.rendMoving && pawn.Moving) || (curBehavior.rendUnMoving && !pawn.Moving));
         }
 
 
+        /// <summary>
+        /// 更新ActionManager的CurBehavior的状态
+        /// </summary>
+        /// <param name="pawn">包装后的Pawn信息获取器</param>
+        /// <param name="obj">Pawn本身</param>
+        /// <param name="job">Pawn当前的Job</param>
+        /// <param name="key">TextureLevels此时为此Pawn随机到的贴图名称</param>
         public void StateUpdate(ExtendedGraphicsPawnWrapper pawn, Pawn obj, JobDef job, string key)
         {
             if (job == null || key == null || key == "")
                 return;
-
-            if ((curJob != job || curBehavior == null) && def.behaviors.TryGetValue(job, out curBehavior) && curBehavior.textures.Contains(key))
+            
+            if (curJob == null || curJob.defName != job.defName || curBehavior == null)
             {
-                if (curBehavior.linkedWithAction)
+                curJob = job;
+                if (behaviorAction != null)
                 {
-                    MultiRenderComp comp = obj.GetComp<MultiRenderComp>();
-                    if (comp != null 
-                        && !comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
-                        && comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(curBehavior.type_originalDefName)
-                        && comp.GetAllOriginalDefForGraphicDataDict[curBehavior.type_originalDefName].ContainsKey(curBehavior.textureLevelsName))
+                    UnregisterBehavior();
+                    behaviorAction = null;
+                }
+                if (def.behaviors.TryGetValue(job, out curBehavior) && curBehavior.textures.Contains(key))
+                {
+                    //当使用链接至其他ActionManager时
+                    if (curBehavior.linkedWithAction)
                     {
-                        valuePath = "";
-                        fullPath = Path.Combine(
-                            curBehavior.exPath,
-                            valuePath = comp.GetAllOriginalDefForGraphicDataDict[curBehavior.type_originalDefName][curBehavior.textureLevelsName].actionManager.GetCurPath
-                            );
-                        return;
+                        MultiRenderComp comp = obj.GetComp<MultiRenderComp>();
+                        TextureLevels level;
+                        if (comp != null && comp.TryGetStoredTextureLevels(curBehavior.type_originalDefName, curBehavior.textureLevelsName, out level))
+                        {
+                            behaviorAction = () =>
+                            {
+                                valuePath = "";
+                                fullPath = Path.Combine(curBehavior.exPath, valuePath = level.actionManager.GetCurPath);
+                                GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(obj);
+                            };
+                            HugsLibController.Instance.TickDelayScheduler.ScheduleCallback(behaviorAction, curBehavior.linkedActionSyncDelta.SecondsToTicks(), null, true);
+                            return;
+                        }
                     }
-                    
-                }
-                //exPath = curBehavior.exPath;
-                //curPrefix = "";
-                valuePath = "";
-                fullPath = "";
-                List<string> list = new List<string> { "" };
-                if (!curBehavior.pathDict.TryGetValue(pawn.GetPosture(), out list) || !list.NullOrEmpty())
-                    fullPath = Path.Combine(curBehavior.exPath, valuePath = list.RandomElement());
 
-                if (curBehavior.randomChange)
-                {
-                    if (behaviorAction != null)
-                        UnregisterBehavior();
-                    behaviorAction = () =>
+                    //在正常状态下的逻辑
+                    valuePath = "";
+                    fullPath = "";
+                    List<string> list = new List<string> { "" };
+                    if (curBehavior.pathDict.TryGetValue(pawn.GetPosture(), out list) && !list.NullOrEmpty())
+                        fullPath = Path.Combine(curBehavior.exPath, valuePath = list.RandomElement());
+                    //当启用了随机动作变换时
+                    if (curBehavior.randomChange)
                     {
-                        valuePath = "";
-                        fullPath = "";
-                        List<string> paths = new List<string> { "" }; ;
-                        if (!curBehavior.pathDict.TryGetValue(pawn.GetPosture(), out paths) || !paths.NullOrEmpty())
-                            fullPath = Path.Combine(curBehavior.exPath, valuePath = list.RandomElement());
-                    };
-                    RegisterBehavior();
+                        behaviorAction = () =>
+                        {
+                            valuePath = "";
+                            fullPath = "";
+                            List<string> paths = new List<string> { "" };
+                            if (curBehavior.pathDict.TryGetValue(pawn.GetPosture(), out paths) && !paths.NullOrEmpty())
+                                fullPath = Path.Combine(curBehavior.exPath, valuePath = paths.RandomElement());
+                            GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(obj);
+                        };
+                        RegisterBehavior();
+                    }
+                    return;
                 }
+                else
+                    fullPath = "";
+
+                GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(obj);
             }
-            else 
-                fullPath = "";
         }
 
         /// <summary>

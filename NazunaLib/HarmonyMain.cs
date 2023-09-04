@@ -463,13 +463,17 @@ namespace NareisLib
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                    if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
+                    TextureLevels data;
+                    if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) || !data.CanRender(___pawn, batch.keyName))
+                        continue;
+
+                    /*if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
                         || !comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(typeOriginalDefName)
                         || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
                         || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
                         continue;
+                    TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];*/
 
-                    TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                     Color colorOne = ___pawn.story.HairColor;
                     Mesh mesh = null;
                     Vector3 offset = Vector3.zero;
@@ -654,13 +658,10 @@ namespace NareisLib
                         string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                         string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                        if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty() 
-                            || !comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(typeOriginalDefName)
-                            || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
-                            || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
+                        TextureLevels data;
+                        if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) || !data.CanRender(___pawn, batch.keyName))
                             continue;
 
-                        TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                         Mesh mesh = null;
                         Vector3 offset = Vector3.zero;
                         if (data.meshSize != Vector2.zero)
@@ -819,11 +820,11 @@ namespace NareisLib
                                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
+                                    TextureLevels data;
                                     if (typeOriginalDefName == apparelTypeOriginalDefName
-                                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
-                                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
+                                        && comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data)
+                                        && data.CanRender(___pawn, batch.keyName))
                                     {
-                                        TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                                         Mesh mesh = null;
                                         Vector3 offset = Vector3.zero;
                                         if (data.meshSize != Vector2.zero)
@@ -1002,11 +1003,11 @@ namespace NareisLib
                                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
+                                    TextureLevels data;
                                     if (typeOriginalDefName == apparelTypeOriginalDefName
-                                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
-                                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
+                                        && comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data)
+                                        && data.CanRender(___pawn, batch.keyName))
                                     {
-                                        TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                                         Mesh mesh = null;
 
                                         Vector3 offset = Vector3.zero;
@@ -1103,13 +1104,10 @@ namespace NareisLib
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                    if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
-                            || !comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(typeOriginalDefName)
-                            || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
-                            || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
+                    TextureLevels data;
+                    if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) || !data.CanRender(___pawn, batch.keyName))
                         continue;
 
-                    TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                     Apparel apparel = apparelGraphics.FirstOrDefault(x => x.sourceApparel.def.defName == batch.originalDefName).sourceApparel;
                     Color apparelColor = apparel == null ? data.color : apparel.DrawColor;
                     Mesh mesh = null;
@@ -1291,13 +1289,10 @@ namespace NareisLib
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                    if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
-                        || !comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(typeOriginalDefName)
-                        || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
-                        || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(pawn, batch.keyName))
+                    TextureLevels data;
+                    if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) || !data.CanRender(pawn, batch.keyName))
                         continue;
 
-                    TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                     Mesh mesh = null;
                     Vector3 offset = Vector3.zero;
                     if (data.meshSize != Vector2.zero)
@@ -1560,11 +1555,11 @@ namespace NareisLib
                             string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                             string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
+                            TextureLevels data;
                             if (typeOriginalDefName == apparelTypeOriginalDefName 
-                                && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
-                                && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(pawn, batch.keyName))
+                                && comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) 
+                                && data.CanRender(pawn, batch.keyName))
                             {
-                                TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                                 Mesh mesh = null;
                                 if (data.meshSize != Vector2.zero)
                                 {
@@ -1697,13 +1692,10 @@ namespace NareisLib
                         string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                         string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                        if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
-                            || !comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(typeOriginalDefName)
-                            || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
-                            || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(pawn, batch.keyName))
+                        TextureLevels data;
+                        if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) || !data.CanRender(pawn, batch.keyName))
                             continue;
 
-                        TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                         Mesh mesh = null;
                         
                         if (data.meshSize != Vector2.zero)
@@ -1849,11 +1841,11 @@ namespace NareisLib
                                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                                    if (typeOriginalDefName == apparelTypeOriginalDefName 
-                                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
-                                        && comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(pawn, batch.keyName))
+                                    TextureLevels data;
+                                    if (typeOriginalDefName == apparelTypeOriginalDefName
+                                        && comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data)
+                                        && data.CanRender(pawn, batch.keyName))
                                     {
-                                        TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                                         Mesh mesh = null;
                                         if (data.meshSize != Vector2.zero)
                                         {
@@ -1969,13 +1961,10 @@ namespace NareisLib
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
                     string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
 
-                    if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
-                        || !comp.GetAllOriginalDefForGraphicDataDict.ContainsKey(typeOriginalDefName)
-                        || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName].ContainsKey(batch.textureLevelsName)
-                        || !comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName].CanRender(___pawn, batch.keyName))
+                    TextureLevels data;
+                    if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) || !data.CanRender(___pawn, batch.keyName))
                         continue;
 
-                    TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];
                     Color colorOne = ((ThingDef)GenDefDatabase.GetDef(data.originalDefClass, data.originalDef)).graphicData != null ? 
                                      ((ThingDef)GenDefDatabase.GetDef(data.originalDefClass, data.originalDef)).graphicData.color
                                      : Color.white;

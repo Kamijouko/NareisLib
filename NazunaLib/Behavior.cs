@@ -34,27 +34,30 @@ namespace NareisLib
 
         //是否根据时间随机在prefixList中选择前缀来进行随机贴图变换
         public bool randomChange = false;
-        //与上一项联动，上一项开启后此设置才生效，
+        //randomChange开启后此设置才生效，
         //表示是否使用随机的时间间隔，否则使用下下一项固定的时间间隔
         public bool useRandomTimeDelta = false;
-        //与上一项联动，上一项开启后此设置才生效，
+        //randomChange开启后此设置才生效，
         //表示随机的贴图变换时间间隔范围
         public Vector2 actionRandomChangeSeconds = new Vector2(10f, 20f);
-        //与上上一项联动，上上一项关闭时此设置才生效，
-        //表示固定的贴图变换时间间隔
+        //randomChange开启后此设置才生效，
+        //表示固定的贴图变换时间间隔（秒）
         public float actionStaticChangeSeconds = 10f;
 
         //是否与另一个Behavior的状态相关联
         //此设置开启后上方除exPath和textures以外所有选项将不再具有作用，当前Behavior将使用下面指定的textureLevels的ActionManager里产生的结果
         public bool linkedWithAction = false;
-        //与上一项联动，上一项开启后此设置才生效
+        //linkedWithAction开启后此设置才生效，
         //与其关联的MultiTexDef表示方法，例如手臂应设置为"HandTypeDef_Comp里设置的手臂defName"
         //其中"_"前的部分表示MultiTexDef里设置的原Def的类型，比如"ThingDef"
         //"_"后的部分表示MultiTexDef里设置的原Def的defName
         public string type_originalDefName;
-        //与上上一项联动，上上一项开启后此设置才生效
+        //linkedWithAction开启后此设置才生效，
         //表示其关联的那层TextureLevels的textureLevelsName，与MultiTexDef的levels列表里设置的相对应
         public string textureLevelsName;
+        //linkedWithAction开启后此设置才生效，
+        //设置此部件检测被link的部件状态的时间间隔（秒）
+        public float linkedActionSyncDelta = 0.2f;
 
 
         public int GetActionRandomChangeTick()

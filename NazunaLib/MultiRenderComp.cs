@@ -148,6 +148,19 @@ namespace NareisLib
 
         }
 
+        public bool TryGetStoredTextureLevels(string type_OriDef, string texLevelsName, out TextureLevels level)
+        {
+            if (!GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
+                && GetAllOriginalDefForGraphicDataDict.ContainsKey(type_OriDef)
+                && GetAllOriginalDefForGraphicDataDict[type_OriDef].ContainsKey(texLevelsName))
+            {
+                level = GetAllOriginalDefForGraphicDataDict[type_OriDef][texLevelsName];
+                return true;
+            }
+            level = null;
+            return false;
+        }
+
 
         public override void CompTick()
         {
