@@ -40,7 +40,7 @@ namespace NareisLib
         //用于缓存具有随机状态的贴图的当前的pattern，
         //key为此贴图的Type_OriginalDefName_KeyName，
         //value为此贴图目前应使用的pattern序号
-        public Dictionary<string, int> cachedRandomGraphicPattern = new Dictionary<string, int>();
+        //public Dictionary<string, int> cachedRandomGraphicPattern = new Dictionary<string, int>();
 
         //用于缓存是否需要覆盖原部位的层名称列表,其中身体使用Body，头部使用Head，头发使用Hair来表示，其余覆盖部位用其defName表示
         public List<string> cachedOverrideBody, cachedOverrideApparel, cachedOverrideHair = new List<string>();
@@ -58,8 +58,8 @@ namespace NareisLib
 
         public string pawnName = "";
 
-        public int timeTickLineIndex = 0;
-        public TextureLevelRandomPatternSet[] patternLine = new TextureLevelRandomPatternSet[] { };
+        //public int timeTickLineIndex = 0;
+        //public TextureLevelRandomPatternSet[] patternLine = new TextureLevelRandomPatternSet[] { };
 
         public bool PrefixResolved = false;
 
@@ -315,11 +315,11 @@ namespace NareisLib
 
 
             //初始化randomPattern队列
-            patternLine = cachedAllOriginalDefForGraphicData.SelectMany(x => x.Value.Values).Where(x => x.patternSets != null && x.patternSets.texList.Contains(x.keyName)).Select(x => x.patternSets).ToArray();
+            /*patternLine = cachedAllOriginalDefForGraphicData.SelectMany(x => x.Value.Values).Where(x => x.patternSets != null && x.patternSets.texList.Contains(x.keyName)).Select(x => x.patternSets).ToArray();
             if (patternLine.Length > 1)
                 patternLine.SortStable((i, j) => i.RandomNextIntervalAndPattern().CompareTo(j.RandomNextIntervalAndPattern()));
             cachedRandomGraphicPattern.Clear();
-            timeTickLineIndex = 0;
+            timeTickLineIndex = 0;*/
 
             if (ModStaticMethod.ThisMod.debugToggle)
             {

@@ -164,8 +164,8 @@ namespace NareisLib
                     {
                         TextureLevels textureLevels = ThisModData.TexLevelsDatabase[type_defName][level.textureLevelsName].Clone();
                         textureLevels.keyName = keyName;
-                        if (textureLevels.patternSets != null)
-                            textureLevels.patternSets.typeOriginalDefNameKeyName = textureLevels.originalDefClass.ToStringSafe() + "_" + textureLevels.originalDef + "_" + keyName;
+                        /*if (textureLevels.patternSets != null)
+                            textureLevels.patternSets.typeOriginalDefNameKeyName = textureLevels.originalDefClass.ToStringSafe() + "_" + textureLevels.originalDef + "_" + keyName;*/
                         if (!data.ContainsKey(textureLevels.textureLevelsName))
                             data[textureLevels.textureLevelsName] = textureLevels;
                     }
@@ -190,8 +190,8 @@ namespace NareisLib
         public static TextureLevels ResolveKeyNameForLevel(TextureLevels level, string key)
         {
             level.keyName = key;
-            if (level.patternSets != null)
-                level.patternSets.typeOriginalDefNameKeyName = level.originalDefClass.ToStringSafe() + "_" + level.originalDef + "_" + key;
+            /*if (level.patternSets != null)
+                level.patternSets.typeOriginalDefNameKeyName = level.originalDefClass.ToStringSafe() + "_" + level.originalDef + "_" + key;*/
             return level;
         }
 
@@ -508,9 +508,9 @@ namespace NareisLib
                         else
                             mesh = bodyMesh;
                     }
-                    int pattern = 0;
+                    /*int pattern = 0;
                     if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
-                        pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
+                        pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];*/
                     string condition = "";
                     if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
                         condition = "Rotting";
@@ -531,7 +531,7 @@ namespace NareisLib
                         dataOffset.y *= 0.0001f;
                     Vector3 pos = local + offset + dataOffset;
                     Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                    Material mat = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition, bodyType, headType).MatAt(matFacing, null);
+                    Material mat = data.GetGraphic(batch.keyName, colorOne, colorTwo, condition, bodyType, headType).MatAt(matFacing, null);
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                     if (displayLevelInfo)
                         Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());
@@ -695,7 +695,7 @@ namespace NareisLib
                             else
                                 mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(__instance.graphics.nakedGraphic, facing) : bodyMesh;
                         }
-                        int pattern = 0;
+                        /*int pattern = 0;
                         if (data.isSleeve)
                         {
                             string handPrefix = typeof(HandTypeDef).ToStringSafe() + "_" + comp.GetCurHandDefName + "_";
@@ -706,7 +706,7 @@ namespace NareisLib
                                 continue;
                         }  
                         else if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
-                            pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
+                            pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];*/
                         string condition = "";
                         if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
                             condition = "Rotting";
@@ -723,26 +723,14 @@ namespace NareisLib
                             if (data.handDrawHigherOfShell && !data.isSleeve)
                             {
                                 if (facing != Rot4.North)
-                                    handOffset.y = 0.02027027f + 0.0028957527f + comp.Props.apparelInterval;
+                                    handOffset.y = 0.02027027f - 0.008687258f + 0.0028957527f + comp.Props.apparelInterval;
                                 else
-                                    handOffset.y = 0.023166021f + 0.0028957527f + comp.Props.apparelInterval;
-                            }
-                            else if (data.sleeveDrawHigherOfShell && data.isSleeve)
-                            {
-                                if (facing != Rot4.North)
-                                    handOffset.y = 0.02027027f + 0.0028957527f + comp.Props.apparelInterval * 2;
-                                else
-                                    handOffset.y = 0.023166021f + 0.0028957527f + comp.Props.apparelInterval * 2;
+                                    handOffset.y = 0.023166021f - 0.008687258f + 0.0028957527f + comp.Props.apparelInterval;
                             }
                             else if (!data.isSleeve)
                             {
-                                handOffset.y = 0.02027027f - 0.0015f;
+                                handOffset.y = 0.02027027f - 0.008687258f - 0.0015f;
                             }
-                            else
-                            {
-                                handOffset.y = 0.02027027f - 0.001f;
-                            }
-                            handOffset.y -= 0.008687258f;
                         }
                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
                         if (data.useStaticYOffset)
@@ -753,7 +741,7 @@ namespace NareisLib
                             dataOffset.y *= 0.0001f;
                         Vector3 pos = locVec + offset + handOffset + dataOffset;
                         Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                        Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition, bodyType).MatAt(matFacing, null);
+                        Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, condition, bodyType).MatAt(matFacing, null);
                         Material mat = (___pawn.RaceProps.IsMechanoid 
                             && ___pawn.Faction != null 
                             && ___pawn.Faction != Faction.OfMechanoids) ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor) : material;
@@ -856,9 +844,9 @@ namespace NareisLib
                                             else
                                                 mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(__instance.graphics.nakedGraphic, facing) : bodyMesh;
                                         }
-                                        int pattern = 0;
+                                        /*int pattern = 0;
                                         if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
-                                            pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
+                                            pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];*/
                                         /*string condition = "";
                                         if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
                                             condition = "Rotting";
@@ -867,6 +855,21 @@ namespace NareisLib
                                         string bodyType = "";
                                         if (data.useBodyType)
                                             bodyType = ___pawn.story.bodyType.defName;
+                                        Vector3 handOffset = Vector3.zero;
+                                        if (!data.useStaticYOffset && !data.usePublicYOffset)
+                                        {
+                                            if (data.sleeveDrawHigherOfShell && data.isSleeve)
+                                            {
+                                                if (facing != Rot4.North)
+                                                    handOffset.y = 0.02027027f - 0.008687258f + 0.0028957527f + comp.Props.apparelInterval;
+                                                else
+                                                    handOffset.y = 0.023166021f - 0.008687258f + 0.0028957527f + comp.Props.apparelInterval;
+                                            }
+                                            else if (data.isSleeve)
+                                            {
+                                                handOffset.y = 0.02027027f - 0.008687258f - 0.001f;
+                                            }
+                                        }
                                         Vector3 dataOffset = data.DrawOffsetForRot(facing);
                                         if (data.useStaticYOffset)
                                             local.y = rootLoc.y + dataOffset.y * 0.01f;
@@ -874,9 +877,9 @@ namespace NareisLib
                                             dataOffset.y *= 0.01f;
                                         else
                                             dataOffset.y *= 0.0001f;
-                                        Vector3 pos = local + offset + dataOffset;
+                                        Vector3 pos = local + offset + handOffset + dataOffset;
                                         Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", bodyType).MatAt(matFacing, null);
+                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, "", bodyType).MatAt(matFacing, null);
                                         Material mat = (___pawn.RaceProps.IsMechanoid && ___pawn.Faction != null && ___pawn.Faction != Faction.OfMechanoids)
                                             ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor)
                                             : material;
@@ -1043,9 +1046,9 @@ namespace NareisLib
                                                 mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(__instance.graphics.nakedGraphic, bodyFacing) : bodyMesh;
                                         }
                                         //Log.Warning("has mesh mesh mesh : " + (bodyMesh != null).ToStringSafe());
-                                        int pattern = 0;
+                                        /*int pattern = 0;
                                         if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
-                                            pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
+                                            pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];*/
                                         string bodyType = "";
                                         if (data.useBodyType)
                                             bodyType = ___pawn.story.bodyType.defName;
@@ -1058,7 +1061,7 @@ namespace NareisLib
                                             dataOffset.y *= 0.0001f;
                                         Vector3 pos = local + offset + dataOffset;
                                         Rot4 matFacing = data.switchEastWest && (bodyFacing == Rot4.East || bodyFacing == Rot4.West) ? new Rot4(4 - bodyFacing.AsInt) : bodyFacing;
-                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "" , bodyType).MatAt(matFacing, null);
+                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, "" , bodyType).MatAt(matFacing, null);
                                         Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                                             ? material
                                             : OverrideMaterialIfNeeded(__instance, material, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1145,9 +1148,9 @@ namespace NareisLib
                             mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(__instance.graphics.nakedGraphic, bodyFacing) : bodyMesh;
                     }
                     //Log.Warning("has mesh mesh mesh : " + (bodyMesh != null).ToStringSafe());
-                    int pattern = 0;
+                    /*int pattern = 0;
                     if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
-                        pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
+                        pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];*/
                     string bodyType = "";
                     if (data.useBodyType)
                         bodyType = ___pawn.story.bodyType.defName;
@@ -1160,7 +1163,7 @@ namespace NareisLib
                         dataOffset.y *= 0.0001f;
                     Vector3 pos = loc + offset + dataOffset;
                     Rot4 matFacing = data.switchEastWest && (bodyFacing == Rot4.East || bodyFacing == Rot4.West) ? new Rot4(4 - bodyFacing.AsInt) : bodyFacing;
-                    Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", bodyType).MatAt(matFacing, null);
+                    Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, "", bodyType).MatAt(matFacing, null);
                     Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                         ? material
                         : OverrideMaterialIfNeeded(__instance, material, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1326,9 +1329,9 @@ namespace NareisLib
                         else
                             mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(instance.graphics.nakedGraphic, facing) : bodyMesh;
                     }
-                    int pattern = 0;
+                    /*int pattern = 0;
                     if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
-                        pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
+                        pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];*/
                     string condition = "";
                     if (flags.FlagSet(PawnRenderFlags.HeadStump))
                     {
@@ -1353,7 +1356,7 @@ namespace NareisLib
                         dataOffset.y *= 0.0001f;
                     Vector3 pos = headYOffset + offset + dataOffset;
                     Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                    Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, condition, "", headType).MatAt(matFacing, null);
+                    Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, condition, "", headType).MatAt(matFacing, null);
                     Material mat = GetHeadOverrideMat(material, instance, flags.FlagSet(PawnRenderFlags.Portrait), !flags.FlagSet(PawnRenderFlags.Cache));
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, drawNow);
                     if (displayLevelInfo)
@@ -1592,9 +1595,9 @@ namespace NareisLib
                                         loc.z = vector.z;
                                     }
                                 }                                        
-                                int pattern = 0;
+                                /*int pattern = 0;
                                 if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
-                                    pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
+                                    pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];*/
                                 string headType = "";
                                 if (data.useHeadType)
                                     headType = pawn.story.headType.defName;
@@ -1607,7 +1610,7 @@ namespace NareisLib
                                     dataOffset.y *= 0.0001f;
                                 Vector3 pos = loc + dataOffset;
                                 Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                                Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", "", headType).MatAt(matFacing, null);
+                                Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, "", "", headType).MatAt(matFacing, null);
                                 Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                                     ? material
                                     : OverrideMaterialIfNeeded(instance, material, pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1731,9 +1734,9 @@ namespace NareisLib
                                 hairPos.z = vector.z;
                             }
                         }
-                        int pattern = 0;
+                        /*int pattern = 0;
                         if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
-                            pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
+                            pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];*/
                         string headType = "";
                         if (data.useHeadType)
                             headType = pawn.story.headType.defName;
@@ -1748,7 +1751,7 @@ namespace NareisLib
                             dataOffset.y *= 0.0001f;
                         Vector3 pos = hairPos + dataOffset;
                         Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                        Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, pattern, "", "", headType).MatAt(matFacing, null);
+                        Material material = data.GetGraphic(batch.keyName, colorOne, colorTwo, "", "", headType).MatAt(matFacing, null);
                         Material mat = GetHairOverrideMat(material, instance, flags.FlagSet(PawnRenderFlags.Portrait), !flags.FlagSet(PawnRenderFlags.Cache));
                         GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, drawNow);
                         if (displayLevelInfo)
@@ -1878,9 +1881,9 @@ namespace NareisLib
                                                 loc.z = vector.z;
                                             }
                                         }
-                                        int pattern = 0;
+                                        /*int pattern = 0;
                                         if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
-                                            pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
+                                            pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];*/
                                         string headType = "";
                                         if (data.useHeadType)
                                             headType = pawn.story.headType.defName;
@@ -1893,7 +1896,7 @@ namespace NareisLib
                                             dataOffset.y *= 0.0001f;
                                         Vector3 pos = loc + dataOffset;
                                         Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, pattern, "", "", headType).MatAt(matFacing, null);
+                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, "", "", headType).MatAt(matFacing, null);
                                         Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                                             ? material
                                             : OverrideMaterialIfNeeded(instance, material, pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -2001,9 +2004,9 @@ namespace NareisLib
                         else
                             mesh = data.flipped ? NareisLib_MeshPool.FlippedMeshAt(__instance.graphics.nakedGraphic, facing) : bodyMesh;
                     }
-                    int pattern = 0;
+                    /*int pattern = 0;
                     if (!comp.cachedRandomGraphicPattern.NullOrEmpty() && comp.cachedRandomGraphicPattern.ContainsKey(typeOtiginalDefNameKeyName))
-                        pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];
+                        pattern = comp.cachedRandomGraphicPattern[typeOtiginalDefNameKeyName];*/
                     string condition = "";
                     if (data.hasRotting && bodyDrawType == RotDrawMode.Rotting)
                         condition = "Rotting";
@@ -2024,7 +2027,7 @@ namespace NareisLib
                         dataOffset.y *= 0.0001f;
                     Vector3 pos = bodyLoc + offset + dataOffset;
                     Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                    Material mat = data.GetGraphic(batch.keyName, colorOne, Color.white, pattern, condition, bodyType, headType).MatAt(matFacing, null);
+                    Material mat = data.GetGraphic(batch.keyName, colorOne, Color.white, condition, bodyType, headType).MatAt(matFacing, null);
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                     if (displayLevelInfo)
                         Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());

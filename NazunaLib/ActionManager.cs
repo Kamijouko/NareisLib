@@ -91,11 +91,18 @@ namespace NareisLib
                         TextureLevels level;
                         if (comp != null && comp.TryGetStoredTextureLevels(curBehavior.type_originalDefName, curBehavior.textureLevelsName, out level))
                         {
-                            behaviorAction = () =>
+                            if (valuePath != level.actionManager.GetCurPath)
                             {
-                                valuePath = "";
                                 fullPath = Path.Combine(curBehavior.exPath, valuePath = level.actionManager.GetCurPath);
                                 GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(obj);
+                            }
+                            behaviorAction = () =>
+                            {
+                                if (valuePath != level.actionManager.GetCurPath)
+                                {
+                                    fullPath = Path.Combine(curBehavior.exPath, valuePath = level.actionManager.GetCurPath);
+                                    GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(obj);
+                                }
                             };
                             HugsLibController.Instance.TickDelayScheduler.ScheduleCallback(behaviorAction, curBehavior.linkedActionSyncDelta.SecondsToTicks(), null, true);
                             return;

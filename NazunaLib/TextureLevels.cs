@@ -35,8 +35,13 @@ namespace NareisLib
         public bool switchEastWest = false;
 
 
+
+
+
+
         //可选参数，设置特殊hediff所对应的名称前缀（根据hediff严重度）
         public List<TextureLevelHediffSet> hediffSets = new List<TextureLevelHediffSet>();
+
         //是否在无Hediff时渲染
         public bool rendNoHediff = true;
 
@@ -51,8 +56,9 @@ namespace NareisLib
         //在使用以上两个动作条件设置时，控制是否在Pawn无job时渲染
         public bool rendNoJob = true;
 
-        //可选参数，设置此层的贴图具有的pattern以及随机时间的间隔
-        public TextureLevelRandomPatternSet patternSets;
+
+
+
 
         //可选参数，渲染时使用的Mesh类型，有Hair，Head和Body三种（注意大小写）非Humanlike的pawn只有Body
         public string meshType = "Body";
@@ -65,6 +71,10 @@ namespace NareisLib
         public bool renderMale = false;
         public bool renderFemale = false;
 
+
+
+
+
         //是否使用在整体y轴上调整
         //开启此选项后在各方向上的偏移将反应在整个Pawn上
         public bool usePublicYOffset = false;
@@ -72,6 +82,10 @@ namespace NareisLib
         //使各方向设置的偏移为一个固定的y轴高度
         //不建议同时开启usePublicYOffset
         public bool useStaticYOffset = false;
+
+
+
+
 
         //可选参数，链接到身体部位，与下面的label二选一
         public BodyPartDef bodyPart = null;
@@ -100,8 +114,24 @@ namespace NareisLib
         //可选参数，使用相对头部类型的贴图版本，不可与useBodyType同时使用
         public bool useHeadType = false;
 
+
+
+
+
+
         //可选参数，如果该贴图为手部层，则这个选项控制Hand层和HandTwo层是否绘制在shell层下方
         public bool handDrawHigherOfShell = true;
+
+        //可选参数，当前层是否为袖子
+        public bool isSleeve = false;
+
+        //可选参数，设置袖子是否在shell层下方
+        public bool sleeveDrawHigherOfShell = true;
+
+
+
+
+
 
         //可选参数，x、y、z分别表示正面侧面和背面，为1时会被渲染，为0时会被忽略
         public Vector3 renderSwitch = Vector3.one;
@@ -112,15 +142,10 @@ namespace NareisLib
         //可选参数，针对某张贴图的特定名称设定权重（不带文件格式以及前缀后缀）
         public Dictionary<string, int> weightOfTheName = new Dictionary<string, int>();
 
-        //可选参数，当前层是否为袖子
-        public bool isSleeve = false;
-        //可选参数，和上方参数联动，当前袖子对应哪个手部的贴图，填入手部贴图名称（不带前后缀）
-        public List<string> sleeveTexList = new List<string>();
-        //可选参数，设置袖子是否在shell层下方
-        public bool sleeveDrawHigherOfShell = true;
-
         //默认的权重（在未设定权重的情况下所有贴图的权重均为1）常数，无法更改
         public const int normalWeight = 1;
+
+
 
 
 
@@ -177,8 +202,8 @@ namespace NareisLib
             result.actionManager = actionManager.Clone();//
             if (jobSets != null)
                 result.jobSets = jobSets.Clone();
-            if (patternSets != null)
-                result.patternSets = patternSets.Clone();
+            /*if (patternSets != null)
+                result.patternSets = patternSets.Clone();*/
             result.rendNoJob = rendNoJob;               //
             result.rendNoHediff = rendNoHediff;         //
             result.meshType = meshType;
@@ -202,7 +227,7 @@ namespace NareisLib
             result.weightOfThePrefix = weightOfThePrefix;
             result.weightOfTheName = weightOfTheName;
             result.isSleeve = isSleeve;
-            result.sleeveTexList = sleeveTexList;
+            //result.sleeveTexList = sleeveTexList;
             result.sleeveDrawHigherOfShell = sleeveDrawHigherOfShell;
 
             result.drawOffsetNorth = drawOffsetNorth;
@@ -473,11 +498,11 @@ namespace NareisLib
         }
 
         //取得完整的贴图名称，前缀顺序为pattern，job，hediff
-        public string GetFullKeyName(string keyName, int pattern = 0, string condition = "", string bodyType = "", string headType = "")
+        public string GetFullKeyName(string keyName, string condition = "", string bodyType = "", string headType = "")
         {            
-            string patternPrefix = "";
+            /*string patternPrefix = "";
             if (pattern > 0)
-                patternPrefix = "Pattern" + pattern.ToString() + "_";
+                patternPrefix = "Pattern" + pattern.ToString() + "_";*/
             if (jobPrefix != "")
                 jobPrefix = jobPrefix + "_";
             if (hediffPrefix != "")
@@ -488,14 +513,14 @@ namespace NareisLib
                 headType = "_" + headType;
             if (condition != "")
                 condition = "_" + condition;
-            string result = new StringBuilder().Append(new string[] { patternPrefix, jobPrefix, hediffPrefix, keyName, genderSuffix, bodyType, headType, condition }.SelectMany(x => x).ToArray()).ToString();
+            string result = new StringBuilder().Append(new string[] {jobPrefix, hediffPrefix, keyName, genderSuffix, bodyType, headType, condition }.SelectMany(x => x).ToArray()).ToString();
             return result;
         }
 
         //取得graphic，修改了基类的属性Graphic，参数为完全处理完毕后多层渲染comp里记录的keyName（列表在MultiTexBatch里）
-        public Graphic GetGraphic(string keyName, Color color, Color colorTwo, int pattern = 0, string condition = "", string bodyType = "", string headType = "")
+        public Graphic GetGraphic(string keyName, Color color, Color colorTwo, string condition = "", string bodyType = "", string headType = "")
         {
-            string path = exPath == "" ? Path.Combine(folder, GetFullKeyName(keyName, pattern, condition, bodyType, headType)) : Path.Combine(exPath, GetFullKeyName(keyName, pattern, condition, bodyType, headType));
+            string path = (exPath == "" || exPath == null) ? Path.Combine(folder, GetFullKeyName(keyName, condition, bodyType, headType)) : Path.Combine(exPath, GetFullKeyName(keyName, condition, bodyType, headType));
             if (texPath != path || cacheGraphic == null)
             {
                 texPath = path;
