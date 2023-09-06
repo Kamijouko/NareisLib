@@ -151,8 +151,10 @@ namespace NareisLib
             }  
             else
             {
+                Action loopAction = behaviorAction;
                 behaviorAction = () =>
                 {
+                    loopAction();
                     HugsLibController.Instance.TickDelayScheduler.ScheduleCallback(behaviorAction, curBehavior.GetActionRandomChangeTick(), null, false);
                     //curPrefix = curBehavior.prefixDict.RandomElement();
                 };

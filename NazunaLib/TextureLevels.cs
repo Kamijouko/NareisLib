@@ -45,7 +45,7 @@ namespace NareisLib
         //是否在无Hediff时渲染
         public bool rendNoHediff = true;
 
-        //可选参数，可系统性的为图层创建条件需求，
+        //可选参数，可系统性的为图层创建Job条件需求，
         //使用此ActionManager会使jobSets失效
         public ActionManager actionManager = new ActionManager();
 
@@ -53,7 +53,7 @@ namespace NareisLib
         //在与actionManager同时设定时优先使用actionManager
         public TextureLevelJobSet jobSets;
 
-        //在使用以上两个动作条件设置时，控制是否在Pawn无job时渲染
+        //可选参数，控制该层是否在Pawn无job时渲染
         public bool rendNoJob = true;
 
 
@@ -71,17 +71,13 @@ namespace NareisLib
         public bool renderMale = false;
         public bool renderFemale = false;
 
+        //可选参数，使用相对躯体类型的贴图版本，不可与useHeadType同时使用
+        public bool useBodyType = false;
+
+        //可选参数，使用相对头部类型的贴图版本，不可与useBodyType同时使用
+        public bool useHeadType = false;
 
 
-
-
-        //是否使用在整体y轴上调整
-        //开启此选项后在各方向上的偏移将反应在整个Pawn上
-        public bool usePublicYOffset = false;
-
-        //使各方向设置的偏移为一个固定的y轴高度
-        //不建议同时开启usePublicYOffset
-        public bool useStaticYOffset = false;
 
 
 
@@ -108,12 +104,6 @@ namespace NareisLib
         //可选参数，该贴图是否有断头版本，只可用于Body层
         public bool hasStump = false;
 
-        //可选参数，使用相对躯体类型的贴图版本，不可与useHeadType同时使用
-        public bool useBodyType = false;
-
-        //可选参数，使用相对头部类型的贴图版本，不可与useBodyType同时使用
-        public bool useHeadType = false;
-
 
 
 
@@ -133,8 +123,23 @@ namespace NareisLib
 
 
 
+        //是否使用在整体y轴上调整
+        //开启此选项后在各方向上的偏移将反应在整个Pawn上
+        public bool usePublicYOffset = false;
+
+        //使各方向设置的偏移为一个固定的y轴高度
+        //不建议同时开启usePublicYOffset
+        public bool useStaticYOffset = false;
+
         //可选参数，x、y、z分别表示正面侧面和背面，为1时会被渲染，为0时会被忽略
         public Vector3 renderSwitch = Vector3.one;
+
+
+
+
+
+
+
 
         //可选参数，设定某种前缀prefix的生成权重
         public Dictionary<string, int> weightOfThePrefix = new Dictionary<string, int>();
@@ -435,7 +440,7 @@ namespace NareisLib
             int priority = 0;
             foreach (TextureLevelHediffSet set in hediffSets)
             {
-                if (!set.texList.Contains(keyName) || (exPath != "" && !set.enableWithJob))
+                if (!set.texList.Contains(keyName) || ((exPath != "" || jobPrefix != "") && !set.enableWithJob))
                     continue;
                 if (set.priority >= priority)
                 {

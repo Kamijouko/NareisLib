@@ -24,6 +24,7 @@ namespace NareisLib
             }
         }
 
+        //列出所有需要对应的Job及其贴图和前缀信息
         public List<TextureLevelJobDataSet> jobs = new List<TextureLevelJobDataSet>();
 
         public TextureLevelJobSet Clone()
