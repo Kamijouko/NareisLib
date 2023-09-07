@@ -19,7 +19,7 @@ namespace NareisLib
         public string textureLevelsName = "";
 
         //子文件夹路径，如果不需要就不用管
-        public string subFloderPath = "";
+        public string subFolderPath = "";
 
         //贴图名称前缀（不带文件夹路径）此定义出的贴图名为唯一标识符，请不要重复使用相同的贴图名（前缀可以重复）
         public List<string> prefix = new List<string>();
@@ -200,7 +200,7 @@ namespace NareisLib
             TextureLevels result = new TextureLevels();
             result.CopyFrom(this);
             result.textureLevelsName = textureLevelsName;
-            result.subFloderPath = subFloderPath;
+            result.subFolderPath = subFolderPath;
             result.prefix = prefix;
             result.renderLayer = renderLayer;
             result.staticLayer = staticLayer;            //
@@ -300,7 +300,7 @@ namespace NareisLib
             }
 
             //组合指定的文件夹路径
-            string[] folderAbsDir = LoadedModManager.RunningModsListForReading.Select(x => Path.Combine(x.RootDir, "Textures", folder, subFloderPath)).Where(x => Directory.Exists(x)).ToArray();
+            string[] folderAbsDir = LoadedModManager.RunningModsListForReading.Select(x => Path.Combine(x.RootDir, "Textures", folder, subFolderPath)).Where(x => Directory.Exists(x)).ToArray();
 
             //处理prefix对应的图层的全名并且赋予它prefix预设权重列表所对应的权重
             if (!prefix.NullOrEmpty())
