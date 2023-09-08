@@ -27,18 +27,31 @@ namespace NareisLib
         //严重度对应的贴图名称前缀列表
         public List<TextureLevelHediffSeveritySet> severity = new List<TextureLevelHediffSeveritySet>();
 
+        //是否使用严重度，适用于不具有严重度的Hediff
+        public bool useSeverity = true;
+
+        //不使用严重度时应用的前缀
+        public string noSeverityPrefix = "";
+
         public string GetCurHediffPrefix(ExtendedGraphicsPawnWrapper pawn, BodyPartDef part, string partLabel)
         {
             string result = "";
-            float tmp = 0f;
-            float maxSeverityOfHediff = pawn.SeverityOfHediffsOnPart(hediff, part, partLabel).Max();
-            foreach (TextureLevelHediffSeveritySet set in severity)
+            if (useSeverity)
             {
-                if (maxSeverityOfHediff >= set.severity && set.severity >= tmp)
+                float tmp = 0f;
+                float maxSeverityOfHediff = pawn.SeverityOfHediffsOnPart(hediff, part, partLabel).Max();
+                foreach (TextureLevelHediffSeveritySet set in severity)
                 {
-                    tmp = set.severity;
-                    result = set.prefix;
+                    if (maxSeverityOfHediff >= set.severity && set.severity >= tmp)
+                    {
+                        tmp = set.severity;
+                        result = set.prefix;
+                    }
                 }
+            }
+            else if (pawn.HasHediffOfDefAndPart(hediff, part, partLabel))
+            {
+                result = noSeverityPrefix;
             }
             return result;
         }
