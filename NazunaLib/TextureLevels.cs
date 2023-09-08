@@ -40,9 +40,14 @@ namespace NareisLib
 
 
 
+        //可选参数，链接到身体部位，与下面的label二选一
+        public BodyPartDef bodyPart = null;
 
+        //可选参数，链接到身体部位
+        public string bodyPartLabel = null;
 
         //可选参数，设置特殊hediff所对应的名称前缀（根据hediff严重度）
+        //与上方两个选项联动
         public List<TextureLevelHediffSet> hediffSets = new List<TextureLevelHediffSet>();
 
         //是否在无Hediff时渲染
@@ -85,12 +90,6 @@ namespace NareisLib
 
 
 
-
-        //可选参数，链接到身体部位，与下面的label二选一
-        public BodyPartDef bodyPart = null;
-
-        //可选参数，链接到身体部位
-        public string bodyPartLabel = null;
 
         //可选参数，当渲染的部位不是AlienRace的BodyAddon时使用，控制是否在倒地时渲染
         public bool renderOnGround = true;
@@ -396,7 +395,7 @@ namespace NareisLib
         
 
         //检查关联的bodyPart是否还存在
-        public bool RequiredBodyPartExistsFor(ExtendedGraphicsPawnWrapper pawn)
+        public bool RequiredBodyPartStatusFor(ExtendedGraphicsPawnWrapper pawn)
         {
             if (pawn.HasNamedBodyPart(this.bodyPart, this.bodyPartLabel))
             {
@@ -476,7 +475,7 @@ namespace NareisLib
         public bool CanRender(Pawn pawn, string keyName)
         {
             ExtendedGraphicsPawnWrapper obj = new ExtendedGraphicsPawnWrapper(pawn);
-            return RequiredBodyPartExistsFor(obj) && VisibleForPostureOf(obj) && ResolvePrefixForJob(obj, pawn, keyName) && ResolvePrefixForHediff(obj, keyName) && ResolveSuffixForGenderOf(obj);
+            return RequiredBodyPartStatusFor(obj) && VisibleForPostureOf(obj) && ResolvePrefixForJob(obj, pawn, keyName) && ResolvePrefixForHediff(obj, keyName) && ResolveSuffixForGenderOf(obj);
         }
 
         //初始化，与基类的Init方法相同但显式
@@ -529,7 +528,7 @@ namespace NareisLib
         //取得graphic，修改了基类的属性Graphic，参数为完全处理完毕后多层渲染comp里记录的keyName（列表在MultiTexBatch里）
         public Graphic GetGraphic(string keyName, Color color, Color colorTwo, string condition = "", string bodyType = "", string headType = "")
         {
-            string path = (exPath == "" || exPath == null) ? Path.Combine(folder, GetFullKeyName(keyName, condition, bodyType, headType)) : Path.Combine(exPath, GetFullKeyName(keyName, condition, bodyType, headType));
+            string path = (exPath == "" || exPath == null) ? Path.Combine(folder, subFolderPath , GetFullKeyName(keyName, condition, bodyType, headType)) : Path.Combine(exPath, GetFullKeyName(keyName, condition, bodyType, headType));
             if (texPath != path || cacheGraphic == null)
             {
                 texPath = path;
