@@ -14,6 +14,9 @@ namespace NareisLib
         //填入Hediff的defName
         public HediffDef hediff;
 
+        //填入Hediff的hediffClass，请不要与上方参数同时使用
+        public Type hediffClass;
+
         //控制此Hediff效果是否在Job效果存在时渲染，
         //如果开启的话必须为当前的Job效果也准备一份Hediff效果贴图
         public bool enableWithJob = false;
@@ -33,9 +36,30 @@ namespace NareisLib
         //不使用严重度时应用的前缀
         public string noSeverityPrefix = "";
 
-        public string GetCurHediffPrefix(ExtendedGraphicsPawnWrapper pawn, BodyPartDef part, string partLabel)
+        public bool GetCurHediffPrefix(ExtendedGraphicsPawnWrapper pawn, BodyPartDef part, string partLabel, ref string prefix)
         {
-            string result = "";
+            if (hediffClass != null)
+            {
+                if (useSeverity)
+                {
+                    float tmp = 0f;
+                    float maxSeverityOfHediff = SeverityOfHediffsClassOnPart(pawn, hediffClass, part, partLabel).Max();
+                    foreach (TextureLevelHediffSeveritySet set in severity)
+                    {
+                        if (maxSeverityOfHediff >= set.severity && set.severity >= tmp)
+                        {
+                            tmp = set.severity;
+                            prefix = set.prefix;
+                            return true;
+                        }
+                    }
+                }
+                else if (HasHediffOfClassAndPart(pawn, hediffClass, part, partLabel))
+                {
+                    prefix = noSeverityPrefix;
+                    return true;
+                }
+            }
             if (useSeverity)
             {
                 float tmp = 0f;
@@ -45,15 +69,35 @@ namespace NareisLib
                     if (maxSeverityOfHediff >= set.severity && set.severity >= tmp)
                     {
                         tmp = set.severity;
-                        result = set.prefix;
+                        prefix = set.prefix;
+                        return true;
                     }
                 }
             }
             else if (pawn.HasHediffOfDefAndPart(hediff, part, partLabel))
             {
-                result = noSeverityPrefix;
+                prefix = noSeverityPrefix;
+                return true;
             }
-            return result;
+            return false;
+        }
+
+
+        public virtual IEnumerable<float> SeverityOfHediffsClassOnPart(ExtendedGraphicsPawnWrapper pawn, Type hediffClass, BodyPartDef part, string partLabel)
+        {
+            return from h in pawn.GetHediffList()
+                   where IsHediffOfClassAndPart(pawn, h, hediffClass, part, partLabel)
+                   select h.Severity;
+        }
+
+        private bool HasHediffOfClassAndPart(ExtendedGraphicsPawnWrapper pawn, Type hediffClass, BodyPartDef part, string partLabel)
+        {
+            return pawn.GetHediffList().Any((Hediff h) => IsHediffOfClassAndPart(pawn, h, hediffClass, part, partLabel));
+        }
+
+        private bool IsHediffOfClassAndPart(ExtendedGraphicsPawnWrapper pawn, Hediff hediff, Type hediffClass, BodyPartDef part, string partLabel)
+        {
+            return hediff.GetType() == hediffClass && (hediff.Part == null || pawn.IsBodyPart(hediff.Part, part, partLabel));
         }
     }
 }

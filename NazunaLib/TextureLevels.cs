@@ -441,13 +441,13 @@ namespace NareisLib
             if (hediffSets.NullOrEmpty() || (bodyPart == null && bodyPartLabel == ""))
                 return true;
             int priority = 0;
+            hediffPrefix = "";
             foreach (TextureLevelHediffSet set in hediffSets)
             {
                 if (!set.texList.Contains(keyName) || ((exPath != "" || jobPrefix != "") && !set.enableWithJob))
                     continue;
-                if (set.priority >= priority)
+                if (set.priority >= priority && set.GetCurHediffPrefix(pawn, bodyPart, bodyPartLabel, ref hediffPrefix))
                 {
-                    hediffPrefix = set.GetCurHediffPrefix(pawn, bodyPart, bodyPartLabel);
                     priority = set.priority;
                 }
             }
