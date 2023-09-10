@@ -37,6 +37,11 @@ namespace NareisLib
         //可选参数，与上选项搭配使用，开启后将交换东西方向的贴图
         public bool switchEastWest = false;
 
+        //可选参数，设置当前层存在时是否替换或隐藏某些可能存在的层
+        public List<TextureLevelHideOption> hideList = new List<TextureLevelHideOption>();
+
+
+
 
 
 
@@ -105,6 +110,9 @@ namespace NareisLib
 
         //可选参数，该贴图是否有断头版本，只可用于Body层
         public bool hasStump = false;
+
+        //可选参数，该层使用固定的颜色，通过color和colorTwo两个属性设置颜色
+        public bool useStaticColor = false;
 
 
 
@@ -193,6 +201,7 @@ namespace NareisLib
         public Graphic cacheGraphic;
 
 
+
         //用于从ThisModData的数据库中克隆
         public TextureLevels Clone()
         {
@@ -205,6 +214,8 @@ namespace NareisLib
             result.staticLayer = staticLayer;            //
             result.flipped = flipped;                   //
             result.switchEastWest = switchEastWest;     //
+            if (!hideList.NullOrEmpty())
+                result.hideList = new List<TextureLevelHideOption>(hideList);//
             if (!hediffSets.NullOrEmpty())
                 result.hediffSets = new List<TextureLevelHediffSet>(hediffSets);
             result.actionManager = actionManager.Clone();//

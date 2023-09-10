@@ -51,6 +51,7 @@ namespace NareisLib
 
 
     //初始化后加载资源全靠它！！！（已停用）
+    //转移到带有[EarlyInit]属性的ThisModBase类中执行加载
     //[HarmonyPatch(typeof(UIRoot_Entry))]
     //[HarmonyPatch("DoMainMenu")]
     public class InitialModPatch
@@ -95,7 +96,8 @@ namespace NareisLib
 
     public class PawnRenderPatchs
     {
-        //给所有Pawn添加多层渲染Comp，CompTick有触发条件所以不存在性能问题
+        //给所有Pawn添加多层渲染Comp，CompTick有触发条件所以不存在性能问题[停用]
+        //现在转移到带有[EarlyInit]属性的ThisModBase类中添加
         /*public static bool InitializeCompsAddCompPrefix(ThingWithComps __instance)
         {
             Pawn pawn = __instance as Pawn;
@@ -461,10 +463,15 @@ namespace NareisLib
                 foreach (MultiTexBatch batch in curDirection[level])
                 {
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
-                    string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                    //string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                    string mlPrefixName = batch.multiTexDefName + "_";
 
                     TextureLevels data;
-                    if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) || !data.CanRender(___pawn, batch.keyName))
+                    if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) 
+                        || (!comp.cachedHideOrReplaceDict.NullOrEmpty() 
+                            && comp.cachedHideOrReplaceDict.ContainsKey(mlPrefixName + data.textureLevelsName) 
+                            && comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
+                        || !data.CanRender(___pawn, batch.keyName))
                         continue;
 
                     /*if (comp.GetAllOriginalDefForGraphicDataDict.NullOrEmpty()
@@ -474,7 +481,9 @@ namespace NareisLib
                         continue;
                     TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];*/
 
-                    Color colorOne = ___pawn.story.HairColor;
+                    Color colorOne = data.useStaticColor ? data.color : ___pawn.story.HairColor;
+                    colorTwo = data.useStaticColor ? data.colorTwo : colorTwo;
+
                     Mesh mesh = null;
                     Vector3 offset = Vector3.zero;
                     if (data.meshSize != Vector2.zero)
@@ -656,12 +665,19 @@ namespace NareisLib
                     foreach (MultiTexBatch batch in curDirection[level])
                     {
                         string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
-                        string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                        //string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                        string mlPrefixName = batch.multiTexDefName + "_";
 
                         TextureLevels data;
-                        if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) || !data.CanRender(___pawn, batch.keyName))
+                        if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data)
+                            || (!comp.cachedHideOrReplaceDict.NullOrEmpty()
+                                && comp.cachedHideOrReplaceDict.ContainsKey(mlPrefixName + data.textureLevelsName)
+                                && comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
+                            || !data.CanRender(___pawn, batch.keyName))
                             continue;
 
+                        colorOne = data.useStaticColor ? data.color : colorOne;
+                        colorTwo = data.useStaticColor ? data.colorTwo : colorTwo;
                         Mesh mesh = null;
                         Vector3 offset = Vector3.zero;
                         if (data.meshSize != Vector2.zero)
@@ -806,13 +822,19 @@ namespace NareisLib
                                 foreach (MultiTexBatch batch in curDirection[layer])
                                 {
                                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
-                                    string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                                    //string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                                    string mlPrefixName = batch.multiTexDefName + "_";
 
                                     TextureLevels data;
                                     if (typeOriginalDefName == apparelTypeOriginalDefName
                                         && comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data)
+                                        && (comp.cachedHideOrReplaceDict.NullOrEmpty()
+                                            || !comp.cachedHideOrReplaceDict.ContainsKey(mlPrefixName + data.textureLevelsName)
+                                            || !comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
                                         && data.CanRender(___pawn, batch.keyName))
                                     {
+                                        apparelColor = data.useStaticColor ? data.color : apparelColor;
+                                        Color colorTwo = data.useStaticColor ? data.colorTwo : Color.white;
                                         Mesh mesh = null;
                                         Vector3 offset = Vector3.zero;
                                         if (data.meshSize != Vector2.zero)
@@ -879,7 +901,7 @@ namespace NareisLib
                                             dataOffset.y *= 0.0001f;
                                         Vector3 pos = local + offset + handOffset + dataOffset;
                                         Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, "", bodyType).MatAt(matFacing, null);
+                                        Material material = data.GetGraphic(batch.keyName, apparelColor, colorTwo, "", bodyType).MatAt(matFacing, null);
                                         Material mat = (___pawn.RaceProps.IsMechanoid && ___pawn.Faction != null && ___pawn.Faction != Faction.OfMechanoids)
                                             ? __instance.graphics.GetOverlayMat(material, ___pawn.Faction.MechColor)
                                             : material;
@@ -895,6 +917,33 @@ namespace NareisLib
                         }
                         vector.y += comp.Props.apparelInterval;
                         //vector.y += 0.0028957527f;
+                    }
+                }
+            }
+            else if (!__state && flags.FlagSet(PawnRenderFlags.Clothes))
+            {
+                for (int i = 0; i < __instance.graphics.apparelGraphics.Count; i++)
+                {
+                    ApparelGraphicRecord apparel = __instance.graphics.apparelGraphics[i];
+                    if ((apparel.sourceApparel.def.apparel.shellRenderedBehindHead || apparel.sourceApparel.def.apparel.LastLayer != ApparelLayerDefOf.Shell)
+                        && !PawnRenderer.RenderAsPack(apparel.sourceApparel)
+                        && apparel.sourceApparel.def.apparel.LastLayer != ApparelLayerDefOf.Overhead
+                        && apparel.sourceApparel.def.apparel.LastLayer != ApparelLayerDefOf.EyeCover)
+                    {
+                        //如果当前服装的def没在需要被隐藏的列表里的话
+                        if (!comp.GetAllHideOriginalDefData.NullOrEmpty() && !comp.GetAllHideOriginalDefData.Contains(apparel.sourceApparel.def.defName))
+                        {
+                            //先画此服装
+                            Material apparelMAt = (___pawn.RaceProps.IsMechanoid && ___pawn.Faction != null && ___pawn.Faction != Faction.OfMechanoids)
+                                ? __instance.graphics.GetOverlayMat(apparel.graphic.MatAt(facing, null), ___pawn.Faction.MechColor)
+                                : apparel.graphic.MatAt(facing, null);
+                            Material material = flags.FlagSet(PawnRenderFlags.Cache)
+                                ? apparelMAt
+                                : OverrideMaterialIfNeeded(__instance, apparelMAt, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
+
+                            GenDraw.DrawMeshNowOrLater(bodyMesh, vector, quat, material, flags.FlagSet(PawnRenderFlags.DrawNow));
+                        }
+                        vector.y += comp.Props.apparelInterval;
                     }
                 }
             }
@@ -1004,13 +1053,21 @@ namespace NareisLib
                                 foreach (MultiTexBatch batch in curDirection[layer])
                                 {
                                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
-                                    string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                                    //string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                                    string mlPrefixName = batch.multiTexDefName + "_";
 
                                     TextureLevels data;
                                     if (typeOriginalDefName == apparelTypeOriginalDefName
                                         && comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data)
+                                        && (comp.cachedHideOrReplaceDict.NullOrEmpty()
+                                            || !comp.cachedHideOrReplaceDict.ContainsKey(mlPrefixName + data.textureLevelsName)
+                                            || !comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
                                         && data.CanRender(___pawn, batch.keyName))
                                     {
+
+                                        apparelColor = data.useStaticColor ? data.color : apparelColor;
+                                        Color colorTwo = data.useStaticColor ? data.colorTwo : Color.white;
+
                                         Mesh mesh = null;
 
                                         Vector3 offset = Vector3.zero;
@@ -1061,7 +1118,7 @@ namespace NareisLib
                                             dataOffset.y *= 0.0001f;
                                         Vector3 pos = local + offset + dataOffset;
                                         Rot4 matFacing = data.switchEastWest && (bodyFacing == Rot4.East || bodyFacing == Rot4.West) ? new Rot4(4 - bodyFacing.AsInt) : bodyFacing;
-                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, "" , bodyType).MatAt(matFacing, null);
+                                        Material material = data.GetGraphic(batch.keyName, apparelColor, colorTwo, "" , bodyType).MatAt(matFacing, null);
                                         Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                                             ? material
                                             : OverrideMaterialIfNeeded(__instance, material, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1105,14 +1162,20 @@ namespace NareisLib
                 foreach (MultiTexBatch batch in curDirection[(int)TextureRenderLayer.FrontShell])
                 {
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
-                    string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                    //string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                    string mlPrefixName = batch.multiTexDefName + "_";
 
                     TextureLevels data;
-                    if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) || !data.CanRender(___pawn, batch.keyName))
+                    if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data)
+                        || (!comp.cachedHideOrReplaceDict.NullOrEmpty()
+                            && comp.cachedHideOrReplaceDict.ContainsKey(mlPrefixName + data.textureLevelsName)
+                            && comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
+                        || !data.CanRender(___pawn, batch.keyName))
                         continue;
 
                     Apparel apparel = apparelGraphics.FirstOrDefault(x => x.sourceApparel.def.defName == batch.originalDefName).sourceApparel;
-                    Color apparelColor = apparel == null ? data.color : apparel.DrawColor;
+                    Color apparelColor = (apparel == null || data.useStaticColor) ? data.color : apparel.DrawColor;
+                    Color colorTwo = data.useStaticColor ? data.colorTwo : Color.white;
                     Mesh mesh = null;
 
                     Vector3 offset = Vector3.zero;
@@ -1163,7 +1226,7 @@ namespace NareisLib
                         dataOffset.y *= 0.0001f;
                     Vector3 pos = loc + offset + dataOffset;
                     Rot4 matFacing = data.switchEastWest && (bodyFacing == Rot4.East || bodyFacing == Rot4.West) ? new Rot4(4 - bodyFacing.AsInt) : bodyFacing;
-                    Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, "", bodyType).MatAt(matFacing, null);
+                    Material material = data.GetGraphic(batch.keyName, apparelColor, colorTwo, "", bodyType).MatAt(matFacing, null);
                     Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                         ? material
                         : OverrideMaterialIfNeeded(__instance, material, ___pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1290,11 +1353,19 @@ namespace NareisLib
                 foreach (MultiTexBatch batch in curDirection[layer])
                 {
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
-                    string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                    //string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                    string mlPrefixName = batch.multiTexDefName + "_";
 
                     TextureLevels data;
-                    if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) || !data.CanRender(pawn, batch.keyName))
+                    if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data)
+                        || (!comp.cachedHideOrReplaceDict.NullOrEmpty()
+                            && comp.cachedHideOrReplaceDict.ContainsKey(mlPrefixName + data.textureLevelsName)
+                            && comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
+                        || !data.CanRender(pawn, batch.keyName))
                         continue;
+
+                    colorOne = data.useStaticColor ? data.color : colorOne;
+                    colorTwo = data.useStaticColor ? data.colorTwo : colorTwo;
 
                     Mesh mesh = null;
                     Vector3 offset = Vector3.zero;
@@ -1556,13 +1627,20 @@ namespace NareisLib
                         foreach (MultiTexBatch batch in curDirection[layer])
                         {
                             string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
-                            string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                            //string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                            string mlPrefixName = batch.multiTexDefName + "_";
 
                             TextureLevels data;
-                            if (typeOriginalDefName == apparelTypeOriginalDefName 
-                                && comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) 
+                            if (typeOriginalDefName == apparelTypeOriginalDefName
+                                && comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data)
+                                && (comp.cachedHideOrReplaceDict.NullOrEmpty()
+                                    || !comp.cachedHideOrReplaceDict.ContainsKey(mlPrefixName + data.textureLevelsName)
+                                    || !comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
                                 && data.CanRender(pawn, batch.keyName))
                             {
+                                apparelColor = data.useStaticColor ? data.color : apparelColor;
+                                Color colorTwo = data.useStaticColor ? data.colorTwo : Color.white;
+
                                 Mesh mesh = null;
                                 if (data.meshSize != Vector2.zero)
                                 {
@@ -1610,7 +1688,7 @@ namespace NareisLib
                                     dataOffset.y *= 0.0001f;
                                 Vector3 pos = loc + dataOffset;
                                 Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                                Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, "", "", headType).MatAt(matFacing, null);
+                                Material material = data.GetGraphic(batch.keyName, apparelColor, colorTwo, "", "", headType).MatAt(matFacing, null);
                                 Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                                     ? material
                                     : OverrideMaterialIfNeeded(instance, material, pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1693,11 +1771,19 @@ namespace NareisLib
                     foreach (MultiTexBatch batch in curDirection[layer])
                     {
                         string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
-                        string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                        //string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                        string mlPrefixName = batch.multiTexDefName + "_";
 
                         TextureLevels data;
-                        if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) || !data.CanRender(pawn, batch.keyName))
+                        if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data)
+                            || (!comp.cachedHideOrReplaceDict.NullOrEmpty()
+                                && comp.cachedHideOrReplaceDict.ContainsKey(mlPrefixName + data.textureLevelsName)
+                                && comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
+                            || !data.CanRender(pawn, batch.keyName))
                             continue;
+
+                        colorOne = data.useStaticColor ? data.color : colorOne;
+                        colorTwo = data.useStaticColor ? data.colorTwo : colorTwo;
 
                         Mesh mesh = null;
                         
@@ -1842,13 +1928,20 @@ namespace NareisLib
                                 foreach (MultiTexBatch batch in curDirection[layer])
                                 {
                                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
-                                    string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                                    //string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                                    string mlPrefixName = batch.multiTexDefName + "_";
 
                                     TextureLevels data;
                                     if (typeOriginalDefName == apparelTypeOriginalDefName
                                         && comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data)
+                                        && (comp.cachedHideOrReplaceDict.NullOrEmpty()
+                                            || !comp.cachedHideOrReplaceDict.ContainsKey(mlPrefixName + data.textureLevelsName)
+                                            || !comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
                                         && data.CanRender(pawn, batch.keyName))
                                     {
+                                        apparelColor = data.useStaticColor ? data.color : apparelColor;
+                                        Color colorTwo = data.useStaticColor ? data.colorTwo : Color.white;
+
                                         Mesh mesh = null;
                                         if (data.meshSize != Vector2.zero)
                                         {
@@ -1896,7 +1989,7 @@ namespace NareisLib
                                             dataOffset.y *= 0.0001f;
                                         Vector3 pos = loc + dataOffset;
                                         Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                                        Material material = data.GetGraphic(batch.keyName, apparelColor, Color.white, "", "", headType).MatAt(matFacing, null);
+                                        Material material = data.GetGraphic(batch.keyName, apparelColor, colorTwo, "", "", headType).MatAt(matFacing, null);
                                         Material mat = flags.FlagSet(PawnRenderFlags.Cache)
                                             ? material
                                             : OverrideMaterialIfNeeded(instance, material, pawn, flags.FlagSet(PawnRenderFlags.Portrait));
@@ -1962,15 +2055,17 @@ namespace NareisLib
                 foreach (MultiTexBatch batch in curDirection[(int)TextureRenderLayer.Overlay])
                 {
                     string typeOriginalDefName = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
-                    string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                    //string typeOtiginalDefNameKeyName = typeOriginalDefName + "_" + batch.keyName;
+                    string mlPrefixName = batch.multiTexDefName + "_";
 
                     TextureLevels data;
-                    if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data) || !data.CanRender(___pawn, batch.keyName))
+                    if (!comp.TryGetStoredTextureLevels(typeOriginalDefName, batch.textureLevelsName, out data)
+                        || (!comp.cachedHideOrReplaceDict.NullOrEmpty()
+                            && comp.cachedHideOrReplaceDict.ContainsKey(mlPrefixName + data.textureLevelsName)
+                            && comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
+                        || !data.CanRender(___pawn, batch.keyName))
                         continue;
 
-                    Color colorOne = ((ThingDef)GenDefDatabase.GetDef(data.originalDefClass, data.originalDef)).graphicData != null ? 
-                                     ((ThingDef)GenDefDatabase.GetDef(data.originalDefClass, data.originalDef)).graphicData.color
-                                     : Color.white;
                     Mesh mesh = null;
                     Vector3 offset = Vector3.zero;
                     if (data.meshSize != Vector2.zero)
@@ -2027,7 +2122,7 @@ namespace NareisLib
                         dataOffset.y *= 0.0001f;
                     Vector3 pos = bodyLoc + offset + dataOffset;
                     Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                    Material mat = data.GetGraphic(batch.keyName, colorOne, Color.white, condition, bodyType, headType).MatAt(matFacing, null);
+                    Material mat = data.GetGraphic(batch.keyName, data.color, data.colorTwo, condition, bodyType, headType).MatAt(matFacing, null);
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                     if (displayLevelInfo)
                         Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());

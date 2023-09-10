@@ -31,6 +31,10 @@ namespace NareisLib
         public bool rendMoving = true;
         public bool rendUnMoving = true;
 
+        //此设置决定切换到此Behavior时是否使用列表中随机的元素，
+        //如果为false则使用列表中第一个项。
+        public bool randomFirst = true;
+
         //是否在pathDict的当前value中随机选择贴图变换
         public bool randomChange = false;
         //randomChange开启后此设置才生效，
@@ -42,6 +46,9 @@ namespace NareisLib
         //randomChange开启后此设置才生效，
         //表示随机的贴图变换时间间隔范围
         public Vector2 actionRandomChangeSeconds = new Vector2(10f, 20f);
+        //randomChange开启后此设置才生效，
+        //此设置决定是否是根据列表中的顺序来变换
+        public bool loopChange = false;
        
 
         //是否与另一个Behavior的状态相关联

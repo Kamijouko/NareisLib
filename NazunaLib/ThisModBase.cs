@@ -64,12 +64,11 @@ namespace NareisLib
 
         public static void LoadAndResolveAllPlanDefs()
         {
+            ThisModData.SuffixList = DefDatabase<BodyTypeDef>.AllDefsListForReading.Select(x => x.defName).Concat(DefDatabase<HeadTypeDef>.AllDefsListForReading.Select(x => x.defName)).ToList();
+
             List<RenderPlanDef> list = DefDatabase<RenderPlanDef>.AllDefsListForReading;
             if (list.NullOrEmpty())
                 return;
-
-            ThisModData.SuffixList = DefDatabase<BodyTypeDef>.AllDefsListForReading.Select(x => x.defName).Concat(DefDatabase<HeadTypeDef>.AllDefsListForReading.Select(x => x.defName)).ToList();
-
             foreach (RenderPlanDef plan in list)
             {
                 if (plan.plans.NullOrEmpty())

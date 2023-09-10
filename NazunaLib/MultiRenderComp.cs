@@ -45,6 +45,9 @@ namespace NareisLib
         //用于缓存是否需要覆盖原部位的层名称列表,其中身体使用Body，头部使用Head，头发使用Hair来表示，其余覆盖部位用其defName表示
         public List<string> cachedOverrideBody, cachedOverrideApparel, cachedOverrideHair = new List<string>();
 
+        //用于缓存当前帧需要隐藏或替换层的数据
+        public Dictionary<string, TextureLevelHideOption> cachedHideOrReplaceDict = new Dictionary<string, TextureLevelHideOption>();
+
         //用于缓存当前pawn的race关联的RenderPlanDef
         //public string cachedRenderPlanDefName = "";
 
@@ -313,6 +316,9 @@ namespace NareisLib
             cachedAllOriginalDefForGraphicDataList = cachedAllOriginalDefForGraphicData.Values.SelectMany(x => x.Values).ToList();
             //cachedAllGraphicData = cachedAllOriginalDefForGraphicData.SelectMany(x => x.Value).ToDictionary(k => k.Key, v => v.Value);
 
+            //获取临时的所有应该隐藏某个图层的列表
+            cachedHideOrReplaceDict = cachedAllOriginalDefForGraphicDataList.Where(x => !x.hideList.NullOrEmpty()).SelectMany(x => x.hideList).ToDictionary(k => k.defLevelName);
+
 
             //初始化randomPattern队列
             /*patternLine = cachedAllOriginalDefForGraphicData.SelectMany(x => x.Value.Values).Where(x => x.patternSets != null && x.patternSets.texList.Contains(x.keyName)).Select(x => x.patternSets).ToArray();
@@ -340,7 +346,7 @@ namespace NareisLib
             {
                 yield return gizmo;
             }
-            if (PawnOwner != null && PawnOwner.Faction == Faction.OfPlayer && Find.Selector.SingleSelectedThing == PawnOwner)
+            if (PawnOwner != null && PawnOwner.Faction == Faction.OfPlayer && Find.Selector.SingleSelectedThing == PawnOwner && ThisModData.RacePlansDatabase.ContainsKey(PawnOwner.def.defName))
             {
                 List<TextureLevels> levels = cachedAllOriginalDefForGraphicDataList.Where(x => x.actionManager.def != null).ToList();
 

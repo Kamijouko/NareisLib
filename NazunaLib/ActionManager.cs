@@ -26,7 +26,7 @@ namespace NareisLib
         private Action behaviorAction = null;
 
 
-
+        private int valueIndex = -1;
         private int tickDelay = 10;
         private Action tickAction = null;
 
@@ -77,6 +77,9 @@ namespace NareisLib
             if (curJob == null || curJob.defName != job.defName || curBehavior == null)
             {
                 curJob = job;
+                valueIndex = -1;
+                valuePath = "";
+                fullPath = "";
                 if (behaviorAction != null)
                 {
                     UnregisterBehavior();
@@ -91,14 +94,14 @@ namespace NareisLib
                         TextureLevels level;
                         if (comp != null && comp.TryGetStoredTextureLevels(curBehavior.type_originalDefName, curBehavior.textureLevelsName, out level))
                         {
-                            if (valuePath != level.actionManager.GetCurPath)
+                            if (valuePath != level.actionManager.GetCurPath && level.actionManager.GetCurPath != "")
                             {
                                 fullPath = Path.Combine(curBehavior.exPath, valuePath = level.actionManager.GetCurPath);
                                 GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(obj);
                             }
                             behaviorAction = () =>
                             {
-                                if (valuePath != level.actionManager.GetCurPath)
+                                if (valuePath != level.actionManager.GetCurPath && level.actionManager.GetCurPath != "")
                                 {
                                     fullPath = Path.Combine(curBehavior.exPath, valuePath = level.actionManager.GetCurPath);
                                     GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(obj);
@@ -110,11 +113,9 @@ namespace NareisLib
                     }
 
                     //在正常状态下的逻辑
-                    valuePath = "";
-                    fullPath = "";
-                    List<string> list = new List<string> { "" };
+                    List<string> list;
                     if (curBehavior.pathDict.TryGetValue(pawn.GetPosture(), out list) && !list.NullOrEmpty())
-                        fullPath = Path.Combine(curBehavior.exPath, valuePath = list.RandomElement());
+                        fullPath = Path.Combine(curBehavior.exPath, valuePath = curBehavior.randomFirst ? list.RandomElement() : list[0]);
                     //当启用了随机动作变换时
                     if (curBehavior.randomChange)
                     {
@@ -122,9 +123,9 @@ namespace NareisLib
                         {
                             valuePath = "";
                             fullPath = "";
-                            List<string> paths = new List<string> { "" };
+                            List<string> paths;
                             if (curBehavior.pathDict.TryGetValue(pawn.GetPosture(), out paths) && !paths.NullOrEmpty())
-                                fullPath = Path.Combine(curBehavior.exPath, valuePath = paths.RandomElement());
+                                fullPath = Path.Combine(curBehavior.exPath, valuePath = curBehavior.loopChange ? paths[GetNextIndex(paths)] : paths.RandomElement());
                             GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(obj);
                         };
                         RegisterBehavior();
@@ -136,6 +137,19 @@ namespace NareisLib
 
                 GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(obj);
             }
+        }
+
+        /// <summary>
+        /// 获取轮转变换的下一个索引
+        /// </summary>
+        /// <param name="list"></param>
+        /// <returns></returns>
+        private int GetNextIndex(List<string> list)
+        {
+            if (valueIndex >= list.Count() - 1)
+                return valueIndex = 0;
+            else
+                return valueIndex++;
         }
 
         /// <summary>
@@ -162,6 +176,9 @@ namespace NareisLib
             }
         }
 
+        /// <summary>
+        /// 取消注册当前行为
+        /// </summary>
         private void UnregisterBehavior()
         {
             HugsLibController.Instance.TickDelayScheduler.TryUnscheduleCallback(behaviorAction);
