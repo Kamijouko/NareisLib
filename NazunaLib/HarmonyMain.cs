@@ -572,7 +572,6 @@ namespace NareisLib
         //Body HandOne Hand HandTwo Apparel(除了shell层) BottomShell DrawPawnBodyFinalizer
         static void DrawPawnBodyFinalizer(PawnRenderer __instance, Pawn ___pawn, bool __state, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags, out Mesh bodyMesh)
         {
-            bodyMesh = null;
             NareisLib_GraphicMeshSet bodyMeshSet = null;
             NareisLib_GraphicMeshSet hairMeshSet = null;
             NareisLib_GraphicMeshSet headMeshSet = null;

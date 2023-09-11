@@ -13,5 +13,8 @@ namespace NareisLib
 
         //true为隐藏图层
         public bool hide = true;
+
+        //暂时未实现
+        public bool replace = false;
     }
 }
