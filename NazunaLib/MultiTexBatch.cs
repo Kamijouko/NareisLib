@@ -27,6 +27,8 @@ namespace NareisLib
 
         public bool staticLayer;
 
+        public bool donotChangeLayer;
+
         //public List<string> keyList = new List<string>();
 
         //public List<string> keyListSouth = new List<string>();
@@ -42,7 +44,7 @@ namespace NareisLib
 
         }
 
-        public MultiTexBatch(System.Type type, string original, string def, string key, string levelsName, TextureRenderLayer la, Vector3 r, bool stLayer/*, List<string> list*/)
+        public MultiTexBatch(System.Type type, string original, string def, string key, string levelsName, TextureRenderLayer la, Vector3 r, bool stLayer = false, bool dnChangeLayer = false/*, List<string> list*/)
         {
             originalDefClass = type;
             originalDefName = original;
@@ -52,11 +54,12 @@ namespace NareisLib
             layer = la;
             renderSwitch = r;
             staticLayer = stLayer;
+            donotChangeLayer = dnChangeLayer;
         }
 
         public MultiTexBatch Clone()
         {
-            return new MultiTexBatch(originalDefClass, originalDefName, multiTexDefName, keyName, textureLevelsName, layer, renderSwitch, staticLayer);
+            return new MultiTexBatch(originalDefClass, originalDefName, multiTexDefName, keyName, textureLevelsName, layer, renderSwitch, staticLayer, donotChangeLayer);
         }
 
         public void ExposeData()
@@ -69,6 +72,8 @@ namespace NareisLib
             Scribe_Values.Look<string>(ref multiTexDefName, "multiTexDefName", null, false);
             Scribe_Values.Look<string>(ref keyName, "keyName", null, false);
             Scribe_Values.Look<string>(ref textureLevelsName, "textureLevelsName", null, false);
+            Scribe_Values.Look<bool>(ref staticLayer, "staticLayer", false, false);
+            Scribe_Values.Look<bool>(ref donotChangeLayer, "donotChangeLayer", false, false);
             Scribe_Values.Look<TextureRenderLayer>(ref layer, "layer", TextureRenderLayer.None, false);
 
             if (Scribe.mode == LoadSaveMode.Saving)

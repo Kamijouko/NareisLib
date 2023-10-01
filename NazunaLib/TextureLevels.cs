@@ -37,6 +37,9 @@ namespace NareisLib
         //可选参数，与上选项搭配使用，开启后将交换东西方向的贴图
         public bool switchEastWest = false;
 
+        //*可选参数，打开后一些在不同方向会交换的图层类型不再交换
+        public bool donotChangeLayer = false;
+
         //可选参数，设置当前层存在时是否替换或隐藏某些可能存在的层
         public List<TextureLevelHideOption> hideList = new List<TextureLevelHideOption>();
 
@@ -113,6 +116,12 @@ namespace NareisLib
 
         //可选参数，该层使用固定的颜色，通过color和colorTwo两个属性设置颜色
         public bool useStaticColor = false;
+
+        //可选参数，该层是否强制获取头发的颜色并使用
+        public bool useHairColor = false;
+
+        //可选参数，该层是否强制获取身体的颜色并使用
+        public bool useBodyColor = false;
 
 
 
@@ -214,8 +223,12 @@ namespace NareisLib
             result.staticLayer = staticLayer;            //
             result.flipped = flipped;                   //
             result.switchEastWest = switchEastWest;     //
+            result.donotChangeLayer = donotChangeLayer; //
             if (!hideList.NullOrEmpty())
                 result.hideList = new List<TextureLevelHideOption>(hideList);//
+
+
+
             if (!hediffSets.NullOrEmpty())
                 result.hediffSets = new List<TextureLevelHediffSet>(hediffSets);
             result.actionManager = actionManager.Clone();//
@@ -239,6 +252,11 @@ namespace NareisLib
             result.hasRotting = hasRotting;
             result.hasDessicated = hasDessicated;
             result.hasStump = hasStump;
+
+            result.useStaticColor = useStaticColor;
+            result.useHairColor = useHairColor;
+            result.useBodyColor = useBodyColor;
+
             result.useBodyType = useBodyType;
             result.useHeadType = useHeadType;
             result.handDrawHigherOfShell = handDrawHigherOfShell;

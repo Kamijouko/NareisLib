@@ -20,6 +20,7 @@ using static HarmonyLib.Code;
 using UnityEngine.SocialPlatforms;
 using UnityEngine.UIElements.Experimental;
 using UnityEngine.Assertions.Must;
+using static AlienRace.AlienPartGenerator;
 
 namespace NareisLib
 {
@@ -153,7 +154,7 @@ namespace NareisLib
                     }
 
                     if (!batches.Exists(x => x.textureLevelsName == level.textureLevelsName))
-                        batches.Add(new MultiTexBatch(def.originalDefClass, def.originalDef, def.defName, keyName, level.textureLevelsName, level.renderLayer, level.renderSwitch, level.staticLayer));
+                        batches.Add(new MultiTexBatch(def.originalDefClass, def.originalDef, def.defName, keyName, level.textureLevelsName, level.renderLayer, level.renderSwitch, level.staticLayer, level.donotChangeLayer));
 
                     if (ModStaticMethod.ThisMod.debugToggle)
                     {
@@ -390,6 +391,87 @@ namespace NareisLib
                 comp.ResolveAllLayerBatch();
         }
 
+        public static Color ResolveColorFirst(AlienPartGenerator.AlienComp alienComp, TextureLevels data, Pawn pawn)
+        {
+            if (data.useStaticColor)
+                return data.color;
+            if (data.useBodyColor)
+                return alienComp == null ? pawn.story.SkinColor : alienComp.GetChannel("skin").first;
+            return pawn.story.HairColor;
+        }
+        public static Color ResolveColorFirst(Color color, AlienPartGenerator.AlienComp alienComp, TextureLevels data, Pawn pawn)
+        {
+            if (data.useStaticColor)
+                return data.color;
+            if (data.useBodyColor)
+                return alienComp == null ? pawn.story.SkinColor : alienComp.GetChannel("skin").first;
+            return color;
+        }
+        public static Color ResolveColorFirstOne(Color color, AlienPartGenerator.AlienComp alienComp, TextureLevels data, Pawn pawn)
+        {
+            if (data.useStaticColor)
+                return data.color;
+            if (data.useHairColor)
+                return alienComp == null ? pawn.story.HairColor : alienComp.GetChannel("hair").first;
+            return color;
+        }
+        public static Color ResolveColorFirstTwo(AlienPartGenerator.AlienComp alienComp, TextureLevels data, Pawn pawn)
+        {
+            if (data.useStaticColor)
+                return data.color;
+            if (data.useHairColor)
+                return alienComp == null ? pawn.story.HairColor : alienComp.GetChannel("hair").first;
+            if (data.useBodyColor)
+                return alienComp == null ? pawn.story.SkinColor : alienComp.GetChannel("skin").first;
+            return Color.white;
+        }
+        public static Color ResolveColorFirstTwo(Color color, AlienPartGenerator.AlienComp alienComp, TextureLevels data, Pawn pawn)
+        {
+            if (data.useStaticColor)
+                return data.color;
+            if (data.useHairColor)
+                return alienComp == null ? pawn.story.HairColor : alienComp.GetChannel("hair").first;
+            if (data.useBodyColor)
+                return alienComp == null ? pawn.story.SkinColor : alienComp.GetChannel("skin").first;
+            return color;
+        }
+
+        public static Color ResolveColorSecond(Color color, AlienPartGenerator.AlienComp alienComp, TextureLevels data, Pawn pawn)
+        {
+            if (data.useStaticColor)
+                return data.colorTwo;
+            if (data.useBodyColor)
+                return alienComp == null ? Color.white : alienComp.GetChannel("skin").second;
+            return color;
+        }
+        public static Color ResolveColorSecondOne(Color color, AlienPartGenerator.AlienComp alienComp, TextureLevels data, Pawn pawn)
+        {
+            if (data.useStaticColor)
+                return data.colorTwo;
+            if (data.useHairColor)
+                return alienComp == null ? Color.white : alienComp.GetChannel("hair").second;
+            return color;
+        }
+        public static Color ResolveColorSecondTwo(AlienPartGenerator.AlienComp alienComp, TextureLevels data, Pawn pawn)
+        {
+            if (data.useStaticColor)
+                return data.colorTwo;
+            if (data.useHairColor)
+                return alienComp == null ? Color.white : alienComp.GetChannel("hair").second;
+            if (data.useBodyColor)
+                return alienComp == null ? Color.white : alienComp.GetChannel("skin").second;
+            return Color.white;
+        }
+        public static Color ResolveColorSecondTwo(Color color, AlienPartGenerator.AlienComp alienComp, TextureLevels data, Pawn pawn)
+        {
+            if (data.useStaticColor)
+                return data.colorTwo;
+            if (data.useHairColor)
+                return alienComp == null ? Color.white : alienComp.GetChannel("hair").second;
+            if (data.useBodyColor)
+                return alienComp == null ? Color.white : alienComp.GetChannel("skin").second;
+            return color;
+        }
 
         //BottomOverlay BodyPrefix
         static bool DrawPawnBodyPrefix(PawnRenderer __instance, Pawn ___pawn, ref bool __state, Vector3 rootLoc, float angle, Rot4 facing, RotDrawMode bodyDrawType, PawnRenderFlags flags)
@@ -481,8 +563,8 @@ namespace NareisLib
                         continue;
                     TextureLevels data = comp.GetAllOriginalDefForGraphicDataDict[typeOriginalDefName][batch.textureLevelsName];*/
 
-                    Color colorOne = data.useStaticColor ? data.color : ___pawn.story.HairColor;
-                    colorTwo = data.useStaticColor ? data.colorTwo : colorTwo;
+                    Color colorOne = ResolveColorFirst(alienComp, data, ___pawn);
+                    colorTwo = ResolveColorSecond(colorTwo, alienComp, data, ___pawn);
 
                     Mesh mesh = null;
                     Vector3 offset = Vector3.zero;
@@ -675,8 +757,8 @@ namespace NareisLib
                             || !data.CanRender(___pawn, batch.keyName))
                             continue;
 
-                        colorOne = data.useStaticColor ? data.color : colorOne;
-                        colorTwo = data.useStaticColor ? data.colorTwo : colorTwo;
+                        colorOne = ResolveColorFirstOne(colorOne, alienComp, data, ___pawn);
+                        colorTwo = ResolveColorSecondOne(colorTwo, alienComp, data, ___pawn);
                         Mesh mesh = null;
                         Vector3 offset = Vector3.zero;
                         if (data.meshSize != Vector2.zero)
@@ -832,8 +914,8 @@ namespace NareisLib
                                             || !comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
                                         && data.CanRender(___pawn, batch.keyName))
                                     {
-                                        apparelColor = data.useStaticColor ? data.color : apparelColor;
-                                        Color colorTwo = data.useStaticColor ? data.colorTwo : Color.white;
+                                        apparelColor = ResolveColorFirstTwo(apparelColor, alienComp, data, ___pawn);
+                                        Color colorTwo = ResolveColorSecondTwo(alienComp, data, ___pawn);
                                         Mesh mesh = null;
                                         Vector3 offset = Vector3.zero;
                                         if (data.meshSize != Vector2.zero)
@@ -962,8 +1044,9 @@ namespace NareisLib
             MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 return true;
+            AlienPartGenerator.AlienComp alienComp = ___pawn.GetComp<AlienPartGenerator.AlienComp>();
             //if (!comp.PrefixResolved)
-                //__instance.graphics.ResolveAllGraphics();
+            //__instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp.GetDataOfDirection(bodyFacing);
             if (curDirection.NullOrEmpty())
@@ -1064,9 +1147,8 @@ namespace NareisLib
                                         && data.CanRender(___pawn, batch.keyName))
                                     {
 
-                                        apparelColor = data.useStaticColor ? data.color : apparelColor;
-                                        Color colorTwo = data.useStaticColor ? data.colorTwo : Color.white;
-
+                                        apparelColor = ResolveColorFirstTwo(apparelColor, alienComp, data, ___pawn);
+                                        Color colorTwo = ResolveColorSecondTwo(alienComp, data, ___pawn);
                                         Mesh mesh = null;
 
                                         Vector3 offset = Vector3.zero;
@@ -1173,8 +1255,8 @@ namespace NareisLib
                         continue;
 
                     Apparel apparel = apparelGraphics.FirstOrDefault(x => x.sourceApparel.def.defName == batch.originalDefName).sourceApparel;
-                    Color apparelColor = (apparel == null || data.useStaticColor) ? data.color : apparel.DrawColor;
-                    Color colorTwo = data.useStaticColor ? data.colorTwo : Color.white;
+                    Color apparelColor = apparel == null ? ResolveColorFirstOne(Color.white, alienComp, data, ___pawn) : apparel.DrawColor;
+                    Color colorTwo = ResolveColorSecondTwo(alienComp, data, ___pawn);
                     Mesh mesh = null;
 
                     Vector3 offset = Vector3.zero;
@@ -1363,8 +1445,8 @@ namespace NareisLib
                         || !data.CanRender(pawn, batch.keyName))
                         continue;
 
-                    colorOne = data.useStaticColor ? data.color : colorOne;
-                    colorTwo = data.useStaticColor ? data.colorTwo : colorTwo;
+                    colorOne = ResolveColorFirstOne(colorOne, alienComp, data, pawn);
+                    colorTwo = ResolveColorSecondOne(colorTwo, alienComp, data, pawn);
 
                     Mesh mesh = null;
                     Vector3 offset = Vector3.zero;
@@ -1559,9 +1641,9 @@ namespace NareisLib
             //Log.Warning("HeadGear RunPatched");
 
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
-            
+            AlienPartGenerator.AlienComp alienComp = pawn.GetComp<AlienPartGenerator.AlienComp>();
             //if (comp != null && !comp.PrefixResolved)
-                //instance.graphics.ResolveAllGraphics();
+            //instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
@@ -1637,8 +1719,8 @@ namespace NareisLib
                                     || !comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
                                 && data.CanRender(pawn, batch.keyName))
                             {
-                                apparelColor = data.useStaticColor ? data.color : apparelColor;
-                                Color colorTwo = data.useStaticColor ? data.colorTwo : Color.white;
+                                apparelColor = ResolveColorFirstTwo(apparelColor, alienComp, data, pawn);
+                                Color colorTwo = ResolveColorSecondTwo(alienComp, data, pawn);
 
                                 Mesh mesh = null;
                                 if (data.meshSize != Vector2.zero)
@@ -1742,7 +1824,7 @@ namespace NareisLib
             else
                 bodyMesh = instance.graphics.nakedGraphic.MeshAt(facing);
 
-            Color colorOne = pawn.story.HairColor;
+            Color colorOne = alienComp != null ? alienComp.GetChannel("hair").first : pawn.story.HairColor;
             Color colorTwo = alienComp != null ? alienComp.GetChannel("hair").second : Color.white;
 
             List<int> renderLayers = new List<int>() { (int)TextureRenderLayer.BottomHair, (int)TextureRenderLayer.Hair };
@@ -1781,8 +1863,8 @@ namespace NareisLib
                             || !data.CanRender(pawn, batch.keyName))
                             continue;
 
-                        colorOne = data.useStaticColor ? data.color : colorOne;
-                        colorTwo = data.useStaticColor ? data.colorTwo : colorTwo;
+                        colorOne = ResolveColorFirst(colorOne, alienComp, data, pawn);
+                        colorTwo = ResolveColorSecond(colorTwo, alienComp, data, pawn);
 
                         Mesh mesh = null;
                         
@@ -1853,9 +1935,10 @@ namespace NareisLib
             //Log.Warning("Hat RunPatched");
 
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
-            
+            AlienPartGenerator.AlienComp alienComp = pawn.GetComp<AlienPartGenerator.AlienComp>();
+
             //if (comp != null && !comp.PrefixResolved)
-                //instance.graphics.ResolveAllGraphics();
+            //instance.graphics.ResolveAllGraphics();
 
             Dictionary<int, List<MultiTexBatch>> curDirection = comp != null ? comp.GetDataOfDirection(facing) : new Dictionary<int, List<MultiTexBatch>>();
 
@@ -1938,8 +2021,8 @@ namespace NareisLib
                                             || !comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
                                         && data.CanRender(pawn, batch.keyName))
                                     {
-                                        apparelColor = data.useStaticColor ? data.color : apparelColor;
-                                        Color colorTwo = data.useStaticColor ? data.colorTwo : Color.white;
+                                        apparelColor = ResolveColorFirstTwo(apparelColor, alienComp, data, pawn);
+                                        Color colorTwo = ResolveColorSecondTwo(alienComp, data, pawn);
 
                                         Mesh mesh = null;
                                         if (data.meshSize != Vector2.zero)
@@ -2014,6 +2097,7 @@ namespace NareisLib
         static void RenderPawnInternalPostfix(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, float angle, bool renderBody, Rot4 bodyFacing, RotDrawMode bodyDrawType, PawnRenderFlags flags)
         {
             MultiRenderComp comp = ___pawn.GetComp<MultiRenderComp>();
+            AlienPartGenerator.AlienComp alienComp = ___pawn.GetComp<AlienPartGenerator.AlienComp>();
             if (comp == null)
                 return;
             //if (!comp.PrefixResolved)
@@ -2064,6 +2148,9 @@ namespace NareisLib
                             && comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
                         || !data.CanRender(___pawn, batch.keyName))
                         continue;
+
+                    Color colorOne = ResolveColorFirstTwo(alienComp, data, ___pawn);
+                    Color colorTwo = ResolveColorSecondTwo(alienComp, data, ___pawn);
 
                     Mesh mesh = null;
                     Vector3 offset = Vector3.zero;
@@ -2121,7 +2208,7 @@ namespace NareisLib
                         dataOffset.y *= 0.0001f;
                     Vector3 pos = bodyLoc + offset + dataOffset;
                     Rot4 matFacing = data.switchEastWest && (facing == Rot4.East || facing == Rot4.West) ? new Rot4(4 - facing.AsInt) : facing;
-                    Material mat = data.GetGraphic(batch.keyName, data.color, data.colorTwo, condition, bodyType, headType).MatAt(matFacing, null);
+                    Material mat = data.GetGraphic(batch.keyName, colorOne, colorTwo, condition, bodyType, headType).MatAt(matFacing, null);
                     GenDraw.DrawMeshNowOrLater(mesh, pos, quat, mat, flags.FlagSet(PawnRenderFlags.DrawNow));
                     if (displayLevelInfo)
                         Log.Warning(" " + data.originalDef + "------------" + data.textureLevelsName + ": " + pos.y.ToString());

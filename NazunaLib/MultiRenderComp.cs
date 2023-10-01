@@ -185,20 +185,16 @@ namespace NareisLib
                 else
                     Log.Warning(pawnName + "当前工作：Null");
             }
+        }
 
-            /*//根据初始化的randomPattern队列来执行随机变换，每次random执行后向队列添加下次random的值，并且将cachedActionTimeOfTicks作为时间轴进行排序
-            //随机出的pattern值被保存在cachedTandomGraphicPattern字典中，通过贴图名称查询
-            //实验性质，可能会导致卡顿
-            int tick = Find.TickManager.TicksGame;
-            if (!patternLine.NullOrEmpty() && tick >= patternLine[timeTickLineIndex].cachedActionTimeOfTicks)
+        public override void PostDeSpawn(Map map)
+        {
+            base.PostDeSpawn(map);
+            foreach (TextureLevels t in cachedAllOriginalDefForGraphicDataList)
             {
-                TextureLevelRandomPatternSet set = patternLine[timeTickLineIndex];
-                cachedRandomGraphicPattern[set.typeOriginalDefNameKeyName] = set.cachedPattern;
-                set.RandomNextIntervalAndPattern();
-                patternLine.Append(set);
-                patternLine.SortStable((i, j) => i.cachedActionTimeOfTicks.CompareTo(j.cachedActionTimeOfTicks));
-                timeTickLineIndex++;
-            }*/
+                if (t.actionManager.def != null)
+                    t.actionManager.Destory();
+            }
         }
 
 
@@ -240,7 +236,7 @@ namespace NareisLib
                 if (batch.renderSwitch.y != 0)
                 {
                     TextureRenderLayer layer = batch.layer;
-                    if (!batch.staticLayer && batch.layer == TextureRenderLayer.BottomHair)
+                    if (!batch.staticLayer && !batch.donotChangeLayer && batch.layer == TextureRenderLayer.BottomHair)
                         layer = TextureRenderLayer.Hair;
                     if (dataEast.NullOrEmpty() || !dataEast.ContainsKey((int)layer))
                         dataEast[(int)layer] = new List<MultiTexBatch>();
@@ -252,7 +248,7 @@ namespace NareisLib
                 if (batch.renderSwitch.z != 0)
                 {
                     TextureRenderLayer layer = batch.layer;
-                    if (!batch.staticLayer)
+                    if (!batch.staticLayer && !batch.donotChangeLayer)
                     {
                         if (batch.layer == TextureRenderLayer.BottomHair)
                             layer = TextureRenderLayer.Hair;

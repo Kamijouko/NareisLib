@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using Verse;
+using Verse.AI;
 
 namespace NareisLib
 {
@@ -77,14 +78,7 @@ namespace NareisLib
             if (curJob == null || curJob.defName != job.defName || curBehavior == null)
             {
                 curJob = job;
-                valueIndex = -1;
-                valuePath = "";
-                fullPath = "";
-                if (behaviorAction != null)
-                {
-                    UnregisterBehavior();
-                    behaviorAction = null;
-                }
+                Reset();
                 if (def.behaviors.TryGetValue(job, out curBehavior) && curBehavior.textures.Contains(key))
                 {
                     //当使用链接至其他ActionManager时
@@ -198,26 +192,22 @@ namespace NareisLib
             return result;
         }
 
-        public void RegisterTickability()
+        private void Reset()
         {
-            tickAction = () =>
+            valueIndex = -1;
+            valuePath = "";
+            fullPath = "";
+            if (behaviorAction != null)
             {
-                HugsLibController.Instance.TickDelayScheduler.ScheduleCallback(() =>
-                {
-                    CustomTick();
-                }, tickDelay, null, true);
-            };
-            tickAction();
+                UnregisterBehavior();
+                behaviorAction = null;
+            }
         }
 
-        public void UnregisterTickability()
+        public void Destory()
         {
-            HugsLibController.Instance.TickDelayScheduler.TryUnscheduleCallback(tickAction);
-        }
-
-        private void CustomTick()
-        {
-            // logic here
+            curJob = null;
+            Reset();
         }
     }
 }
