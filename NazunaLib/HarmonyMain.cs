@@ -35,17 +35,18 @@ namespace NareisLib
             //harmonyInstance.Patch(AccessTools.Method(typeof(ThingWithComps), "ExposeData", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "ExposeDataAddCompPostfix", null), null, null);
             //harmonyInstance.Patch(AccessTools.Method(typeof(ThingWithComps), "InitializeComps", null, null), new HarmonyMethod(typeof(PawnRenderPatchs), "InitializeCompsAddCompPrefix", null), null, null, null);
             
+            /*
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveAllGraphics", null, null), null, null, null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveAllGraphicsFinalizer", null));
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveApparelGraphics", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveHairGraphicsPostfix", null), null, null);
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnGraphicSet), "ResolveApparelGraphics", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "ResolveApparelGraphicsPostfix", null), null, null);
-
+            
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "DrawPawnBody", null, null), new HarmonyMethod(typeof(PawnRenderPatchs), "DrawPawnBodyPrefix", null), null, null, null);
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "DrawPawnBody", null, null), null, null, null, new HarmonyMethod(typeof(PawnRenderPatchs), "DrawPawnBodyFinalizer", null));
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "DrawBodyApparel", null, null), new HarmonyMethod(typeof(PawnRenderPatchs), "DrawBodyApparelPrefix", null), null, null, null);
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "RenderPawnInternal", null, null), null, null, new HarmonyMethod(typeof(PawnRenderPatchs), "RenderPawnInternalHeadPatchTranspiler", null), null);
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "DrawHeadHair", null, null), null, null, new HarmonyMethod(typeof(PawnRenderPatchs), "DrawHeadHairPatchTranspiler", null), null);
             harmonyInstance.Patch(AccessTools.Method(typeof(PawnRenderer), "RenderPawnInternal", null, null), null, new HarmonyMethod(typeof(PawnRenderPatchs), "RenderPawnInternalPostfix", null), null, null);
-
+            */
         }
     }
 
@@ -108,7 +109,7 @@ namespace NareisLib
             return true;
         }*/
 
-        public static void PostMakeAddCompPostfix(ThingWithComps __instance, List<ThingComp> ___comps)
+        /*public static void PostMakeAddCompPostfix(ThingWithComps __instance, List<ThingComp> ___comps)
         {
             Pawn pawn = __instance as Pawn;
             if (pawn == null)
@@ -125,7 +126,7 @@ namespace NareisLib
             }
             if (comp != null)
                 comp.PostPostMake();
-        }
+        }*/
 
 
         //处理defName所指定的MultiTexDef，

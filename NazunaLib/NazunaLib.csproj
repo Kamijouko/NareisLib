@@ -32,23 +32,33 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath>L:\SteamLibrary\steamapps\common\RimWorld\Mods\NareisLib\Assemblies\0Harmony.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="0Harmony, Version=2.2.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>L:\SteamLibrary\steamapps\workshop\content\294100\2009463077\Current\Assemblies\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="AlienRace">
-      <HintPath>L:\SteamLibrary\steamapps\workshop\content\294100\839005762\1.4\Assemblies\AlienRace.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>L:\SteamLibrary\steamapps\workshop\content\294100\839005762\1.5\Assemblies\AlienRace.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>L:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="HugsLib">
-      <HintPath>L:\SteamLibrary\steamapps\workshop\content\294100\818773962\v1.4\Assemblies\HugsLib.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>L:\SteamLibrary\steamapps\workshop\content\294100\818773962\v1.5\Assemblies\HugsLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="Unity.Burst">
+      <HintPath>L:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Unity.Burst.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Burst.Unsafe">
+      <HintPath>L:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Unity.Burst.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Mathematics">
+      <HintPath>L:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Unity.Mathematics.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.MemoryProfiler">
+      <HintPath>L:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Unity.MemoryProfiler.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>L:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Unity.TextMeshPro.dll</HintPath>
       <Private>False</Private>
@@ -322,6 +332,8 @@
     <Compile Include="TextureLevelJobDataSet.cs" />
     <Compile Include="TextureLevelJobSet.cs" />
     <Compile Include="TextureLevels.cs" />
+    <Compile Include="TextureLevelsToNode.cs" />
+    <Compile Include="TextureLevelsToNodeProperties.cs" />
     <Compile Include="TextureRenderLayer.cs" />
     <Compile Include="ThisModBase.cs" />
     <Compile Include="HarmonyMain.cs" />

@@ -364,6 +364,15 @@ namespace NareisLib
             yield break;
         }
 
+        /// <summary>
+        /// 将身体每个部分的图层转换为原版的Node，1.5专用
+        /// </summary>
+        /// <returns></returns>
+        public override List<PawnRenderNode> CompRenderNodes()
+        {
+
+            return base.CompRenderNodes();
+        }
 
         public override void PostExposeData()
         {
