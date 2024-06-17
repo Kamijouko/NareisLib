@@ -201,11 +201,11 @@ namespace NareisLib
 
 
         //预处理Pawn身体的多层渲染数据，只会在pawn出现或生成时执行一次，在整体预处理方法中最后执行（因为原方法的顺序）
-        static void ResolveAllGraphicsFinalizer(PawnGraphicSet __instance)
+        static void ResolveAllGraphicsFinalizer(Pawn pawn)
         {
             if (!ModStaticMethod.AllLevelsLoaded || ThisModData.DefAndKeyDatabase.NullOrEmpty())
                 return;
-            Pawn pawn = __instance.pawn;
+            //Pawn pawn = __instance.pawn;
             string race = pawn.def.defName;
             if (!ThisModData.RacePlansDatabase.ContainsKey(race))
                 return;
@@ -289,11 +289,11 @@ namespace NareisLib
         }
 
         //预处理Pawn的头发，在发型变换时会执行
-        static void ResolveHairGraphicsPostfix(PawnGraphicSet __instance)
+        static void ResolveHairGraphicsPostfix(Pawn pawn)
         {
             if (!ModStaticMethod.AllLevelsLoaded || ThisModData.DefAndKeyDatabase.NullOrEmpty())
                 return;
-            Pawn pawn = __instance.pawn;
+            //Pawn pawn = __instance.pawn;
             string race = pawn.def.defName;
             if (!ThisModData.RacePlansDatabase.ContainsKey(race))
                 return;
@@ -343,11 +343,11 @@ namespace NareisLib
         }
 
         //预处理Pawn穿着的多层渲染服装，在服装变换时会执行
-        static void ResolveApparelGraphicsPostfix(PawnGraphicSet __instance)
+        static void ResolveApparelGraphicsPostfix(Pawn pawn)
         {
             if (!ModStaticMethod.AllLevelsLoaded || ThisModData.DefAndKeyDatabase.NullOrEmpty())
                 return;
-            Pawn pawn = __instance.pawn;
+            //Pawn pawn = __instance.pawn;
             string race = pawn.def.defName;
             if (!ThisModData.RacePlansDatabase.ContainsKey(race))
                 return;
@@ -697,17 +697,7 @@ namespace NareisLib
             {
                 Material bodyMat;
                 PawnGraphicSet pawnSet = __instance.graphics;
-                if (bodyDrawType == RotDrawMode.Fresh)
-                {
-                    if (___pawn.Dead && pawnSet.corpseGraphic != null)
-                        bodyMat = pawnSet.corpseGraphic.MatAt(facing, null);
-                    else
-                        bodyMat = pawnSet.nakedGraphic.MatAt(facing, null);
-                }
-                else if (bodyDrawType == RotDrawMode.Rotting || pawnSet.dessicatedGraphic == null)
-                    bodyMat = pawnSet.rottingGraphic.MatAt(facing, null);
-                else
-                    bodyMat = pawnSet.dessicatedGraphic.MatAt(facing, null);
+                bodyMat = __instance.BodyGraphic.MatAt(facing, null);
                 Material material = (___pawn.RaceProps.IsMechanoid && ___pawn.Faction != null && ___pawn.Faction != Faction.OfMechanoids) 
                     ? __instance.graphics.GetOverlayMat(bodyMat, ___pawn.Faction.MechColor) 
                     : bodyMat;

@@ -27,6 +27,9 @@ namespace NareisLib
         //渲染的层级信息
         public TextureRenderLayer renderLayer = TextureRenderLayer.None;
 
+        //可选参数，如果xml里为空将根据MultiTexDef指定的物品种类自行选择默认的原版Worker
+        public Type renderWorker;
+
         //可选参数,设定该层是否会由于方向改变等原因自动变更为其他层，
         //例：Hair层在渲染北面时会自动变为BottomHair层
         public bool staticLayer = false;
@@ -564,6 +567,13 @@ namespace NareisLib
                 Initialization(color, colorTwo);
             }
             return cacheGraphic;
+        }
+
+        public TextureLevelsToNode GetPawnRenderNode(MultiTexBatch batch, Pawn pawn, PawnRenderTree tree)
+        {
+            TextureLevelsToNodeProperties prop = new TextureLevelsToNodeProperties(this, batch);
+            TextureLevelsToNode result = new TextureLevelsToNode(pawn, prop, tree);
+            return result;
         }
     }
 }
