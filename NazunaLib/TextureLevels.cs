@@ -27,6 +27,9 @@ namespace NareisLib
         //渲染的层级信息
         public TextureRenderLayer renderLayer = TextureRenderLayer.None;
 
+        //渲染的父节点指定，优先级高于上方的渲染层级信息
+        public PawnRenderNodeTagDef renderParentNodeTagDef = null;
+
         //可选参数，如果xml里为空将根据MultiTexDef指定的物品种类自行选择默认的原版Worker
         public Type renderWorker;
 

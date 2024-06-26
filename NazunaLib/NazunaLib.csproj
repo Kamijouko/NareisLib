@@ -334,9 +334,9 @@
     <Compile Include="TextureLevels.cs" />
     <Compile Include="TextureLevelsToNode.cs" />
     <Compile Include="TextureLevelsToNodeProperties.cs" />
+    <Compile Include="TextureLevelsToNodeSubWorker.cs" />
     <Compile Include="TextureRenderLayer.cs" />
     <Compile Include="ThisModBase.cs" />
-    <Compile Include="HarmonyMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ThisModData.cs" />
   </ItemGroup>

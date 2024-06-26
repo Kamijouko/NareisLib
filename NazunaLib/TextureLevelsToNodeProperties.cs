@@ -15,8 +15,20 @@ namespace NareisLib
             textureLevels = level;
             multiTexBatch = batch;
             debugLabel = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
-            workerClass = GetWorkerClass(multiTexBatch.originalDefName);
+            workerClass = level.renderWorker ?? GetWorkerClass(multiTexBatch.originalDefName);
 
+        }
+
+        public PawnRenderNodeTagDef GetRootNode(TextureRenderLayer layer)
+        {
+            switch (layer)
+            {
+                case TextureRenderLayer.Head:
+                    return PawnRenderNodeTagDefOf.Head;
+                case TextureRenderLayer.Body:
+                    return PawnRenderNodeTagDefOf.Body;
+                default: return null;
+            }
         }
 
         public Type GetWorkerClass(string defName)
@@ -37,6 +49,8 @@ namespace NareisLib
             if (def.GetType() == typeof(HeadTypeDef))
                 return typeof(PawnRenderNodeWorker_Head);
             if (def.GetType() == typeof(BodyTypeDef))
+                return typeof(PawnRenderNodeWorker_Body);
+            if (def.GetType() == typeof(HandTypeDef))
                 return typeof(PawnRenderNodeWorker_Body);
             else
                 return typeof(PawnRenderNodeWorker);
