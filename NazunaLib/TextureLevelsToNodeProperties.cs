@@ -53,11 +53,13 @@ namespace NareisLib
                 new DrawData.RotationalData(new Rot4?(Rot4.North), level.drawData.northLayer)
             });
 
+            if (workerClass != typeof(PawnRenderNodeWorker_TextureLevels) && !subworkerClasses.Contains(typeof(TextureLevelsToNodeSubWorker)))
+                subworkerClasses.Add(typeof(TextureLevelsToNodeSubWorker));
         }
 
         public PawnRenderNodeTagDef GetRootNode(TextureLevels level, TextureRenderLayer layer)
         {
-            if (level.usePublicYOffset)
+            if (level.usePublicYOffset || level.useStaticYOffset)
                 return DefDatabase<PawnRenderNodeTagDef>.GetNamed("Root");
             switch (layer)
             {
@@ -113,7 +115,7 @@ namespace NareisLib
             if (def.GetType() == typeof(HandTypeDef))
                 return typeof(PawnRenderNodeWorker_Body);
             if (def.GetType() == typeof(HairDef))
-                return typeof(PawnRenderNodeWorker_SPHair);
+                return typeof(PawnRenderNodeWorker_TextureLevels);
             else
                 return typeof(PawnRenderNodeWorker_TextureLevels);
         }

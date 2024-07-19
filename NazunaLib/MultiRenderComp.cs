@@ -368,7 +368,7 @@ namespace NareisLib
         public static TextureLevels ResolveKeyNameForLevel(TextureLevels level, string key, MultiTexBatch batch)
         {
             level.keyName = key;
-            level.catchedBatch = batch;
+            level.cachedBatch = batch;
             /*if (level.patternSets != null)
                 level.patternSets.typeOriginalDefNameKeyName = level.originalDefClass.ToStringSafe() + "_" + level.originalDef + "_" + key;*/
             return level;
@@ -384,7 +384,7 @@ namespace NareisLib
         //对其属性levels里所存储的所有TextureLevels都根据指定的权重随机一个贴图的名称，
         //并将名称记录进一个从其属性cacheOfLevels得来的MultiTexEpoch中所对应渲染图层的MultiTexBatch的名称列表里，
         //最终返回这个MultiTexEpoch
-        public static MultiTexEpoch ResolveMultiTexDef(MultiTexDef def, out Dictionary<string, TextureLevels> data)
+        public static MultiTexEpoch ResolveMultiTexDef(MultiTexDef def, out Dictionary<string, TextureLevels> data, Apparel apparel = null)
         {
             MultiTexEpoch epoch = new MultiTexEpoch(def.originalDefClass.ToStringSafe() + "_" + def.originalDef);
             List<MultiTexBatch> batches = new List<MultiTexBatch>();
@@ -420,7 +420,8 @@ namespace NareisLib
                     {
                         TextureLevels textureLevels = ThisModData.TexLevelsDatabase[type_defName][level.textureLevelsName].Clone();
                         textureLevels.keyName = keyName;
-                        textureLevels.catchedBatch = batch;
+                        textureLevels.cachedBatch = batch;
+                        textureLevels.cachedApparel = apparel;
                         /*if (textureLevels.patternSets != null)
                             textureLevels.patternSets.typeOriginalDefNameKeyName = textureLevels.originalDefClass.ToStringSafe() + "_" + textureLevels.originalDef + "_" + keyName;*/
                         if (!data.ContainsKey(textureLevels.textureLevelsName))

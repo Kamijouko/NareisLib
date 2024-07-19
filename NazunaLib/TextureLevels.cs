@@ -104,6 +104,9 @@ namespace NareisLib
         //可选参数，渲染时使用的Mesh类型，有Hair，Head和Body三种（注意大小写）非Humanlike的pawn只有Body
         public string meshType = "Body";
 
+        //可选参数，当前图层是否要使用头部的位置偏移，适用于不使用head图层以及父节点也不为head及其子节点的图层
+        public bool offsetToHead = false;
+
         //可选参数，渲染时使用的Mesh大小，为zero时不会识别，默认为zero
         public Vector2 meshSize = Vector2.zero;
 
@@ -215,7 +218,7 @@ namespace NareisLib
 
 
         //xml里无需设定并且设定无效
-        public MultiTexBatch catchedBatch = null;
+        public MultiTexBatch cachedBatch = null;
         //xml里无需设定并且设定无效
         public Dictionary<string, int> preFixWeights = new Dictionary<string, int>();
 
@@ -251,6 +254,9 @@ namespace NareisLib
 
         //xml里无需设定并且设定无效
         public Graphic cacheGraphic;
+
+        //xml里无需设定并且设定无效
+        public Apparel cachedApparel;
 
 
 
@@ -611,7 +617,7 @@ namespace NareisLib
 
         public TextureLevelsToNode GetPawnRenderNode(MultiRenderComp renderComp, Pawn pawn, PawnRenderTree tree)
         {
-            TextureLevelsToNodeProperties prop = new TextureLevelsToNodeProperties(this, catchedBatch);
+            TextureLevelsToNodeProperties prop = new TextureLevelsToNodeProperties(this, cachedBatch);
             TextureLevelsToNode result = (TextureLevelsToNode)Activator.CreateInstance(prop.nodeClass, new object[]
             {
                 pawn,
@@ -619,8 +625,9 @@ namespace NareisLib
                 pawn.Drawer.renderer.renderTree
             });
             result.textureLevels = this;
-            result.multiTexBatch = catchedBatch;
+            result.multiTexBatch = cachedBatch;
             result.comp = renderComp;
+            result.apparel = cachedApparel;
             return result;
         }
     }
