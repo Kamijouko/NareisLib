@@ -74,7 +74,7 @@ namespace NareisLib
                     }
                 }
             }
-            else if (pawn.HasHediffOfDefAndPart(hediff, part, partLabel))
+            else if (pawn.HasHediffOfDefAndPart(hediff, part, partLabel) != null)
             {
                 prefix = noSeverityPrefix;
                 return true;

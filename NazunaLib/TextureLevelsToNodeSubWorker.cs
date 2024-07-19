@@ -12,6 +12,8 @@ namespace NareisLib
     {
         public override bool CanDrawNowSub(PawnRenderNode node, PawnDrawParms parms)
         {
+            
+
             return base.CanDrawNowSub(node, parms);
         }
 

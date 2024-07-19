@@ -13,6 +13,20 @@ namespace NareisLib
         {
         }
 
+        public TextureLevelsToNodeProperties CurProps
+        {
+            get
+            {
+                return (TextureLevelsToNodeProperties)Props;
+            }
+        }
+
+        public TextureLevels textureLevels;
+
+        public MultiTexBatch multiTexBatch;
+
+        public MultiRenderComp comp;
+
         public override Graphic GraphicFor(Pawn pawn)
         {
             return base.GraphicFor(pawn);

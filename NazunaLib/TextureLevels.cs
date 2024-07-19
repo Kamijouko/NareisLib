@@ -33,6 +33,9 @@ namespace NareisLib
         //可选参数，如果xml里为空将根据MultiTexDef指定的物品种类自行选择默认的原版Worker
         public Type renderWorker;
 
+        //可选参数，来自RenderNode，设置子SubWorker
+        public List<Type> subworkerClasses = new List<Type>();
+
         //可选参数,设定该层是否会由于方向改变等原因自动变更为其他层，
         //例：Hair层在渲染北面时会自动变为BottomHair层
         public bool staticLayer = false;
@@ -43,13 +46,29 @@ namespace NareisLib
         //可选参数，与上选项搭配使用，开启后将交换东西方向的贴图
         public bool switchEastWest = false;
 
+        //可选参数，来自RenderNode，图层翻转时所在的‘层高（特指原版的layer）’也会翻转
+        public bool oppositeFacingLayerWhenFlipped = false;
+
         //*可选参数，打开后一些在不同方向会交换的图层类型不再交换
         public bool donotChangeLayer = false;
 
         //可选参数，设置当前层存在时是否替换或隐藏某些可能存在的层
         public List<TextureLevelHideOption> hideList = new List<TextureLevelHideOption>();
 
+        //可选参数，来自RenderNode
+        public PawnOverlayDrawer.OverlayLayer overlayLayer;
 
+        //可选参数，来自RenderNode
+        public bool? overlayOverApparel = false;
+
+        //可选参数，来自RenderNode
+        public RenderSkipFlagDef skipFlag;
+
+        //可选参数，来自RenderNode
+        public PawnRenderNodeTagDef tagDef;
+
+
+        
 
 
 
@@ -98,6 +117,9 @@ namespace NareisLib
 
         //可选参数，使用相对头部类型的贴图版本，不可与useBodyType同时使用
         public bool useHeadType = false;
+
+        //可选参数，来自RenderNode
+        public PawnRenderNodeProperties.RenderNodePawnType pawnType = PawnRenderNodeProperties.RenderNodePawnType.HumanlikeOnly;
 
 
 
@@ -159,6 +181,20 @@ namespace NareisLib
         //可选参数，x、y、z分别表示正面侧面和背面，为1时会被渲染，为0时会被忽略
         public Vector3 renderSwitch = Vector3.one;
 
+        //可选参数，相当于设置RenderNode里的baseLayer
+        //用于调整每个方向上的1.5新增的‘层’这个概念
+        //每1层影响Y轴高度是0.00038461538f，最底层为-10f
+        //可以和各个设置各个方向offset一起使用
+        public float baseLayer;
+
+        //可选参数，单独设置每个方向的层
+        public NareisLib_DrawData drawData = null;
+
+        //可选参数，来自RenderNode
+        public bool rotateIndependently = false;
+
+        //可选参数，来自RenderNode
+        public PawnRenderNodeProperties.Side side;
 
 
 
@@ -178,7 +214,8 @@ namespace NareisLib
 
 
 
-
+        //xml里无需设定并且设定无效
+        public MultiTexBatch catchedBatch = null;
         //xml里无需设定并且设定无效
         public Dictionary<string, int> preFixWeights = new Dictionary<string, int>();
 
@@ -572,10 +609,18 @@ namespace NareisLib
             return cacheGraphic;
         }
 
-        public TextureLevelsToNode GetPawnRenderNode(MultiTexBatch batch, Pawn pawn, PawnRenderTree tree)
+        public TextureLevelsToNode GetPawnRenderNode(MultiRenderComp renderComp, Pawn pawn, PawnRenderTree tree)
         {
-            TextureLevelsToNodeProperties prop = new TextureLevelsToNodeProperties(this, batch);
-            TextureLevelsToNode result = new TextureLevelsToNode(pawn, prop, tree);
+            TextureLevelsToNodeProperties prop = new TextureLevelsToNodeProperties(this, catchedBatch);
+            TextureLevelsToNode result = (TextureLevelsToNode)Activator.CreateInstance(prop.nodeClass, new object[]
+            {
+                pawn,
+                prop,
+                pawn.Drawer.renderer.renderTree
+            });
+            result.textureLevels = this;
+            result.multiTexBatch = catchedBatch;
+            result.comp = renderComp;
             return result;
         }
     }

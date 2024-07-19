@@ -7,6 +7,7 @@ using Verse;
 using RimWorld;
 using UnityEngine;
 using AlienRace.ExtendedGraphics;
+using System.IO;
 
 namespace NareisLib
 {
@@ -218,7 +219,7 @@ namespace NareisLib
             List<MultiTexBatch> list = GetAllBatch;
             if (ModStaticMethod.ThisMod.debugToggle)
                 Log.Warning("batch:" + list.Count().ToString());
-            if (list.NullOrEmpty())
+            /*if (list.NullOrEmpty())
                 return;
 
             Dictionary<int, List<MultiTexBatch>> dataSouth = new Dictionary<int, List<MultiTexBatch>>();
@@ -254,8 +255,6 @@ namespace NareisLib
                             layer = TextureRenderLayer.Hair;
                         else if (batch.layer == TextureRenderLayer.BottomShell)
                             layer = TextureRenderLayer.FrontShell;
-                        /*else if (batch.layer == TextureRenderLayer.HandOne)
-                            layer = TextureRenderLayer.HandTwo;*/
                         else if (batch.layer == TextureRenderLayer.FrontShell)
                             layer = TextureRenderLayer.BottomShell;
                         else if (batch.layer == TextureRenderLayer.Hair)
@@ -303,7 +302,7 @@ namespace NareisLib
                     if (cachedDataNorth[t].Count() > 1)
                         cachedDataNorth[t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetNorth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetNorth.Value.y));
                 }
-            }
+            }*/
             
             
             
@@ -364,15 +363,241 @@ namespace NareisLib
             yield break;
         }
 
+
+        //下方法的子方法，为获取到的TextureLevels进行赋值操作
+        public static TextureLevels ResolveKeyNameForLevel(TextureLevels level, string key, MultiTexBatch batch)
+        {
+            level.keyName = key;
+            level.catchedBatch = batch;
+            /*if (level.patternSets != null)
+                level.patternSets.typeOriginalDefNameKeyName = level.originalDefClass.ToStringSafe() + "_" + level.originalDef + "_" + key;*/
+            return level;
+        }
+
+        //从comp的storedData里获取TextureLevels数据，用于处理读取存档时从已有的storedData字典中得到的epoch
+        public static Dictionary<string, TextureLevels> GetLevelsDictFromEpoch(MultiTexEpoch epoch)
+        {
+            return !epoch.batches.NullOrEmpty() ? epoch.batches.ToDictionary(k => k.textureLevelsName, v => ResolveKeyNameForLevel(ThisModData.TexLevelsDatabase[v.originalDefClass.ToStringSafe() + "_" + v.originalDefName][v.textureLevelsName].Clone(), v.keyName, v)) : new Dictionary<string, TextureLevels>();
+        }
+
+        //处理defName所指定的MultiTexDef，
+        //对其属性levels里所存储的所有TextureLevels都根据指定的权重随机一个贴图的名称，
+        //并将名称记录进一个从其属性cacheOfLevels得来的MultiTexEpoch中所对应渲染图层的MultiTexBatch的名称列表里，
+        //最终返回这个MultiTexEpoch
+        public static MultiTexEpoch ResolveMultiTexDef(MultiTexDef def, out Dictionary<string, TextureLevels> data)
+        {
+            MultiTexEpoch epoch = new MultiTexEpoch(def.originalDefClass.ToStringSafe() + "_" + def.originalDef);
+            List<MultiTexBatch> batches = new List<MultiTexBatch>();
+            data = new Dictionary<string, TextureLevels>();
+            try
+            {
+                foreach (TextureLevels level in def.levels)
+                {
+                    string pre = "";
+                    string keyName = "";
+                    if (level.prefix.NullOrEmpty() && level.texPath != null)
+                    {
+                        keyName = TextureLevels.ResolveKeyName(Path.GetFileNameWithoutExtension(level.texPath));
+                    }
+                    else if (!level.prefix.NullOrEmpty())
+                    {
+                        pre = level.prefix.RandomElementByWeight(x => level.preFixWeights.ContainsKey(x) ? level.preFixWeights[x] : 1);
+                        keyName = level.preFixToTexName[pre].RandomElementByWeight(x => level.texWeights[pre].ContainsKey(x) ? level.texWeights[pre][x] : 1);
+                    }
+
+                    MultiTexBatch batch = new MultiTexBatch(def.originalDefClass, def.originalDef, def.defName, keyName, level.textureLevelsName, level.renderLayer, level.renderSwitch, level.staticLayer, level.donotChangeLayer);
+                    if (!batches.Exists(x => x.textureLevelsName == level.textureLevelsName))
+                        batches.Add(batch);
+
+                    if (ModStaticMethod.ThisMod.debugToggle)
+                    {
+                        Log.Warning("render switch : " + level.renderSwitch.ToStringSafe());
+                        Log.Warning("render layer : " + level.renderLayer.ToStringSafe());
+                    }
+
+                    string type_defName = def.originalDefClass.ToStringSafe() + "_" + def.originalDef;
+                    if (ThisModData.TexLevelsDatabase.ContainsKey(type_defName) && ThisModData.TexLevelsDatabase[type_defName].ContainsKey(level.textureLevelsName))
+                    {
+                        TextureLevels textureLevels = ThisModData.TexLevelsDatabase[type_defName][level.textureLevelsName].Clone();
+                        textureLevels.keyName = keyName;
+                        textureLevels.catchedBatch = batch;
+                        /*if (textureLevels.patternSets != null)
+                            textureLevels.patternSets.typeOriginalDefNameKeyName = textureLevels.originalDefClass.ToStringSafe() + "_" + textureLevels.originalDef + "_" + keyName;*/
+                        if (!data.ContainsKey(textureLevels.textureLevelsName))
+                            data[textureLevels.textureLevelsName] = textureLevels;
+                    }
+                }
+                epoch.batches = batches;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("一个MultiTexDef:" + def.defName + "出错了, 这很有可能是其levels中的某个textureLevelsName配置不符合规范, 或者是对应的贴图及其路径内包含错误(请尝试检查标点符号以及贴图和路径是否存在等等)", ex);
+            }
+
+            return epoch;
+        }
+        
+
+        public void PreResolveAllLayerBatch()
+        {
+            if (!ModStaticMethod.AllLevelsLoaded || ThisModData.DefAndKeyDatabase.NullOrEmpty())
+                return;
+            if (!(parent is Pawn))
+                return;
+            Pawn pawn = (Pawn)parent;
+            string race = pawn.def.defName;
+            if (!ThisModData.RacePlansDatabase.ContainsKey(race))
+                return;
+            RenderPlanDef def = ThisModData.RacePlansDatabase[race];
+            string plan = def.defName;
+            MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
+            if (comp == null)
+                return;//AddComp(ref comp, ref pawn);
+            Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
+            Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
+            if (ThisModData.DefAndKeyDatabase.ContainsKey(plan))
+            {
+                //头部
+                HeadTypeDef head = pawn.story.headType;
+                string headName = head != null ? head.defName : "";
+                string fullOriginalDefName = typeof(HeadTypeDef).ToStringSafe() + "_" + headName;
+                if (head != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
+                {
+                    MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
+                    if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(fullOriginalDefName))
+                    {
+                        Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                        data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                        cachedGraphicData[fullOriginalDefName] = cachedData;
+                    }
+                    else
+                    {
+                        data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
+                        cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
+                    }
+                }
+                //身体
+                BodyTypeDef body = pawn.story.bodyType;
+                string bodyName = body != null ? body.defName : "";
+                fullOriginalDefName = typeof(BodyTypeDef).ToStringSafe() + "_" + bodyName;
+                if (body != null && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
+                {
+                    MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
+                    if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(fullOriginalDefName))
+                    {
+                        Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                        data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                        cachedGraphicData[fullOriginalDefName] = cachedData;
+                    }
+                    else
+                    {
+                        data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
+                        cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
+                    }
+                }
+                //手部
+                string hand = comp.GetCurHandDefName;
+                fullOriginalDefName = typeof(HandTypeDef).ToStringSafe() + "_" + hand;
+                if (hand != "" && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
+                {
+                    MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
+                    if (comp.storedDataBody.NullOrEmpty() || !comp.storedDataBody.ContainsKey(fullOriginalDefName))
+                    {
+                        Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                        data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                        cachedGraphicData[fullOriginalDefName] = cachedData;
+                    }
+                    else
+                    {
+                        data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
+                        cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
+                    }
+                }
+                comp.cachedBodyGraphicData = cachedGraphicData;
+                comp.storedDataBody = data;
+                cachedGraphicData.Clear();
+                data.Clear();
+                //头发
+                HairDef hair = pawn.story.hairDef;
+                string keyName = hair != null ? hair.defName : "";
+                fullOriginalDefName = typeof(HairDef).ToStringSafe() + "_" + keyName;
+                if (hair != null && ThisModData.DefAndKeyDatabase.ContainsKey(plan) && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
+                {
+
+                    MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][fullOriginalDefName];
+                    if (comp.storedDataHair.NullOrEmpty() || !comp.storedDataHair.ContainsKey(fullOriginalDefName))
+                    {
+                        Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                        data[fullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                        cachedGraphicData[fullOriginalDefName] = cachedData;
+                    }
+                    else
+                    {
+                        data[fullOriginalDefName] = comp.storedDataHair[fullOriginalDefName];
+
+                        cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(comp.storedDataHair[fullOriginalDefName]);
+                    }
+                }
+                comp.cachedHairGraphicData = cachedGraphicData;
+                comp.storedDataHair = data;
+                cachedGraphicData.Clear();
+                data.Clear();
+                //衣服
+                using (List<Apparel>.Enumerator enumerator = pawn.apparel.WornApparel.GetEnumerator())
+                {
+                    while (enumerator.MoveNext())
+                    {
+                        string appKeyName = enumerator.Current.def.defName;
+                        string appFullOriginalDefName = typeof(ThingDef).ToStringSafe() + "_" + appKeyName;
+                        if (ThisModData.DefAndKeyDatabase.ContainsKey(plan) && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
+                        {
+                            MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][appFullOriginalDefName];
+                            if (comp.storedDataApparel.NullOrEmpty() || !comp.storedDataApparel.ContainsKey(appFullOriginalDefName))
+                            {
+                                Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
+                                data[appFullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                                cachedGraphicData[appFullOriginalDefName] = cachedData;
+                            }
+                            else
+                            {
+                                data[appFullOriginalDefName] = comp.storedDataApparel[appFullOriginalDefName];
+                                cachedGraphicData[appFullOriginalDefName] = GetLevelsDictFromEpoch(data[appFullOriginalDefName]);
+                            }
+                        }
+                    }
+
+                }
+                comp.cachedApparelGraphicData = cachedGraphicData;
+                comp.storedDataApparel = data;
+                cachedGraphicData.Clear();
+                data.Clear();
+                comp.ResolveAllLayerBatch();
+                comp.PrefixResolved = true;
+                comp.pawnName = pawn.Name.ToStringFull;
+            }
+        }
+
+
         /// <summary>
         /// 将身体每个部分的图层转换为原版的Node，1.5专用
         /// </summary>
         /// <returns></returns>
         public override List<PawnRenderNode> CompRenderNodes()
         {
+            PreResolveAllLayerBatch();
+
+
+
+
 
             return base.CompRenderNodes();
         }
+
+        
+
+
+
+
 
         public override void PostExposeData()
         {

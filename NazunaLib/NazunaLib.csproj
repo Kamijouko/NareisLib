@@ -323,6 +323,8 @@
     <Compile Include="NareisLib_GraphicMeshSet.cs" />
     <Compile Include="NareisLib_MeshPoolUtility.cs" />
     <Compile Include="Page_Setting_CurBehavior.cs" />
+    <Compile Include="PawnRenderNodeWorker_SPHair.cs" />
+    <Compile Include="PawnRenderNodeWorker_TextureLevels.cs" />
     <Compile Include="TextureLevelHideOption.cs" />
     <Compile Include="TextureLevelRandomPatternSet.cs" />
     <Compile Include="RenderPlanDef.cs" />
