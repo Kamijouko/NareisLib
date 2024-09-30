@@ -20,6 +20,9 @@ namespace NareisLib
         //是否渲染原层级的贴图
         public bool renderOriginTex = false;
 
+        //当renderOriginTex为false时，将隐藏渲染树里对应这里设置的tagDef，如果游戏中这里设置的tagDef已经被隐藏则自动不做处理
+        public PawnRenderNodeTagDef renderBaseNode;
+
         //贴图文件夹所在路径
         public string path = "";
 

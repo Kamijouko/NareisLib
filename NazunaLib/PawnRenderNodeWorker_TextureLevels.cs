@@ -35,11 +35,16 @@ namespace NareisLib
 
         public override bool CanDrawNow(PawnRenderNode node, PawnDrawParms parms)
         {
-            TextureLevelsToNode tlNode = node as TextureLevelsToNode ?? null;
-            if (tlNode == null)
-                return base.CanDrawNow(node, parms);
+            
             MultiRenderComp comp = parms.pawn.GetComp<MultiRenderComp>();
             if (comp == null)
+                return base.CanDrawNow(node, parms);
+            if (comp.GetAllHideOriginalDefData.Contains(node.Props.tagDef.defName)
+                || (node.apparel != null && comp.GetAllHideOriginalDefData.Contains(node.apparel.def.defName)))
+                return false;
+
+            TextureLevelsToNode tlNode = node as TextureLevelsToNode ?? null;
+            if (tlNode == null)
                 return base.CanDrawNow(node, parms);
 
             TextureLevels data = tlNode.textureLevels;

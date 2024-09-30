@@ -454,6 +454,7 @@ namespace NareisLib
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 return;//AddComp(ref comp, ref pawn);
+            List<string> cachedOverride = new List<string>();
             Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
             Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
             if (ThisModData.DefAndKeyDatabase.ContainsKey(plan))
@@ -476,6 +477,8 @@ namespace NareisLib
                         data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
                         cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
                     }
+                    if (!multidef.renderOriginTex && !cachedOverride.Contains(multidef.renderBaseNode.defName))
+                        cachedOverride.Add(multidef.renderBaseNode.defName);
                 }
                 //身体
                 BodyTypeDef body = pawn.story.bodyType;
@@ -495,6 +498,8 @@ namespace NareisLib
                         data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
                         cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
                     }
+                    if (!multidef.renderOriginTex && !cachedOverride.Contains(multidef.renderBaseNode.defName))
+                        cachedOverride.Add(multidef.renderBaseNode.defName);
                 }
                 //手部
                 string hand = comp.GetCurHandDefName;
@@ -513,11 +518,15 @@ namespace NareisLib
                         data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
                         cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
                     }
+                    if (!multidef.renderOriginTex && !cachedOverride.Contains(multidef.renderBaseNode.defName))
+                        cachedOverride.Add(multidef.renderBaseNode.defName);
                 }
+                comp.cachedOverrideBody = cachedOverride;
                 comp.cachedBodyGraphicData = cachedGraphicData;
                 comp.storedDataBody = data;
                 cachedGraphicData.Clear();
                 data.Clear();
+                cachedOverride.Clear();
                 //头发
                 HairDef hair = pawn.story.hairDef;
                 string keyName = hair != null ? hair.defName : "";
@@ -538,11 +547,15 @@ namespace NareisLib
 
                         cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(comp.storedDataHair[fullOriginalDefName]);
                     }
+                    if (!multidef.renderOriginTex && !cachedOverride.Contains(multidef.renderBaseNode.defName))
+                        cachedOverride.Add(multidef.renderBaseNode.defName);
                 }
+                comp.cachedOverrideHair = cachedOverride;
                 comp.cachedHairGraphicData = cachedGraphicData;
                 comp.storedDataHair = data;
                 cachedGraphicData.Clear();
                 data.Clear();
+                cachedOverride.Clear();
                 //衣服
                 using (List<Apparel>.Enumerator enumerator = pawn.apparel.WornApparel.GetEnumerator())
                 {
@@ -552,6 +565,7 @@ namespace NareisLib
                         string appFullOriginalDefName = typeof(ThingDef).ToStringSafe() + "_" + appKeyName;
                         if (ThisModData.DefAndKeyDatabase.ContainsKey(plan) && ThisModData.DefAndKeyDatabase[plan].ContainsKey(fullOriginalDefName))
                         {
+                            string apparelDefName = enumerator.Current.def.defName;
                             MultiTexDef multidef = ThisModData.DefAndKeyDatabase[plan][appFullOriginalDefName];
                             if (comp.storedDataApparel.NullOrEmpty() || !comp.storedDataApparel.ContainsKey(appFullOriginalDefName))
                             {
@@ -564,14 +578,18 @@ namespace NareisLib
                                 data[appFullOriginalDefName] = comp.storedDataApparel[appFullOriginalDefName];
                                 cachedGraphicData[appFullOriginalDefName] = GetLevelsDictFromEpoch(data[appFullOriginalDefName]);
                             }
+                            if (!multidef.renderOriginTex && !cachedOverride.Contains(apparelDefName))
+                                cachedOverride.Add(apparelDefName);
                         }
                     }
 
                 }
+                comp.cachedOverrideApparel = cachedOverride;
                 comp.cachedApparelGraphicData = cachedGraphicData;
                 comp.storedDataApparel = data;
                 cachedGraphicData.Clear();
                 data.Clear();
+                cachedOverride.Clear();
                 comp.ResolveAllLayerBatch();
                 comp.PrefixResolved = true;
                 comp.pawnName = pawn.Name.ToStringFull;
@@ -585,13 +603,16 @@ namespace NareisLib
         /// <returns></returns>
         public override List<PawnRenderNode> CompRenderNodes()
         {
+            if (parent as Pawn == null)
+                return base.CompRenderNodes();
+
+            Pawn pawn = (Pawn)parent;
             PreResolveAllLayerBatch();
 
+            return cachedAllOriginalDefForGraphicDataList.Select(x => (PawnRenderNode)x.GetPawnRenderNode(this, pawn)).ToList();
 
 
-
-
-            return base.CompRenderNodes();
+           
         }
 
         

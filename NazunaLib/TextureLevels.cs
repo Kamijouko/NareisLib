@@ -277,7 +277,6 @@ namespace NareisLib
                 result.hideList = new List<TextureLevelHideOption>(hideList);//
 
 
-
             if (!hediffSets.NullOrEmpty())
                 result.hediffSets = new List<TextureLevelHediffSet>(hediffSets);
             result.actionManager = actionManager.Clone();//
@@ -332,6 +331,34 @@ namespace NareisLib
             result.exPath = exPath;
             result.genderSuffix = genderSuffix;
             result.folder = folder;
+
+
+
+            result.renderParentNodeTagDef = renderParentNodeTagDef;
+            result.renderWorker = renderWorker;
+            result.subworkerClasses = subworkerClasses;
+
+            result.oppositeFacingLayerWhenFlipped = oppositeFacingLayerWhenFlipped;
+
+            result.overlayLayer = overlayLayer;
+            result.overlayOverApparel = overlayOverApparel;
+            result.skipFlag = skipFlag;
+            result.tagDef = tagDef;
+
+            result.pawnType = pawnType;
+
+            result.baseLayer = baseLayer;
+            result.drawData = drawData;
+            result.rotateIndependently = rotateIndependently;
+            result.side = side;
+
+
+
+            result.cachedBatch = cachedBatch;
+            result.cacheGraphic = cacheGraphic;
+            result.cachedApparel = cachedApparel;
+
+
             return result;
         }
 
@@ -615,7 +642,7 @@ namespace NareisLib
             return cacheGraphic;
         }
 
-        public TextureLevelsToNode GetPawnRenderNode(MultiRenderComp renderComp, Pawn pawn, PawnRenderTree tree)
+        public TextureLevelsToNode GetPawnRenderNode(MultiRenderComp renderComp, Pawn pawn)
         {
             TextureLevelsToNodeProperties prop = new TextureLevelsToNodeProperties(this, cachedBatch);
             TextureLevelsToNode result = (TextureLevelsToNode)Activator.CreateInstance(prop.nodeClass, new object[]

@@ -31,20 +31,25 @@ namespace NareisLib
         }
         public override bool CanDrawNowSub(PawnRenderNode node, PawnDrawParms parms)
         {
-            TextureLevelsToNode tlNode = node as TextureLevelsToNode ?? null;
-            if (tlNode == null)
-                return true;
             MultiRenderComp comp = parms.pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 return true;
 
+            if (comp.GetAllHideOriginalDefData.Contains(node.Props.tagDef.defName)
+                || (node.apparel != null && comp.GetAllHideOriginalDefData.Contains(node.apparel.def.defName)))
+                return false;
+
+            TextureLevelsToNode tlNode = node as TextureLevelsToNode ?? null;
+            if (tlNode == null)
+                return true;
+
             TextureLevels data = tlNode.textureLevels;
             MultiTexBatch batch = tlNode.multiTexBatch;
-            string mlPrefixName = batch.multiTexDefName + "_";
+            string mlTexName = $"{batch.multiTexDefName}_{data.textureLevelsName}";
 
             if ((!comp.cachedHideOrReplaceDict.NullOrEmpty()
-                    && comp.cachedHideOrReplaceDict.ContainsKey(mlPrefixName + data.textureLevelsName)
-                    && comp.cachedHideOrReplaceDict[mlPrefixName + data.textureLevelsName].hide)
+                    && comp.cachedHideOrReplaceDict.ContainsKey(mlTexName)
+                    && comp.cachedHideOrReplaceDict[mlTexName].hide)
                 || !data.CanRender(parms.pawn, batch.keyName))
                 return false;
 

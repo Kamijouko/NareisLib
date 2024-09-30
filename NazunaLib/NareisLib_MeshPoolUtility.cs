@@ -11,7 +11,7 @@ namespace NareisLib
 {
     public static class NareisLib_MeshPoolUtility
     {
-        public static NareisLib_GraphicMeshSet GetHumanlikeBodySetForPawn(Pawn pawn)
+        /*public static NareisLib_GraphicMeshSet GetHumanlikeBodySetForPawn(Pawn pawn)
         {
             float lifestageFactor;
             if (ModsConfig.BiotechActive && pawn.ageTracker.CurLifeStage.bodyWidth != null)
@@ -85,6 +85,6 @@ namespace NareisLib
             Vector2 vector4 = new Vector2(lifestageFactor, lifestageFactor);
             return NareisLib_MeshPool.GetMeshSetForWidth(vector2.x * vector4.x, vector2.y * vector4.y);
             //return NareisLib_MeshPool.humanlikeHeadSet;
-        }
+        }*/
     }
 }

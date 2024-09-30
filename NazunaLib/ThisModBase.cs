@@ -10,9 +10,20 @@ using HarmonyLib;
 using AlienRace;
 using HugsLib.Settings;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace NareisLib
 {
+    [StaticConstructorOnStartup]
+    public class HarmonyMain
+    {
+        static HarmonyMain()
+        {
+            var harmonyInstance = new Harmony("NareisLib.kamijouko.nazunarei");
+            harmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
+        }
+    }
+
     [EarlyInit]
     public class ThisModBase : ModBase
     {
@@ -32,6 +43,21 @@ namespace NareisLib
                 return true;
             }
         }
+
+        //给所有PawnRenderNode添加SubWorker
+        [HarmonyPatch(typeof(PawnRenderNodeProperties))]
+        [HarmonyPatch("ResolveReferences")]
+        public class InitialModPawnRenderNodeSubWorkerPatch
+        {
+            static bool Prefix(PawnRenderNodeProperties __instance)
+            {
+                if (__instance.workerClass != typeof(PawnRenderNodeWorker_TextureLevels) && !__instance.subworkerClasses.Contains(typeof(TextureLevelsToNodeSubWorker)))
+                    __instance.subworkerClasses.Add(typeof(TextureLevelsToNodeSubWorker));
+                return true;
+            }
+        }
+
+        
 
         public override void DefsLoaded()
         {

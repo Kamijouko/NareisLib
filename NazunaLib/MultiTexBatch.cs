@@ -39,6 +39,16 @@ namespace NareisLib
         public Vector3 renderSwitch = new Vector3(1f, 1f, 1f);
         public IntVec3 saveRenderSwitch;
 
+        public string GetMultiTexDef_TextureLevelsDefName
+        {
+            get { return $"{multiTexDefName}_{textureLevelsName}"; }
+        }
+
+        public string GetType_OriginalDefName
+        {
+            get { return $"{originalDefClass.ToStringSafe()}_{originalDefName}"; }
+        }
+
         public MultiTexBatch()
         {
 

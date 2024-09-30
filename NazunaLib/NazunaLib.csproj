@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>L:\SteamLibrary\steamapps\common\RimWorld\Mods\NareisLib\Assemblies\</OutputPath>
+    <OutputPath>C:\Users\j0325nvk\source\repos\NareisLib\NazunaLib\bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -35,9 +35,11 @@
     <Reference Include="0Harmony, Version=2.2.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\workshop\content\294100\839005762\1.5\Assemblies\0Harmony.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="AlienRace">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\workshop\content\294100\839005762\1.5\Assemblies\AlienRace.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
@@ -45,19 +47,24 @@
     </Reference>
     <Reference Include="HugsLib">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\workshop\content\294100\818773962\v1.5\Assemblies\HugsLib.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="Unity.Burst">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Unity.Burst.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Burst.Unsafe">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Unity.Burst.Unsafe.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Mathematics">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Unity.Mathematics.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Unity.MemoryProfiler">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Unity.MemoryProfiler.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Unity.TextMeshPro.dll</HintPath>
@@ -312,6 +319,7 @@
     <Compile Include="ActionDef.cs" />
     <Compile Include="ActionManager.cs" />
     <Compile Include="Behavior.cs" />
+    <Compile Include="DefaultNodeSubWorker.cs" />
     <Compile Include="HandTypeDef.cs" />
     <Compile Include="ModStaticMethod.cs" />
     <Compile Include="MultiRenderComp.cs" />
@@ -319,6 +327,8 @@
     <Compile Include="MultiTexBatch.cs" />
     <Compile Include="MultiTexDef.cs" />
     <Compile Include="MultiTexEpoch.cs" />
+    <Compile Include="NareisLib_ColorResolve.cs" />
+    <Compile Include="NareisLib_DrawData.cs" />
     <Compile Include="NareisLib_MeshPool.cs" />
     <Compile Include="NareisLib_GraphicMeshSet.cs" />
     <Compile Include="NareisLib_MeshPoolUtility.cs" />
