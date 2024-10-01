@@ -46,14 +46,13 @@ namespace NareisLib
 
         //给所有PawnRenderNode添加SubWorker
         [HarmonyPatch(typeof(PawnRenderNodeProperties))]
-        [HarmonyPatch("ResolveReferences")]
+        [HarmonyPatch("EnsureInitialized")]
         public class InitialModPawnRenderNodeSubWorkerPatch
         {
-            static bool Prefix(PawnRenderNodeProperties __instance)
+            static void Postfix(PawnRenderNodeProperties __instance)
             {
-                if (__instance.workerClass != typeof(PawnRenderNodeWorker_TextureLevels) && !__instance.subworkerClasses.Contains(typeof(TextureLevelsToNodeSubWorker)))
-                    __instance.subworkerClasses.Add(typeof(TextureLevelsToNodeSubWorker));
-                return true;
+                if (__instance.workerClass != typeof(PawnRenderNodeWorker_TextureLevels) && !__instance.subworkerClasses.Contains(typeof(DefaultNodeSubWorker)) && !__instance.subworkerClasses.Contains(typeof(TextureLevelsToNodeSubWorker)))
+                    __instance.subworkerClasses.Add(typeof(DefaultNodeSubWorker));
             }
         }
 
