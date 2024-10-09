@@ -11,13 +11,18 @@ namespace NareisLib
 {
     public class TextureLevelsToNodeProperties : PawnRenderNodeProperties
     {
-        public TextureLevelsToNodeProperties(TextureLevels level, MultiTexBatch batch) 
+        public TextureLevelsToNodeProperties() 
+        {
+            
+        }
+        
+        public void InitPropertirs(TextureLevels level, MultiTexBatch batch)
         {
             textureLevels = level;
             multiTexBatch = batch;
-            debugLabel = batch.originalDefClass.ToStringSafe() + "_" + batch.originalDefName;
-            workerClass = level.renderWorker ?? GetWorkerClass(multiTexBatch.originalDefName);
-            parentTagDef = level.renderParentNodeTagDef ?? GetRootNode(textureLevels, level.renderLayer);
+            debugLabel = $"{batch.originalDefClass.ToStringSafe()}_{batch.originalDefName}";
+            workerClass = level.renderWorker ?? GetWorkerClass(multiTexBatch.originalDefName, multiTexBatch.originalDefClass);
+            parentTagDef = level.renderParentNodeTagDef ?? GetRootNodeTagDef(textureLevels, level.renderLayer);
             if (level.hasRotting)
                 rotDrawMode |= RotDrawMode.Fresh | RotDrawMode.Rotting;
             if (level.hasDessicated)
@@ -45,19 +50,22 @@ namespace NareisLib
             subworkerClasses = level.subworkerClasses;
             tagDef = level.tagDef;
 
-            drawData = DrawData.NewWithData(new DrawData.RotationalData[]
+            if (level.drawData != null)
             {
-                new DrawData.RotationalData(new Rot4?(Rot4.South), level.drawData.southLayer),
-                new DrawData.RotationalData(new Rot4?(Rot4.East), level.drawData.eastLayer),
-                new DrawData.RotationalData(new Rot4?(Rot4.West), level.drawData.westLayer),
-                new DrawData.RotationalData(new Rot4?(Rot4.North), level.drawData.northLayer)
-            });
+                drawData = DrawData.NewWithData(new DrawData.RotationalData[]
+                {
+                    new DrawData.RotationalData(new Rot4?(Rot4.South), level.drawData.southLayer),
+                    new DrawData.RotationalData(new Rot4?(Rot4.East), level.drawData.eastLayer),
+                    new DrawData.RotationalData(new Rot4?(Rot4.West), level.drawData.westLayer),
+                    new DrawData.RotationalData(new Rot4?(Rot4.North), level.drawData.northLayer)
+                });
+            }
 
             if (workerClass != typeof(PawnRenderNodeWorker_TextureLevels) && !subworkerClasses.Contains(typeof(TextureLevelsToNodeSubWorker)))
                 subworkerClasses.Add(typeof(TextureLevelsToNodeSubWorker));
         }
 
-        public PawnRenderNodeTagDef GetRootNode(TextureLevels level, TextureRenderLayer layer)
+        public PawnRenderNodeTagDef GetRootNodeTagDef(TextureLevels level, TextureRenderLayer layer)
         {
             if (level.usePublicYOffset || level.useStaticYOffset)
                 return DefDatabase<PawnRenderNodeTagDef>.GetNamed("Root");
@@ -93,10 +101,12 @@ namespace NareisLib
             }
         }
 
-        public Type GetWorkerClass(string defName)
+        public Type GetWorkerClass(string defName, Type type)
         {
-            Def def = DefDatabase<Def>.GetNamed(defName);
-            if (def.GetType() == typeof(ThingDef))
+            Def def = null;
+            if (type != typeof(HandTypeDef))
+                def = DefDatabase<Def>.GetNamed(defName);
+            if (type == typeof(ThingDef) && def != null)
             {
                 ThingDef thingDef = (ThingDef)def;
                 if (thingDef.thingClass == typeof(Apparel))
@@ -108,13 +118,13 @@ namespace NareisLib
                 }
                 
             }
-            if (def.GetType() == typeof(HeadTypeDef))
+            if (type == typeof(HeadTypeDef))
                 return typeof(PawnRenderNodeWorker_Head);
-            if (def.GetType() == typeof(BodyTypeDef))
+            if (type == typeof(BodyTypeDef))
                 return typeof(PawnRenderNodeWorker_Body);
-            if (def.GetType() == typeof(HandTypeDef))
+            if (type == typeof(HandTypeDef))
                 return typeof(PawnRenderNodeWorker_Body);
-            if (def.GetType() == typeof(HairDef))
+            if (type == typeof(HairDef))
                 return typeof(PawnRenderNodeWorker_TextureLevels);
             else
                 return typeof(PawnRenderNodeWorker_TextureLevels);

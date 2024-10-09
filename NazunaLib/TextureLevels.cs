@@ -31,7 +31,7 @@ namespace NareisLib
         public PawnRenderNodeTagDef renderParentNodeTagDef = null;
 
         //可选参数，如果xml里为空将根据MultiTexDef指定的物品种类自行选择默认的原版Worker
-        public Type renderWorker;
+        public Type renderWorker = null;
 
         //可选参数，来自RenderNode，设置子SubWorker
         public List<Type> subworkerClasses = new List<Type>();
@@ -644,7 +644,8 @@ namespace NareisLib
 
         public TextureLevelsToNode GetPawnRenderNode(MultiRenderComp renderComp, Pawn pawn)
         {
-            TextureLevelsToNodeProperties prop = new TextureLevelsToNodeProperties(this, cachedBatch);
+            TextureLevelsToNodeProperties prop = MakeProperties();
+            prop.InitPropertirs(this, cachedBatch);
             TextureLevelsToNode result = (TextureLevelsToNode)Activator.CreateInstance(prop.nodeClass, new object[]
             {
                 pawn,
@@ -656,6 +657,11 @@ namespace NareisLib
             result.comp = renderComp;
             result.apparel = cachedApparel;
             return result;
+        }
+
+        TextureLevelsToNodeProperties MakeProperties()
+        {
+            return new TextureLevelsToNodeProperties();
         }
     }
 }

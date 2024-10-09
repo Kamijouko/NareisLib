@@ -44,7 +44,7 @@ namespace NareisLib
         //public Dictionary<string, int> cachedRandomGraphicPattern = new Dictionary<string, int>();
 
         //用于缓存是否需要覆盖原部位的层名称列表,其中身体使用Body，头部使用Head，头发使用Hair来表示，其余覆盖部位用其defName表示
-        public List<string> cachedOverrideBody, cachedOverrideApparel, cachedOverrideHair = new List<string>();
+        public Dictionary<OverrideClass, bool> cachedOverrideBody/*, cachedOverrideApparel, cachedOverrideHair*/ = new Dictionary<OverrideClass, bool>();
 
         //用于缓存当前帧需要隐藏或替换层的数据
         public Dictionary<string, TextureLevelHideOption> cachedHideOrReplaceDict = new Dictionary<string, TextureLevelHideOption>();
@@ -95,23 +95,23 @@ namespace NareisLib
                 return cachedAllOriginalDefForGraphicData;
             }
         }
-        public List<string> GetAllHideOriginalDefData
+        public Dictionary<OverrideClass, bool> GetAllHideOriginalDefData
         {
             get
             {
                 if (cachedOverrideBody != null)
                 {
-                    if (cachedOverrideHair != null)
+                    /*if (cachedOverrideHair != null)
                     {
                         if (cachedOverrideApparel != null)
-                            return cachedOverrideBody.Concat(cachedOverrideHair).Concat(cachedOverrideApparel).ToList();
-                        return cachedOverrideBody.Concat(cachedOverrideHair).ToList();
+                            return cachedOverrideBody.Concat(cachedOverrideHair).Concat(cachedOverrideApparel).ToDictionary(k => k.Key, v => v.Value);
+                        return cachedOverrideBody.Concat(cachedOverrideHair).ToDictionary(k => k.Key, v => v.Value);
                     }
                     if (cachedOverrideApparel != null)
-                        return cachedOverrideBody.Concat(cachedOverrideApparel).ToList();
+                        return cachedOverrideBody.Concat(cachedOverrideApparel).ToDictionary(k => k.Key, v => v.Value);*/
                     return cachedOverrideBody;
                 }
-                return new List<string>();
+                return new Dictionary<OverrideClass, bool>();
             }
         }
         public List<MultiTexBatch> GetAllBatch
@@ -454,7 +454,7 @@ namespace NareisLib
             MultiRenderComp comp = pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 return;//AddComp(ref comp, ref pawn);
-            List<string> cachedOverride = new List<string>();
+            Dictionary<OverrideClass, bool> cachedOverride = new Dictionary<OverrideClass, bool>();
             Dictionary<string, Dictionary<string, TextureLevels>> cachedGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
             Dictionary<string, MultiTexEpoch> data = new Dictionary<string, MultiTexEpoch>();
             if (ThisModData.DefAndKeyDatabase.ContainsKey(plan))
@@ -477,8 +477,26 @@ namespace NareisLib
                         data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
                         cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
                     }
-                    if (!multidef.renderOriginTex && !cachedOverride.Contains(multidef.renderBaseNode.defName))
-                        cachedOverride.Add(multidef.renderBaseNode.defName);
+                    if (!multidef.renderOriginTex)
+                    {
+                        if (!multidef.overrideOriginSet.IsNull)
+                        {
+                            if (!cachedOverride.ContainsKey(multidef.overrideOriginSet))
+                                cachedOverride.Add(multidef.overrideOriginSet, multidef.keepSubNode);
+                            else if (cachedOverride[multidef.overrideOriginSet] && !multidef.keepSubNode)
+                                cachedOverride[multidef.overrideOriginSet] = multidef.keepSubNode;
+                        }
+                        else
+                        {
+                            OverrideClass over = new OverrideClass(null, multidef.originalDef);
+                            if (!cachedOverride.ContainsKey(over))
+                                cachedOverride.Add(over, multidef.keepSubNode);
+                            else if (cachedOverride[over] && !multidef.keepSubNode)
+                                cachedOverride[over] = multidef.keepSubNode;
+                        }
+                    }
+                    /*if (!multidef.renderOriginTex && !cachedOverride.Contains(multidef.renderDebugLabel ?? "Head"))
+                        cachedOverride.Add(multidef.renderDebugLabel ?? "Head");*/
                 }
                 //身体
                 BodyTypeDef body = pawn.story.bodyType;
@@ -498,8 +516,24 @@ namespace NareisLib
                         data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
                         cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
                     }
-                    if (!multidef.renderOriginTex && !cachedOverride.Contains(multidef.renderBaseNode.defName))
-                        cachedOverride.Add(multidef.renderBaseNode.defName);
+                    if (!multidef.renderOriginTex)
+                    {
+                        if (!multidef.overrideOriginSet.IsNull)
+                        {
+                            if (!cachedOverride.ContainsKey(multidef.overrideOriginSet))
+                                cachedOverride.Add(multidef.overrideOriginSet, multidef.keepSubNode);
+                            else if (cachedOverride[multidef.overrideOriginSet] && !multidef.keepSubNode)
+                                cachedOverride[multidef.overrideOriginSet] = multidef.keepSubNode;
+                        }
+                        else
+                        {
+                            OverrideClass over = new OverrideClass(null, multidef.originalDef);
+                            if (!cachedOverride.ContainsKey(over))
+                                cachedOverride.Add(over, multidef.keepSubNode);
+                            else if (cachedOverride[over] && !multidef.keepSubNode)
+                                cachedOverride[over] = multidef.keepSubNode;
+                        }
+                    }
                 }
                 //手部
                 string hand = comp.GetCurHandDefName;
@@ -518,15 +552,31 @@ namespace NareisLib
                         data[fullOriginalDefName] = comp.storedDataBody[fullOriginalDefName];
                         cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(data[fullOriginalDefName]);
                     }
-                    if (!multidef.renderOriginTex && !cachedOverride.Contains(multidef.renderBaseNode.defName))
-                        cachedOverride.Add(multidef.renderBaseNode.defName);
+                    if (!multidef.renderOriginTex)
+                    {
+                        if (!multidef.overrideOriginSet.IsNull)
+                        {
+                            if (!cachedOverride.ContainsKey(multidef.overrideOriginSet))
+                                cachedOverride.Add(multidef.overrideOriginSet, multidef.keepSubNode);
+                            else if (cachedOverride[multidef.overrideOriginSet] && !multidef.keepSubNode)
+                                cachedOverride[multidef.overrideOriginSet] = multidef.keepSubNode;
+                        }
+                        else
+                        {
+                            OverrideClass over = new OverrideClass(null, multidef.originalDef);
+                            if (!cachedOverride.ContainsKey(over))
+                                cachedOverride.Add(over, multidef.keepSubNode);
+                            else if (cachedOverride[over] && !multidef.keepSubNode)
+                                cachedOverride[over] = multidef.keepSubNode;
+                        }
+                    }
                 }
-                comp.cachedOverrideBody = cachedOverride;
-                comp.cachedBodyGraphicData = cachedGraphicData;
-                comp.storedDataBody = data;
+                //comp.cachedOverrideBody = cachedOverride;
+                comp.cachedBodyGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>(cachedGraphicData);
+                comp.storedDataBody = new Dictionary<string, MultiTexEpoch>(data);
                 cachedGraphicData.Clear();
                 data.Clear();
-                cachedOverride.Clear();
+                //cachedOverride.Clear();
                 //头发
                 HairDef hair = pawn.story.hairDef;
                 string keyName = hair != null ? hair.defName : "";
@@ -547,15 +597,31 @@ namespace NareisLib
 
                         cachedGraphicData[fullOriginalDefName] = GetLevelsDictFromEpoch(comp.storedDataHair[fullOriginalDefName]);
                     }
-                    if (!multidef.renderOriginTex && !cachedOverride.Contains(multidef.renderBaseNode.defName))
-                        cachedOverride.Add(multidef.renderBaseNode.defName);
+                    if (!multidef.renderOriginTex)
+                    {
+                        if (!multidef.overrideOriginSet.IsNull)
+                        {
+                            if (!cachedOverride.ContainsKey(multidef.overrideOriginSet))
+                                cachedOverride.Add(multidef.overrideOriginSet, multidef.keepSubNode);
+                            else if (cachedOverride[multidef.overrideOriginSet] && !multidef.keepSubNode)
+                                cachedOverride[multidef.overrideOriginSet] = multidef.keepSubNode;
+                        }
+                        else
+                        {
+                            OverrideClass over = new OverrideClass(null, multidef.originalDef);
+                            if (!cachedOverride.ContainsKey(over))
+                                cachedOverride.Add(over, multidef.keepSubNode);
+                            else if (cachedOverride[over] && !multidef.keepSubNode)
+                                cachedOverride[over] = multidef.keepSubNode;
+                        }
+                    }
                 }
-                comp.cachedOverrideHair = cachedOverride;
-                comp.cachedHairGraphicData = cachedGraphicData;
-                comp.storedDataHair = data;
+                //comp.cachedOverrideHair = cachedOverride;
+                comp.cachedHairGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>(cachedGraphicData);
+                comp.storedDataHair = new Dictionary<string, MultiTexEpoch>(data);
                 cachedGraphicData.Clear();
                 data.Clear();
-                cachedOverride.Clear();
+                //cachedOverride.Clear();
                 //衣服
                 using (List<Apparel>.Enumerator enumerator = pawn.apparel.WornApparel.GetEnumerator())
                 {
@@ -578,15 +644,32 @@ namespace NareisLib
                                 data[appFullOriginalDefName] = comp.storedDataApparel[appFullOriginalDefName];
                                 cachedGraphicData[appFullOriginalDefName] = GetLevelsDictFromEpoch(data[appFullOriginalDefName]);
                             }
-                            if (!multidef.renderOriginTex && !cachedOverride.Contains(apparelDefName))
-                                cachedOverride.Add(apparelDefName);
+                            if (!multidef.renderOriginTex)
+                            {
+                                if (!multidef.overrideOriginSet.IsNull)
+                                {
+                                    if (!cachedOverride.ContainsKey(multidef.overrideOriginSet))
+                                        cachedOverride.Add(multidef.overrideOriginSet, multidef.keepSubNode);
+                                    else if (cachedOverride[multidef.overrideOriginSet] && !multidef.keepSubNode)
+                                        cachedOverride[multidef.overrideOriginSet] = multidef.keepSubNode;
+                                }
+                                else
+                                {
+                                    OverrideClass over = new OverrideClass(null, multidef.originalDef);
+                                    if (!cachedOverride.ContainsKey(over))
+                                        cachedOverride.Add(over, multidef.keepSubNode);
+                                    else if (cachedOverride[over] && !multidef.keepSubNode)
+                                        cachedOverride[over] = multidef.keepSubNode;
+                                }
+                            }
                         }
                     }
 
                 }
-                comp.cachedOverrideApparel = cachedOverride;
-                comp.cachedApparelGraphicData = cachedGraphicData;
-                comp.storedDataApparel = data;
+                //comp.cachedOverrideApparel = cachedOverride;
+                comp.cachedOverrideBody = new Dictionary<OverrideClass, bool>(cachedOverride);
+                comp.cachedApparelGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>(cachedGraphicData);
+                comp.storedDataApparel = new Dictionary<string, MultiTexEpoch>(data);
                 cachedGraphicData.Clear();
                 data.Clear();
                 cachedOverride.Clear();
@@ -603,13 +686,18 @@ namespace NareisLib
         /// <returns></returns>
         public override List<PawnRenderNode> CompRenderNodes()
         {
+            
             if (parent as Pawn == null)
                 return base.CompRenderNodes();
 
             Pawn pawn = (Pawn)parent;
             PreResolveAllLayerBatch();
+            List<PawnRenderNode> result = new List<PawnRenderNode>();
+            if (!cachedAllOriginalDefForGraphicDataList.NullOrEmpty())
+                result = cachedAllOriginalDefForGraphicDataList.Select(x => x.GetPawnRenderNode(this, pawn) as PawnRenderNode).ToList();
+            Log.Message($"Comp true:{cachedAllOriginalDefForGraphicDataList.Count}");
 
-            return cachedAllOriginalDefForGraphicDataList.Select(x => (PawnRenderNode)x.GetPawnRenderNode(this, pawn)).ToList();
+            return result;
 
 
            

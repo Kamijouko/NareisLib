@@ -35,9 +35,8 @@ namespace NareisLib
             if (comp == null)
                 return true;
 
-            if (comp.GetAllHideOriginalDefData.Contains(node.Props.tagDef.defName)
-                || (node.apparel != null && comp.GetAllHideOriginalDefData.Contains(node.apparel.def.defName)))
-                return false;
+            /*if (comp.GetAllHideOriginalDefData.Contains(node.Props.debugLabel))
+                return false;*/
 
             TextureLevelsToNode tlNode = node as TextureLevelsToNode ?? null;
             if (tlNode == null)

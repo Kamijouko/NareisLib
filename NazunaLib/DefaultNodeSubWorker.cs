@@ -15,9 +15,7 @@ namespace NareisLib
             MultiRenderComp comp = parms.pawn.GetComp<MultiRenderComp>();
             if (comp == null)
                 return base.CanDrawNowSub(node, parms);
-            if (comp.GetAllHideOriginalDefData.Contains(node.Props.tagDef.defName) 
-                || (node.apparel != null && comp.GetAllHideOriginalDefData.Contains(node.apparel.def.defName)))
-                return false;
+
             /*TextureLevelsToNode tlNode = node as TextureLevelsToNode ?? null;
             if (tlNode == null)
                 return true;*/

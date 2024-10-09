@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>C:\Users\j0325nvk\source\repos\NareisLib\NazunaLib\bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\..\..\..\Program Files %28x86%29\Steam\steamapps\common\RimWorld\Mods\NareisLib\1.5\Assemblies\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -332,6 +332,7 @@
     <Compile Include="NareisLib_MeshPool.cs" />
     <Compile Include="NareisLib_GraphicMeshSet.cs" />
     <Compile Include="NareisLib_MeshPoolUtility.cs" />
+    <Compile Include="OverrideClass.cs" />
     <Compile Include="Page_Setting_CurBehavior.cs" />
     <Compile Include="PawnRenderNodeWorker_SPHair.cs" />
     <Compile Include="PawnRenderNodeWorker_TextureLevels.cs" />
