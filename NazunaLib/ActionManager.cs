@@ -18,9 +18,10 @@ namespace NareisLib
     {
         //使用的行为树，填入defName
         public ActionDef def = null;
+        public PawnRenderNode node = null;
 
-        private string valuePath;
-        private string fullPath;
+        private string valuePath = "";
+        private string fullPath = "";
         //string curPrefix = "";
         private JobDef curJob = null;
         private Behavior curBehavior = null;
@@ -88,18 +89,25 @@ namespace NareisLib
                         TextureLevels level;
                         if (comp != null && comp.TryGetStoredTextureLevels(curBehavior.type_originalDefName, curBehavior.textureLevelsName, out level))
                         {
-                            if (valuePath != level.actionManager.GetCurPath && level.actionManager.GetCurPath != "")
+                            if (level.actionManager.GetCurPath != "" && valuePath != level.actionManager.GetCurPath)
                             {
                                 fullPath = Path.Combine(curBehavior.exPath, valuePath = level.actionManager.GetCurPath);
                                 GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(obj);
+                                if (node != null)
+                                    node.requestRecache = true;
+                                Log.Message($"linked:{valuePath}");
                             }
                             behaviorAction = () =>
                             {
-                                if (valuePath != level.actionManager.GetCurPath && level.actionManager.GetCurPath != "")
+                                if (level.actionManager.GetCurPath != "" && valuePath != level.actionManager.GetCurPath)
                                 {
                                     fullPath = Path.Combine(curBehavior.exPath, valuePath = level.actionManager.GetCurPath);
                                     GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(obj);
+                                    if (node != null)
+                                        node.requestRecache = true;
+                                    Log.Message($"linked:{valuePath}");
                                 }
+                                
                             };
                             HugsLibController.Instance.TickDelayScheduler.ScheduleCallback(behaviorAction, curBehavior.linkedActionSyncDelta.SecondsToTicks(), null, true);
                             return;
@@ -121,6 +129,9 @@ namespace NareisLib
                             if (curBehavior.pathDict.TryGetValue(pawn.GetPosture(), out paths) && !paths.NullOrEmpty())
                                 fullPath = Path.Combine(curBehavior.exPath, valuePath = curBehavior.loopChange ? paths[GetNextIndex(paths)] : paths.RandomElement());
                             GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(obj);
+                            if (node != null)
+                                node.requestRecache = true;
+                            Log.Message($"origin:{valuePath}");
                         };
                         RegisterBehavior();
                     }

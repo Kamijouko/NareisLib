@@ -334,6 +334,7 @@
     <Compile Include="NareisLib_MeshPoolUtility.cs" />
     <Compile Include="OverrideClass.cs" />
     <Compile Include="Page_Setting_CurBehavior.cs" />
+    <Compile Include="PawnRenderNodeWorker_Hand.cs" />
     <Compile Include="PawnRenderNodeWorker_SPHair.cs" />
     <Compile Include="PawnRenderNodeWorker_TextureLevels.cs" />
     <Compile Include="TextureLevelHideOption.cs" />

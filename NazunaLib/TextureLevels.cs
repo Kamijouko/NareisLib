@@ -633,7 +633,9 @@ namespace NareisLib
         //取得graphic，修改了基类的属性Graphic，参数为完全处理完毕后多层渲染comp里记录的keyName（列表在MultiTexBatch里）
         public Graphic GetGraphic(string keyName, Color color, Color colorTwo, string condition = "", string bodyType = "", string headType = "")
         {
-            string path = (exPath == "" || exPath == null) ? Path.Combine(folder, subFolderPath , GetFullKeyName(keyName, condition, bodyType, headType)) : Path.Combine(exPath, GetFullKeyName(keyName, condition, bodyType, headType));
+            string path = (exPath == "" || exPath == null) 
+                ? Path.Combine(folder, subFolderPath , GetFullKeyName(keyName, condition, bodyType, headType)) 
+                : Path.Combine(exPath, GetFullKeyName(keyName, condition, bodyType, headType));
             if (texPath != path || cacheGraphic == null)
             {
                 texPath = path;
@@ -645,7 +647,7 @@ namespace NareisLib
         public TextureLevelsToNode GetPawnRenderNode(MultiRenderComp renderComp, Pawn pawn)
         {
             TextureLevelsToNodeProperties prop = MakeProperties();
-            prop.InitPropertirs(this, cachedBatch);
+            prop.InitProperties(this, cachedBatch);
             TextureLevelsToNode result = (TextureLevelsToNode)Activator.CreateInstance(prop.nodeClass, new object[]
             {
                 pawn,
@@ -656,6 +658,7 @@ namespace NareisLib
             result.multiTexBatch = cachedBatch;
             result.comp = renderComp;
             result.apparel = cachedApparel;
+            result.textureLevels.actionManager.node = result;
             return result;
         }
 

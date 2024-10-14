@@ -11,7 +11,7 @@ namespace NareisLib
 {
     public static class NareisLib_MeshPoolUtility
     {
-        /*public static NareisLib_GraphicMeshSet GetHumanlikeBodySetForPawn(Pawn pawn)
+        public static NareisLib_GraphicMeshSet GetHumanlikeBodySetForPawn(Pawn pawn)
         {
             float lifestageFactor;
             if (ModsConfig.BiotechActive && pawn.ageTracker.CurLifeStage.bodyWidth != null)
@@ -22,7 +22,7 @@ namespace NareisLib
             else
                 lifestageFactor = 1.5f;
             Vector2 ? vector;
-            if (HarmonyPatches.portraitRender.First.Target as Pawn != pawn || !HarmonyPatches.portraitRender.Second)
+            if (!AlienRenderTreePatches.IsPortrait(pawn))
             {
                 AlienPartGenerator.AlienComp comp = pawn.GetComp<AlienPartGenerator.AlienComp>();
                 vector = ((comp != null) ? new Vector2?(comp.customDrawSize) : null);
@@ -46,7 +46,7 @@ namespace NareisLib
                 vec *= pawn.ageTracker.CurLifeStage.headSizeFactor.Value;
             }
             Vector2? vector;
-            if (HarmonyPatches.portraitRender.First.Target as Pawn != pawn || !HarmonyPatches.portraitRender.Second)
+            if (!AlienRenderTreePatches.IsPortrait(pawn))
             {
                 AlienPartGenerator.AlienComp comp = pawn.GetComp<AlienPartGenerator.AlienComp>();
                 vector = ((comp != null) ? new Vector2?(comp.customHeadDrawSize) : null);
@@ -71,7 +71,7 @@ namespace NareisLib
             else
                 lifestageFactor = 1.5f;
             Vector2? vector;
-            if (HarmonyPatches.portraitRender.First.Target as Pawn != pawn || !HarmonyPatches.portraitRender.Second)
+            if (!AlienRenderTreePatches.IsPortrait(pawn))
             {
                 AlienPartGenerator.AlienComp comp = pawn.GetComp<AlienPartGenerator.AlienComp>();
                 vector = ((comp != null) ? new Vector2?(comp.customHeadDrawSize) : null);
@@ -85,6 +85,6 @@ namespace NareisLib
             Vector2 vector4 = new Vector2(lifestageFactor, lifestageFactor);
             return NareisLib_MeshPool.GetMeshSetForWidth(vector2.x * vector4.x, vector2.y * vector4.y);
             //return NareisLib_MeshPool.humanlikeHeadSet;
-        }*/
+        }
     }
 }

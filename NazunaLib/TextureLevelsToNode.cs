@@ -100,13 +100,12 @@ namespace NareisLib
                     colorTwo = NareisLib_ColorResolve.ResolveColorSecondOne(colorTwo, alienComp, textureLevels, pawn);
                     break;
                 case (TextureRenderLayer.BottomShell):
-                    colorOne = apparel.DrawColor;
-                    colorOne = NareisLib_ColorResolve.ResolveColorFirstTwo(colorOne, alienComp, textureLevels, pawn);
+                    colorOne = apparel == null ? NareisLib_ColorResolve.ResolveColorFirstOne(Color.white, alienComp, textureLevels, pawn) : apparel.DrawColor;
                     colorTwo = NareisLib_ColorResolve.ResolveColorSecondTwo(alienComp, textureLevels, pawn);
                     break;
                 case (TextureRenderLayer.Apparel):
-                    colorOne = apparel.DrawColor;
-                    colorOne = NareisLib_ColorResolve.ResolveColorFirstTwo(colorOne, alienComp, textureLevels, pawn);
+                    //colorOne = apparel.DrawColor;
+                    colorOne = apparel == null ? NareisLib_ColorResolve.ResolveColorFirstOne(Color.white, alienComp, textureLevels, pawn) : apparel.DrawColor;
                     colorTwo = NareisLib_ColorResolve.ResolveColorSecondTwo(alienComp, textureLevels, pawn);
                     break;
                 case (TextureRenderLayer.FrontShell):
@@ -118,8 +117,7 @@ namespace NareisLib
                     colorTwo = alienComp == null ? Color.white : alienComp.GetChannel("skin").second;
                     break;
                 case (TextureRenderLayer.FaceMask):
-                    colorOne = apparel.DrawColor;
-                    colorOne = NareisLib_ColorResolve.ResolveColorFirstTwo(colorOne, alienComp, textureLevels, pawn);
+                    colorOne = apparel == null ? NareisLib_ColorResolve.ResolveColorFirstOne(Color.white, alienComp, textureLevels, pawn) : apparel.DrawColor;
                     colorTwo = NareisLib_ColorResolve.ResolveColorSecondTwo(alienComp, textureLevels, pawn);
                     break;
                 case (TextureRenderLayer.BottomHair):
@@ -135,13 +133,11 @@ namespace NareisLib
                     colorTwo = NareisLib_ColorResolve.ResolveColorSecond(colorTwo, alienComp, textureLevels, pawn);
                     break;
                 case (TextureRenderLayer.HeadMask):
-                    colorOne = apparel.DrawColor;
-                    colorOne = NareisLib_ColorResolve.ResolveColorFirstTwo(colorOne, alienComp, textureLevels, pawn);
+                    colorOne = apparel == null ? NareisLib_ColorResolve.ResolveColorFirstOne(Color.white, alienComp, textureLevels, pawn) : apparel.DrawColor;
                     colorTwo = NareisLib_ColorResolve.ResolveColorSecondTwo(alienComp, textureLevels, pawn);
                     break;
                 case (TextureRenderLayer.Hat):
-                    colorOne = apparel.DrawColor;
-                    colorOne = NareisLib_ColorResolve.ResolveColorFirstTwo(colorOne, alienComp, textureLevels, pawn);
+                    colorOne = apparel == null ? NareisLib_ColorResolve.ResolveColorFirstOne(Color.white, alienComp, textureLevels, pawn) : apparel.DrawColor;
                     colorTwo = NareisLib_ColorResolve.ResolveColorSecondTwo(alienComp, textureLevels, pawn);
                     break;
                 case (TextureRenderLayer.Overlay):

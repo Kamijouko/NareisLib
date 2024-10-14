@@ -365,19 +365,20 @@ namespace NareisLib
 
 
         //下方法的子方法，为获取到的TextureLevels进行赋值操作
-        public static TextureLevels ResolveKeyNameForLevel(TextureLevels level, string key, MultiTexBatch batch)
+        public static TextureLevels ResolveKeyNameForLevel(TextureLevels level, string key, MultiTexBatch batch, Apparel apparel = null)
         {
             level.keyName = key;
             level.cachedBatch = batch;
+            level.cachedApparel = apparel;
             /*if (level.patternSets != null)
                 level.patternSets.typeOriginalDefNameKeyName = level.originalDefClass.ToStringSafe() + "_" + level.originalDef + "_" + key;*/
             return level;
         }
 
         //从comp的storedData里获取TextureLevels数据，用于处理读取存档时从已有的storedData字典中得到的epoch
-        public static Dictionary<string, TextureLevels> GetLevelsDictFromEpoch(MultiTexEpoch epoch)
+        public static Dictionary<string, TextureLevels> GetLevelsDictFromEpoch(MultiTexEpoch epoch, Apparel apparel = null)
         {
-            return !epoch.batches.NullOrEmpty() ? epoch.batches.ToDictionary(k => k.textureLevelsName, v => ResolveKeyNameForLevel(ThisModData.TexLevelsDatabase[v.originalDefClass.ToStringSafe() + "_" + v.originalDefName][v.textureLevelsName].Clone(), v.keyName, v)) : new Dictionary<string, TextureLevels>();
+            return !epoch.batches.NullOrEmpty() ? epoch.batches.ToDictionary(k => k.textureLevelsName, v => ResolveKeyNameForLevel(ThisModData.TexLevelsDatabase[v.originalDefClass.ToStringSafe() + "_" + v.originalDefName][v.textureLevelsName].Clone(), v.keyName, v, apparel)) : new Dictionary<string, TextureLevels>();
         }
 
         //处理defName所指定的MultiTexDef，
@@ -636,13 +637,13 @@ namespace NareisLib
                             if (comp.storedDataApparel.NullOrEmpty() || !comp.storedDataApparel.ContainsKey(appFullOriginalDefName))
                             {
                                 Dictionary<string, TextureLevels> cachedData = new Dictionary<string, TextureLevels>();
-                                data[appFullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData);
+                                data[appFullOriginalDefName] = ResolveMultiTexDef(multidef, out cachedData, enumerator.Current);
                                 cachedGraphicData[appFullOriginalDefName] = cachedData;
                             }
                             else
                             {
                                 data[appFullOriginalDefName] = comp.storedDataApparel[appFullOriginalDefName];
-                                cachedGraphicData[appFullOriginalDefName] = GetLevelsDictFromEpoch(data[appFullOriginalDefName]);
+                                cachedGraphicData[appFullOriginalDefName] = GetLevelsDictFromEpoch(data[appFullOriginalDefName], enumerator.Current);
                             }
                             if (!multidef.renderOriginTex)
                             {

@@ -16,11 +16,11 @@ namespace NareisLib
             
         }
         
-        public void InitPropertirs(TextureLevels level, MultiTexBatch batch)
+        public void InitProperties(TextureLevels level, MultiTexBatch batch)
         {
             textureLevels = level;
             multiTexBatch = batch;
-            debugLabel = $"{batch.originalDefClass.ToStringSafe()}_{batch.originalDefName}";
+            debugLabel = $"{level.textureLevelsName}_{level.keyName}";
             workerClass = level.renderWorker ?? GetWorkerClass(multiTexBatch.originalDefName, multiTexBatch.originalDefClass);
             parentTagDef = level.renderParentNodeTagDef ?? GetRootNodeTagDef(textureLevels, level.renderLayer);
             if (level.hasRotting)
@@ -67,8 +67,8 @@ namespace NareisLib
 
         public PawnRenderNodeTagDef GetRootNodeTagDef(TextureLevels level, TextureRenderLayer layer)
         {
-            if (level.usePublicYOffset || level.useStaticYOffset)
-                return DefDatabase<PawnRenderNodeTagDef>.GetNamed("Root");
+            /*if (level.usePublicYOffset || level.useStaticYOffset)
+                return DefDatabase<PawnRenderNodeTagDef>.GetNamed("Root");*/
             switch (layer)
             {
                 case TextureRenderLayer.BottomOverlay:
@@ -79,6 +79,8 @@ namespace NareisLib
                     return PawnRenderNodeTagDefOf.ApparelBody;
                 case TextureRenderLayer.Body:
                     return PawnRenderNodeTagDefOf.Body;
+                case TextureRenderLayer.Apparel:
+                    return PawnRenderNodeTagDefOf.ApparelBody;
                 case TextureRenderLayer.Hand:
                     return PawnRenderNodeTagDefOf.Body;
                 case TextureRenderLayer.Head:
@@ -97,7 +99,7 @@ namespace NareisLib
                     return DefDatabase<PawnRenderNodeTagDef>.GetNamed("Root");
 
 
-                default: return null;
+                default: return DefDatabase<PawnRenderNodeTagDef>.GetNamed("Root");
             }
         }
 
@@ -105,7 +107,7 @@ namespace NareisLib
         {
             Def def = null;
             if (type != typeof(HandTypeDef))
-                def = DefDatabase<Def>.GetNamed(defName);
+                def = GenDefDatabase.GetDef(type, defName);
             if (type == typeof(ThingDef) && def != null)
             {
                 ThingDef thingDef = (ThingDef)def;
@@ -123,7 +125,7 @@ namespace NareisLib
             if (type == typeof(BodyTypeDef))
                 return typeof(PawnRenderNodeWorker_Body);
             if (type == typeof(HandTypeDef))
-                return typeof(PawnRenderNodeWorker_Body);
+                return typeof(PawnRenderNodeWorker_Hand);
             if (type == typeof(HairDef))
                 return typeof(PawnRenderNodeWorker_TextureLevels);
             else
