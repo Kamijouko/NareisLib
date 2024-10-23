@@ -114,18 +114,18 @@ namespace NareisLib
                 if (thingDef.thingClass == typeof(Apparel))
                 {
                     if (thingDef.apparel.parentTagDef == PawnRenderNodeTagDefOf.ApparelBody)
-                        return typeof(PawnRenderNodeWorker_Apparel_Body);
+                        return typeof(PawnRenderNodeWorker_TextureLevels);
                     if (thingDef.apparel.parentTagDef == PawnRenderNodeTagDefOf.ApparelHead)
-                        return typeof(PawnRenderNodeWorker_Apparel_Head);
+                        return typeof(PawnRenderNodeWorker_TextureLevels);
                 }
                 
             }
             if (type == typeof(HeadTypeDef))
-                return typeof(PawnRenderNodeWorker_Head);
+                return typeof(PawnRenderNodeWorker_TextureLevels);
             if (type == typeof(BodyTypeDef))
-                return typeof(PawnRenderNodeWorker_Body);
+                return typeof(PawnRenderNodeWorker_TextureLevels);
             if (type == typeof(HandTypeDef))
-                return typeof(PawnRenderNodeWorker_Hand);
+                return typeof(PawnRenderNodeWorker_TextureLevels);
             if (type == typeof(HairDef))
                 return typeof(PawnRenderNodeWorker_TextureLevels);
             else

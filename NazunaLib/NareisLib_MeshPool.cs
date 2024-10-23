@@ -30,10 +30,10 @@ namespace NareisLib
 
         public static NareisLib_GraphicMeshSet GetMeshSetForWidth(float width)
         {
-            return GetMeshSetForWidth(width, width);
+            return GetMeshSetForSize(width, width);
         }
 
-        public static NareisLib_GraphicMeshSet GetMeshSetForWidth(float width, float height)
+        public static NareisLib_GraphicMeshSet GetMeshSetForSize(float width, float height)
         {
             Vector2 key = new Vector2(width, height);
             if (!humanlikeMeshSet_Custom.ContainsKey(key))

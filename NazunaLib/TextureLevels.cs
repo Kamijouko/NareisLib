@@ -56,6 +56,9 @@ namespace NareisLib
         public List<TextureLevelHideOption> hideList = new List<TextureLevelHideOption>();
 
         //可选参数，来自RenderNode
+        //public List<RenderSkipFlagDef> renderSkipFlags = new List<RenderSkipFlagDef>();
+
+        //可选参数，来自RenderNode
         public PawnOverlayDrawer.OverlayLayer overlayLayer;
 
         //可选参数，来自RenderNode
@@ -530,7 +533,7 @@ namespace NareisLib
                 else
                 {
                     jobPrefix = "";
-                    actionManager.StateUpdate(pawn, obj, pawn.CurJob.def, keyName);
+                    actionManager.StateUpdate(pawn, obj, pawn.CurJob.def, keyName, this);
                     exPath = actionManager.GetFullPath;
                     return actionManager.IsApplicable(pawn);
                 }
@@ -652,12 +655,12 @@ namespace NareisLib
             {
                 pawn,
                 prop,
-                pawn.Drawer.renderer.renderTree
+                pawn.Drawer.renderer.renderTree,
+                this,
+                cachedBatch,
+                renderComp,
+                cachedApparel
             });
-            result.textureLevels = this;
-            result.multiTexBatch = cachedBatch;
-            result.comp = renderComp;
-            result.apparel = cachedApparel;
             result.textureLevels.actionManager.node = result;
             return result;
         }

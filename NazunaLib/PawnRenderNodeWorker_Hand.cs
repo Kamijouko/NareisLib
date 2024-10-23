@@ -44,7 +44,7 @@ namespace NareisLib
             Mesh mesh = null;
             if (data.meshSize != Vector2.zero)
             {
-                mesh = NareisLib_MeshPool.GetMeshSetForWidth(data.meshSize.x, data.meshSize.y).MeshAt(facing, data.flipped);
+                mesh = NareisLib_MeshPool.GetMeshSetForSize(data.meshSize.x, data.meshSize.y).MeshAt(facing, data.flipped);
             }
             else
             {

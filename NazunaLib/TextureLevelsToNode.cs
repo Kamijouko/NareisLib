@@ -1,4 +1,5 @@
 ﻿using AlienRace;
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,15 @@ namespace NareisLib
         {
         }
 
+        public TextureLevelsToNode(Pawn pawn, PawnRenderNodeProperties props, PawnRenderTree tree, TextureLevels level, MultiTexBatch batch, MultiRenderComp comp, Apparel apparel = null) : base(pawn, props, tree)
+        {
+            this.textureLevels = level;
+            this.multiTexBatch = batch;
+            this.comp = comp;
+            this.apparel = apparel;
+            this.meshSet = this.MeshSetFor(pawn);
+        }
+
         public TextureLevelsToNodeProperties CurProps
         {
             get
@@ -30,6 +40,8 @@ namespace NareisLib
         public MultiTexBatch multiTexBatch;
 
         public MultiRenderComp comp;
+
+        public NareisLib_GraphicMeshSet nMeshSet;
 
         /*public override Mesh GetMesh(PawnDrawParms parms)
         {
@@ -73,6 +85,64 @@ namespace NareisLib
             }
             return mesh;
         }*/
+
+        public override GraphicMeshSet MeshSetFor(Pawn pawn)
+        {
+            if (CurProps.textureLevels.meshSize != Vector2.zero)
+                nMeshSet = NareisLib_MeshPool.GetMeshSetForSize(CurProps.textureLevels.meshSize.x, CurProps.textureLevels.meshSize.y);
+            else
+            {
+                if (CurProps.textureLevels.meshType == "Body")
+                    nMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeBodySetForPawn(pawn);
+                if (CurProps.textureLevels.meshType == "Head")
+                    nMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHeadSetForPawn(pawn);
+                if (CurProps.textureLevels.meshType == "Hair")
+                    nMeshSet = NareisLib_MeshPoolUtility.GetHumanlikeHairSetForPawn(pawn);
+            }
+            if (nMeshSet == null)
+                nMeshSet = NareisLib_MeshPool.GetMeshSetForSize(1f, 1f);
+            //Log.Message($"{CurProps.textureLevels.textureLevelsName}:{CurProps.textureLevels.meshType}:{CurProps.textureLevels.meshSize}");
+
+            if (CurProps.textureLevels.meshSize != Vector2.zero)
+            {
+                return MeshPool.GetMeshSetForSize(CurProps.textureLevels.meshSize.x, CurProps.textureLevels.meshSize.y);
+            }
+            if (CurProps.parentTagDef == PawnRenderNodeTagDefOf.ApparelHead)
+            {
+                return HumanlikeMeshPoolUtility.GetHumanlikeHeadSetForPawn(pawn, 1f, 1f);
+            }
+            return HumanlikeMeshPoolUtility.GetHumanlikeBodySetForPawn(pawn, 1f, 1f);
+        }
+
+        public override Mesh GetMesh(PawnDrawParms parms)
+        {
+            if (nMeshSet == null)
+            {
+                return base.GetMesh(parms);
+            }
+
+            bool flipNode = CurProps.flipGraphic;
+            Hediff hediff = this.hediff;
+            bool? shouldFlip;
+            if (hediff == null)
+            {
+                shouldFlip = null;
+            }
+            else
+            {
+                BodyPartRecord part = hediff.Part;
+                shouldFlip = ((part != null) ? new bool?(part.flipGraphic) : null);
+            }
+            if (shouldFlip ?? false)
+            {
+                flipNode = !flipNode;
+            }
+            if (CurProps.drawData != null && CurProps.drawData.FlipForRot(parms.facing))
+            {
+                flipNode = !flipNode;
+            }
+            return nMeshSet.MeshAt(parms.facing, flipNode);
+        }
 
 
         public override Graphic GraphicFor(Pawn pawn)

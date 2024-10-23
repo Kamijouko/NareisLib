@@ -34,7 +34,7 @@ namespace NareisLib
             }
             Vector2 vector2 = vector ?? Vector2.one;
             Vector2 vector4 = new Vector2(lifestageFactor, lifestageFactor);
-            return NareisLib_MeshPool.GetMeshSetForWidth(vector2.x * vector4.x, vector2.y * vector4.y);
+            return NareisLib_MeshPool.GetMeshSetForSize(vector2.x * vector4.x, vector2.y * vector4.y);
             //return NareisLib_MeshPool.humanlikeBodySet;
         }
 
@@ -57,7 +57,7 @@ namespace NareisLib
                 vector = ((comp2 != null) ? new Vector2?(comp2.customPortraitHeadDrawSize) : null);
             }
             vec = (vector ?? Vector2.one) * vec;
-            return NareisLib_MeshPool.GetMeshSetForWidth(vec.x, vec.y);
+            return NareisLib_MeshPool.GetMeshSetForSize(vec.x, vec.y);
         }
 
         public static NareisLib_GraphicMeshSet GetHumanlikeHeadSetForPawn(Pawn pawn)
@@ -83,7 +83,7 @@ namespace NareisLib
             }
             Vector2 vector2 = vector ?? Vector2.one;
             Vector2 vector4 = new Vector2(lifestageFactor, lifestageFactor);
-            return NareisLib_MeshPool.GetMeshSetForWidth(vector2.x * vector4.x, vector2.y * vector4.y);
+            return NareisLib_MeshPool.GetMeshSetForSize(vector2.x * vector4.x, vector2.y * vector4.y);
             //return NareisLib_MeshPool.humanlikeHeadSet;
         }
     }

@@ -61,6 +61,67 @@ namespace NareisLib
             }
         }
 
+        //给所有PawnRenderNode添加SubWorker
+        /*[HarmonyPatch(typeof(PawnRenderTree))]
+        [HarmonyPatch("AdjustParms")]
+        public class AdjustParmsPatch
+        {
+            static void Postfix(PawnRenderTree __instance, ref PawnDrawParms parms)
+            {
+                ulong skipFlags = parms.skipFlags;
+                TraverseTree(__instance.pawn, __instance.rootNode, delegate(PawnRenderNode node)
+                {
+                    TextureLevelsToNode tlNode = node as TextureLevelsToNode;
+                    if (tlNode == null || tlNode.CurProps.textureLevels.renderSkipFlags == null)
+                        return;
+                    using (List<RenderSkipFlagDef>.Enumerator enumerator = tlNode.CurProps.textureLevels.renderSkipFlags.GetEnumerator())
+                    {
+                        while (enumerator.MoveNext()) 
+                        {
+                            RenderSkipFlagDef renderSkipFlagDef = enumerator.Current;
+                            if (renderSkipFlagDef != RenderSkipFlagDefOf.None)
+                                skipFlags |= renderSkipFlagDef;
+                        }
+                    }
+                });
+                parms.skipFlags = skipFlags;
+            }
+
+            private static void TraverseTree(Pawn pawn, PawnRenderNode rootNode, Action<PawnRenderNode> action)
+            {
+                Queue<PawnRenderNode> nodeQueue = new Queue<PawnRenderNode>();
+                try
+                {
+                    nodeQueue.Enqueue(rootNode);
+                    while (nodeQueue.Count > 0)
+                    {
+                        PawnRenderNode pawnRenderNode = nodeQueue.Dequeue();
+                        if (pawnRenderNode == null)
+                        {
+                            Log.ErrorOnce(string.Format("Node is null - you must called EnsureGraphicsInitialized() on the drawn dynamic thing {0} before drawing it.", pawn), Gen.HashCombine<int>(1743846, pawn.GetHashCode()));
+                            break;
+                        }
+                        action(pawnRenderNode);
+                        if (pawnRenderNode.children != null)
+                        {
+                            foreach (PawnRenderNode item in pawnRenderNode.children)
+                            {
+                                nodeQueue.Enqueue(item);
+                            }
+                        }
+                    }
+                }
+                catch (Exception arg)
+                {
+                    Log.Error(string.Format("Exception traversing pawn render node tree {0}: {1}", rootNode, arg));
+                }
+                finally
+                {
+                    nodeQueue.Clear();
+                }
+            }
+        }*/
+
 
         //修补SetupDynamicNodes
         //这里将一次性处理不显示的Node及其子Node的迁移

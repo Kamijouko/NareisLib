@@ -8,9 +8,9 @@ using Verse;
 
 namespace NareisLib
 {
-    public class NareisLib_GraphicMeshSet
+    public class NareisLib_GraphicMeshSet : GraphicMeshSet
     {
-        public NareisLib_GraphicMeshSet(float size)
+        public NareisLib_GraphicMeshSet(float size) : base(size)
         {
             this.meshes[0] = (this.meshes[2] = MeshMakerPlanes.NewPlaneMesh(size, false, true));
             this.meshes[1] = MeshMakerPlanes.NewPlaneMesh(size, false, true);
@@ -21,7 +21,7 @@ namespace NareisLib
             this.meshes_flip[3] = MeshMakerPlanes.NewPlaneMesh(size, true, true);
         }
 
-        public NareisLib_GraphicMeshSet(float width, float height)
+        public NareisLib_GraphicMeshSet(float width, float height) : base(width, height)
         {
             Vector2 size = new Vector2(width, height);
             this.meshes[0] = (this.meshes[2] = MeshMakerPlanes.NewPlaneMesh(size, false, true, false));
