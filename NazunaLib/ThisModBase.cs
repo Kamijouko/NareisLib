@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using RimWorld;
 using Verse;
 using HugsLib;
 using HarmonyLib;
-using AlienRace;
 using HugsLib.Settings;
-using System.Diagnostics;
 using System.Reflection;
 
 namespace NareisLib
@@ -61,7 +57,6 @@ namespace NareisLib
             }
         }
 
-        //给所有PawnRenderNode添加SubWorker
         /*[HarmonyPatch(typeof(PawnRenderTree))]
         [HarmonyPatch("AdjustParms")]
         public class AdjustParmsPatch

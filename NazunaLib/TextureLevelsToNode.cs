@@ -1,13 +1,6 @@
 ﻿using AlienRace;
 using RimWorld;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UIElements.Experimental;
 using Verse;
 
 namespace NareisLib
@@ -233,7 +226,6 @@ namespace NareisLib
                 headType = pawn.story.headType.defName;
 
             return textureLevels.GetGraphic(multiTexBatch.keyName, colorOne, colorTwo, condition, bodyType, headType);
-            //return base.GraphicFor(pawn);
         }
 
 

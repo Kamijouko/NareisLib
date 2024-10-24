@@ -13,6 +13,8 @@ namespace NareisLib
         public float eastLayer;
         public float westLayer;
         public float northLayer;
+
+
         public DrawData.RotationalData defaultData = new DrawData.RotationalData(null, 0);
         public DrawData.RotationalData dataNorth = new DrawData.RotationalData(new Rot4?(Rot4.North), 0);
         public DrawData.RotationalData dataEast = new DrawData.RotationalData(new Rot4?(Rot4.East), 0);

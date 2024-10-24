@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Verse;
 using RimWorld;
 using UnityEngine;
@@ -106,14 +104,6 @@ namespace NareisLib
             {
                 if (cachedOverrideBody != null)
                 {
-                    /*if (cachedOverrideHair != null)
-                    {
-                        if (cachedOverrideApparel != null)
-                            return cachedOverrideBody.Concat(cachedOverrideHair).Concat(cachedOverrideApparel).ToDictionary(k => k.Key, v => v.Value);
-                        return cachedOverrideBody.Concat(cachedOverrideHair).ToDictionary(k => k.Key, v => v.Value);
-                    }
-                    if (cachedOverrideApparel != null)
-                        return cachedOverrideBody.Concat(cachedOverrideApparel).ToDictionary(k => k.Key, v => v.Value);*/
                     return cachedOverrideBody;
                 }
                 return new Dictionary<OverrideClass, bool>();
@@ -229,92 +219,6 @@ namespace NareisLib
             List<MultiTexBatch> list = GetAllBatch;
             if (ModStaticMethod.ThisMod.debugToggle)
                 Log.Warning("batch:" + list.Count().ToString());
-            /*if (list.NullOrEmpty())
-                return;
-
-            Dictionary<int, List<MultiTexBatch>> dataSouth = new Dictionary<int, List<MultiTexBatch>>();
-            Dictionary<int, List<MultiTexBatch>> dataEast = new Dictionary<int, List<MultiTexBatch>>();
-            Dictionary<int, List<MultiTexBatch>> dataWest = new Dictionary<int, List<MultiTexBatch>>();
-            Dictionary<int, List<MultiTexBatch>> dataNorth = new Dictionary<int, List<MultiTexBatch>>();
-            foreach (MultiTexBatch batch in list)
-            {
-                if (batch.renderSwitch.x != 0)
-                {
-                    if (dataSouth.NullOrEmpty() || !dataSouth.ContainsKey((int)batch.layer))
-                        dataSouth[(int)batch.layer] = new List<MultiTexBatch>();
-                    dataSouth[(int)batch.layer].Add(batch.Clone());
-                }
-                if (batch.renderSwitch.y != 0)
-                {
-                    TextureRenderLayer layer = batch.layer;
-                    if (!batch.staticLayer && !batch.donotChangeLayer && batch.layer == TextureRenderLayer.BottomHair)
-                        layer = TextureRenderLayer.Hair;
-                    if (dataEast.NullOrEmpty() || !dataEast.ContainsKey((int)layer))
-                        dataEast[(int)layer] = new List<MultiTexBatch>();
-                    if (dataWest.NullOrEmpty() || !dataWest.ContainsKey((int)layer))
-                        dataWest[(int)layer] = new List<MultiTexBatch>();
-                    dataEast[(int)layer].Add(batch.Clone());
-                    dataWest[(int)layer].Add(batch.Clone());
-                }
-                if (batch.renderSwitch.z != 0)
-                {
-                    TextureRenderLayer layer = batch.layer;
-                    if (!batch.staticLayer && !batch.donotChangeLayer)
-                    {
-                        if (batch.layer == TextureRenderLayer.BottomHair)
-                            layer = TextureRenderLayer.Hair;
-                        else if (batch.layer == TextureRenderLayer.BottomShell)
-                            layer = TextureRenderLayer.FrontShell;
-                        else if (batch.layer == TextureRenderLayer.FrontShell)
-                            layer = TextureRenderLayer.BottomShell;
-                        else if (batch.layer == TextureRenderLayer.Hair)
-                            layer = TextureRenderLayer.BottomHair;
-                    }
-                    if (dataNorth.NullOrEmpty() || !dataNorth.ContainsKey((int)layer))
-                        dataNorth[(int)layer] = new List<MultiTexBatch>();
-                    dataNorth[(int)layer].Add(batch.Clone());
-                }
-            }
-            cachedDataSouth = dataSouth;
-            cachedDataEast = dataEast;
-            cachedDataWest = dataWest;
-            cachedDataNorth = dataNorth;
-
-            
-            if (!cachedDataSouth.NullOrEmpty())
-            {
-                foreach (int t in cachedDataSouth.Keys)
-                {
-                    if (cachedDataSouth[t].Count() > 1)
-                        cachedDataSouth[t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetSouth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetSouth.Value.y));
-                }
-            }
-            if (!cachedDataEast.NullOrEmpty())
-            {
-                foreach (int t in cachedDataEast.Keys)
-                {
-                    if (cachedDataEast[t].Count() > 1)
-                        cachedDataEast[t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetEast.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetEast.Value.y));
-                }
-            }
-            if (!cachedDataWest.NullOrEmpty())
-            {
-                foreach (int t in cachedDataWest.Keys)
-                {
-                    if (cachedDataWest[t].Count() > 1)
-                        cachedDataWest[t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetWest.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetWest.Value.y));
-                }
-            }
-            if (!cachedDataNorth.NullOrEmpty())
-            {
-                foreach (int t in cachedDataNorth.Keys)
-                {
-                    if (cachedDataNorth[t].Count() > 1)
-                        cachedDataNorth[t].Sort((i, j) => ThisModData.TexLevelsDatabase[i.originalDefClass.ToStringSafe() + "_" + i.originalDefName][i.textureLevelsName].drawOffsetNorth.Value.y.CompareTo(ThisModData.TexLevelsDatabase[j.originalDefClass.ToStringSafe() + "_" + j.originalDefName][j.textureLevelsName].drawOffsetNorth.Value.y));
-                }
-            }*/
-            
-            
             
 
             cachedAllOriginalDefForGraphicData = cachedBodyGraphicData.Concat(cachedHairGraphicData).Concat(cachedApparelGraphicData).ToDictionary(k => k.Key, v => v.Value);
@@ -324,13 +228,6 @@ namespace NareisLib
             //获取临时的所有应该隐藏某个图层的列表
             cachedHideOrReplaceDict = cachedAllOriginalDefForGraphicDataList.Where(x => !x.hideList.NullOrEmpty()).SelectMany(x => x.hideList).ToLookup(k => k.defLevelName).ToDictionary(g => g.Key, g => g.First());
 
-
-            //初始化randomPattern队列
-            /*patternLine = cachedAllOriginalDefForGraphicData.SelectMany(x => x.Value.Values).Where(x => x.patternSets != null && x.patternSets.texList.Contains(x.keyName)).Select(x => x.patternSets).ToArray();
-            if (patternLine.Length > 1)
-                patternLine.SortStable((i, j) => i.RandomNextIntervalAndPattern().CompareTo(j.RandomNextIntervalAndPattern()));
-            cachedRandomGraphicPattern.Clear();
-            timeTickLineIndex = 0;*/
 
             if (ModStaticMethod.ThisMod.debugToggle)
             {
