@@ -49,15 +49,13 @@
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\com.rlabrecque.steamworks.net.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="HugsLib">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\workshop\content\294100\818773962\v1.6\Assemblies\HugsLib.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="netstandard">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\netstandard.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="Unity.AI.Navigation">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Unity.AI.Navigation.dll</HintPath>
       <Private>False</Private>
@@ -390,6 +388,7 @@
     <Compile Include="NareisLib_MeshPoolUtility.cs" />
     <Compile Include="OverrideClass.cs" />
     <Compile Include="Page_Setting_CurBehavior.cs" />
+    <Compile Include="PatchOperation_AddDefaultSubWorker.cs" />
     <Compile Include="PawnRenderNodeWorker_Hand.cs" />
     <Compile Include="PawnRenderNodeWorker_SPHair.cs" />
     <Compile Include="PawnRenderNodeWorker_TextureLevels.cs" />
