@@ -174,7 +174,7 @@ namespace NareisLib
                 if (parent as Pawn != null && (parent as Pawn).Faction != null && (parent as Pawn).Faction.IsPlayer)
                     pawnWarpper = new ExtendedGraphicsPawnWrapper((Pawn)parent);
             }
-            else if (ModStaticMethod.ThisMod.pawnCurJobDisplayToggle)
+            else if (NareisLibBase.Settings.pawnCurJobDisplayToggle)
             {
                 if (pawnWarpper.CurJob != null)
                     Log.Warning(pawnName + "当前工作：" + pawnWarpper.CurJob.def.defName);
@@ -217,7 +217,7 @@ namespace NareisLib
         public void ResolveAllLayerBatch()
         {
             List<MultiTexBatch> list = GetAllBatch;
-            if (ModStaticMethod.ThisMod.debugToggle)
+            if (NareisLibBase.Settings.debugToggle)
                 Log.Warning("batch:" + list.Count().ToString());
             
 
@@ -229,7 +229,7 @@ namespace NareisLib
             cachedHideOrReplaceDict = cachedAllOriginalDefForGraphicDataList.Where(x => !x.hideList.NullOrEmpty()).SelectMany(x => x.hideList).ToLookup(k => k.defLevelName).ToDictionary(g => g.Key, g => g.First());
 
 
-            if (ModStaticMethod.ThisMod.debugToggle)
+            if (NareisLibBase.Settings.debugToggle)
             {
                 Log.Warning("south:" + cachedDataSouth.SelectMany(x => x.Value).Count().ToString());
                 Log.Warning("east:" + cachedDataEast.SelectMany(x => x.Value).Count().ToString());
@@ -329,7 +329,7 @@ namespace NareisLib
                     if (!batches.Exists(x => x.textureLevelsName == level.textureLevelsName))
                         batches.Add(batch);
 
-                    if (ModStaticMethod.ThisMod.debugToggle)
+                    if (NareisLibBase.Settings.debugToggle)
                     {
                         Log.Warning("render switch : " + level.renderSwitch.ToStringSafe());
                         Log.Warning("render layer : " + level.renderLayer.ToStringSafe());

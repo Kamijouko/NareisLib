@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Verse;
 using RimWorld;
-using HugsLib;
 using AlienRace;
 using AlienRace.ExtendedGraphics;
 

@@ -17,10 +17,10 @@ namespace NareisLib
         {
             get
             {
-                return ThisMod == null ? ModLister.GetActiveModWithIdentifier("NazunaReiLib.kamijouko").RootDir.ToString() : ThisMod.ModContentPack.RootDir;
+                return ThisMod == null ? ModLister.GetActiveModWithIdentifier("NazunaReiLib.kamijouko").RootDir.ToString() : ThisMod.Content.RootDir;
             }
         }
 
-        public static ThisModBase ThisMod { get; set; } = null;
+        public static NareisLibBase ThisMod { get; set; } = null;
     }
 }
