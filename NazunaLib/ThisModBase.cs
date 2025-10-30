@@ -8,8 +8,6 @@ using UnityEngine;
 
 namespace NareisLib
 {
-
-
     //给所有Pawn添加多层渲染Comp，CompTick有触发条件所以不存在性能问题
     [HarmonyPatch(typeof(ThingDef))]
     [HarmonyPatch("ResolveReferences")]
@@ -115,7 +113,6 @@ namespace NareisLib
         [HarmonyPostfix]
         static void Postfix(PawnRenderTree __instance, Dictionary<PawnRenderNodeTagDef, PawnRenderNode> ___nodesByTag, Dictionary<PawnRenderNodeTagDef, List<PawnRenderNode>> ___tmpChildTagNodes)
         {
-
             MultiRenderComp comp = __instance.pawn.GetComp<MultiRenderComp>();
             if (comp == null || (comp != null && comp.GetAllHideOriginalDefData.NullOrEmpty()))
                 return;

@@ -372,7 +372,6 @@
     <Compile Include="ActionDef.cs" />
     <Compile Include="ActionManager.cs" />
     <Compile Include="Behavior.cs" />
-    <Compile Include="DefaultNodeSubWorker.cs" />
     <Compile Include="HandTypeDef.cs" />
     <Compile Include="ModStaticMethod.cs" />
     <Compile Include="MultiRenderComp.cs" />
@@ -387,7 +386,6 @@
     <Compile Include="NareisLib_MeshPoolUtility.cs" />
     <Compile Include="OverrideClass.cs" />
     <Compile Include="Page_Setting_CurBehavior.cs" />
-    <Compile Include="PatchOperation_AddDefaultSubWorker.cs" />
     <Compile Include="PawnRenderNodeWorker_Hand.cs" />
     <Compile Include="PawnRenderNodeWorker_SPHair.cs" />
     <Compile Include="PawnRenderNodeWorker_TextureLevels.cs" />
@@ -410,6 +408,9 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Abandoned\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
