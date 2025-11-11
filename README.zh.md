@@ -32,10 +32,9 @@ NazunaLib/
 ```
 
 ## 快速上手
-1. **克隆并编译** —— 参照 RimWorld 1.6 的程序集编译 `NazunaLib.csproj`（或直接打开 `NazunaLib.sln`），将生成的 DLL 复制到模组的 `Assemblies/` 目录。
-2. **编写 MultiTexDef XML** —— 针对每个小人部位（BodyDef、HeadDef、HairDef、Apparel、HandTypeDef）创建 `MultiTexDef`，将目标 Def 映射到贴图文件夹和图层键值。
-3. **配置行为系统** —— 定义 `ActionDef`，为不同的工作列出对应的 `Behavior`。结合姿势分类文件夹与随机化标记控制贴图切换，并可通过多个 `ActionManager` 实现部位同步。
-4. **游戏内测试** —— 在加载 HAR 与 NareisLib 的情况下启动 RimWorld，生成目标小人，确认图层、覆盖与行为均按预期更新。
+1. **编写 MultiTexDef XML** —— 针对每个小人部位（BodyDef、HeadDef、HairDef、Apparel、HandTypeDef）创建 `MultiTexDef`，将目标 Def 映射到贴图文件夹和图层键值。
+2. **配置行为系统** —— 定义 `ActionDef`，为不同的工作列出对应的 `Behavior`。结合姿势分类文件夹与随机化标记控制贴图切换，并可通过多个 `ActionManager` 实现部位同步。
+3. **游戏内测试** —— 在加载 HAR 与 NareisLib 的情况下启动 RimWorld，生成目标小人，确认图层、覆盖与行为均按预期更新。
 
 ### 最简 MultiTexDef 示例
 ```xml
@@ -70,3 +69,4 @@ NazunaLib/
 
 ## 许可
 本项目以 MIT License 发布，详情见 [`LICENSE`](LICENSE)。
+
