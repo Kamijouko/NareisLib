@@ -404,7 +404,11 @@
     <Compile Include="TextureLevels\TextureLevelsToNodeProperties.cs" />
     <Compile Include="TextureLevels\TextureLevelsToNodeSubWorker.cs" />
     <Compile Include="Rendering\TextureRenderLayer.cs" />
+    <Compile Include="Compat\Building_NewOutfitStand.cs" />
+    <Compile Include="Compat\ITab_ContentsNewOutfitStand.cs" />
+    <Compile Include="Patching\Harmony_AlienRace_OutfitStandHAR.cs" />
     <Compile Include="Core\ThisModBase.cs" />
+    <Compile Include="Core\OutfitStandRenderPlanExtension.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\ThisModData.cs" />
   </ItemGroup>

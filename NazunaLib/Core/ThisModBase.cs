@@ -562,12 +562,14 @@ namespace NareisLib
         public bool debugToggle = false;
         public bool apparelLevelsDisplayToggle = false;
         public bool pawnCurJobDisplayToggle = false;
+        public bool useRuntimeTextureLevels = true;
         // 保存/读取
         public override void ExposeData()
         {
             Scribe_Values.Look(ref debugToggle, "debugToggle ", false);
             Scribe_Values.Look(ref apparelLevelsDisplayToggle, "apparelLevelsDisplayToggle ", false);
             Scribe_Values.Look(ref pawnCurJobDisplayToggle, "pawnCurJobDisplayToggle ", false);
+            Scribe_Values.Look(ref useRuntimeTextureLevels, "useRuntimeTextureLevels", false);
             base.ExposeData();
         }
     }
@@ -620,6 +622,14 @@ namespace NareisLib
                 "pawnCurJobInfo_title".Translate(),
                 ref Settings.pawnCurJobDisplayToggle,
                 "pawnCurJobInfo_desc".Translate()
+            );
+
+            listing.GapLine();
+
+            listing.CheckboxLabeled(
+                "useRuntimeTextureLevels_title".Translate(),
+                ref Settings.useRuntimeTextureLevels,
+                "useRuntimeTextureLevels_desc".Translate()
             );
 
             listing.End();

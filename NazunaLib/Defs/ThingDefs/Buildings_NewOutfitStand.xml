@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <ThingDef ParentName="OutfitStandBase">
+    <defName>Building_NewOutfitStand</defName>
+    <label>outfit stand (new)</label>
+    <description>A small display that showcases a single outfit using the NareisLib render plan.</description>
+    <thingClass>NareisLib.Building_NewOutfitStand</thingClass>
+    <costStuffCount>35</costStuffCount>
+    <graphicData>
+      <graphicClass>Graphic_Multi</graphicClass>
+      <texPath>Things/Building/OutfitStand/OutfitStand_MenuIcon</texPath>
+      <drawSize>(1.3, 1.3)</drawSize>
+    </graphicData>
+    <building>
+      <storageGroupTag>OutfitStand</storageGroupTag>
+      <fixedStorageSettings>
+        <filter>
+          <specialFiltersToDisallow>
+            <li>AllowChildOnlyApparel</li>
+          </specialFiltersToDisallow>
+        </filter>
+      </fixedStorageSettings>
+    </building>
+    <inspectorTabs Inherit="False">
+      <li>ITab_Storage</li>
+      <li>NareisLib.ITab_ContentsNewOutfitStand</li>
+    </inspectorTabs>
+    <modExtensions>
+      <li Class="NareisLib.OutfitStandRenderPlanExtension">
+        <renderPlanDef>Human</renderPlanDef>
+      </li>
+    </modExtensions>
+  </ThingDef>
+</Defs>

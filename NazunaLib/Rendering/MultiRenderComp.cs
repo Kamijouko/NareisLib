@@ -39,6 +39,9 @@ namespace NareisLib
         //public Dictionary<string, TextureLevels> cachedAllGraphicData = new Dictionary<string, TextureLevels>();
         public List<TextureLevels> cachedAllOriginalDefForGraphicDataList = new List<TextureLevels>();
 
+        //用于复用批次列表，避免频繁分配
+        private readonly List<MultiTexBatch> cachedAllBatches = new List<MultiTexBatch>();
+
         //用于缓存具有随机状态的贴图的当前的pattern，
         //key为此贴图的Type_OriginalDefName_KeyName，
         //value为此贴图目前应使用的pattern序号
@@ -70,6 +73,14 @@ namespace NareisLib
         //public TextureLevelRandomPatternSet[] patternLine = new TextureLevelRandomPatternSet[] { };
 
         public bool PrefixResolved = false;
+
+        private static bool UseRuntimeTextureLevels
+        {
+            get
+            {
+                return NareisLibBase.Settings != null && NareisLibBase.Settings.useRuntimeTextureLevels;
+            }
+        }
 
         public MultiRenderCompProperties Props
         {
@@ -113,7 +124,30 @@ namespace NareisLib
         {
             get
             {
-                return storedDataBody.Values.Concat(storedDataApparel.Values).Concat(storedDataHair.Values).SelectMany(x => x.batches).ToList();
+                if (!UseRuntimeTextureLevels)
+                    return storedDataBody.Values.Concat(storedDataApparel.Values).Concat(storedDataHair.Values).SelectMany(x => x.batches).ToList();
+                return GetAllBatchCached();
+            }
+        }
+
+        private List<MultiTexBatch> GetAllBatchCached()
+        {
+            cachedAllBatches.Clear();
+            AppendEpochBatches(storedDataBody, cachedAllBatches);
+            AppendEpochBatches(storedDataApparel, cachedAllBatches);
+            AppendEpochBatches(storedDataHair, cachedAllBatches);
+            return cachedAllBatches;
+        }
+
+        private static void AppendEpochBatches(Dictionary<string, MultiTexEpoch> data, List<MultiTexBatch> target)
+        {
+            if (data.NullOrEmpty())
+                return;
+            foreach (MultiTexEpoch epoch in data.Values)
+            {
+                if (epoch?.batches == null || epoch.batches.Count == 0)
+                    continue;
+                target.AddRange(epoch.batches);
             }
         }
         protected Pawn PawnOwner
@@ -216,6 +250,11 @@ namespace NareisLib
         //对MultiTexEpoch所有的MultiTexBatch的Layer，针对每个方向进行分类和排序，并记入缓存
         public void ResolveAllLayerBatch()
         {
+            if (UseRuntimeTextureLevels)
+            {
+                ResolveAllLayerBatchRuntime();
+                return;
+            }
             List<MultiTexBatch> list = GetAllBatch;
             if (NareisLibBase.Settings.debugToggle)
                 Log.Warning("batch:" + list.Count().ToString());
@@ -237,6 +276,73 @@ namespace NareisLib
                 Log.Warning("AllGraphicData:" + GetAllOriginalDefForGraphicDataDict.Values.SelectMany(x => x.Values).Count().ToString());
                 Log.Warning("levels:" + ThisModData.TexLevelsDatabase.Values.SelectMany(x => x.Values).Count().ToString());
                 Log.Warning("plans:" + ThisModData.DefAndKeyDatabase.Values.SelectMany(x => x.Values).Count().ToString());
+            }
+        }
+
+        private void ResolveAllLayerBatchRuntime()
+        {
+            List<MultiTexBatch> list = GetAllBatchCached();
+            if (NareisLibBase.Settings.debugToggle)
+                Log.Warning("batch:" + list.Count.ToString());
+
+            if (cachedAllOriginalDefForGraphicData == null)
+                cachedAllOriginalDefForGraphicData = new Dictionary<string, Dictionary<string, TextureLevels>>();
+            else
+                cachedAllOriginalDefForGraphicData.Clear();
+
+            MergeGraphicData(cachedBodyGraphicData, cachedAllOriginalDefForGraphicData);
+            MergeGraphicData(cachedHairGraphicData, cachedAllOriginalDefForGraphicData);
+            MergeGraphicData(cachedApparelGraphicData, cachedAllOriginalDefForGraphicData);
+
+            if (cachedAllOriginalDefForGraphicDataList == null)
+                cachedAllOriginalDefForGraphicDataList = new List<TextureLevels>();
+            else
+                cachedAllOriginalDefForGraphicDataList.Clear();
+
+            foreach (Dictionary<string, TextureLevels> perDef in cachedAllOriginalDefForGraphicData.Values)
+            {
+                if (perDef.NullOrEmpty())
+                    continue;
+                foreach (TextureLevels level in perDef.Values)
+                    cachedAllOriginalDefForGraphicDataList.Add(level);
+            }
+
+            if (cachedHideOrReplaceDict == null)
+                cachedHideOrReplaceDict = new Dictionary<string, TextureLevelHideOption>();
+            else
+                cachedHideOrReplaceDict.Clear();
+
+            foreach (TextureLevels level in cachedAllOriginalDefForGraphicDataList)
+            {
+                if (level.hideList.NullOrEmpty())
+                    continue;
+                foreach (TextureLevelHideOption option in level.hideList)
+                {
+                    if (!cachedHideOrReplaceDict.ContainsKey(option.defLevelName))
+                        cachedHideOrReplaceDict.Add(option.defLevelName, option);
+                }
+            }
+
+            if (NareisLibBase.Settings.debugToggle)
+            {
+                Log.Warning("south:" + cachedDataSouth.SelectMany(x => x.Value).Count().ToString());
+                Log.Warning("east:" + cachedDataEast.SelectMany(x => x.Value).Count().ToString());
+                Log.Warning("north:" + cachedDataNorth.SelectMany(x => x.Value).Count().ToString());
+                Log.Warning("AllGraphicData:" + GetAllOriginalDefForGraphicDataDict.Values.SelectMany(x => x.Values).Count().ToString());
+                Log.Warning("levels:" + ThisModData.TexLevelsDatabase.Values.SelectMany(x => x.Values).Count().ToString());
+                Log.Warning("plans:" + ThisModData.DefAndKeyDatabase.Values.SelectMany(x => x.Values).Count().ToString());
+            }
+        }
+
+        private static void MergeGraphicData(
+            Dictionary<string, Dictionary<string, TextureLevels>> source,
+            Dictionary<string, Dictionary<string, TextureLevels>> target)
+        {
+            if (source.NullOrEmpty())
+                return;
+            foreach (KeyValuePair<string, Dictionary<string, TextureLevels>> pair in source)
+            {
+                target.Add(pair.Key, pair.Value);
             }
         }
 
@@ -291,9 +397,27 @@ namespace NareisLib
         //从comp的storedData里获取TextureLevels数据，用于处理读取存档时从已有的storedData字典中得到的epoch
         public static Dictionary<string, TextureLevels> GetLevelsDictFromEpoch(MultiTexEpoch epoch, List<TextureLevels> actionList = null, List<ActionManager> actionManagerList = null, Apparel apparel = null)
         {
+            if (UseRuntimeTextureLevels)
+                return GetLevelsDictFromEpochRuntime(epoch, actionList, actionManagerList, apparel);
             return !epoch.batches.NullOrEmpty() 
                 ? epoch.batches.ToDictionary(k => k.textureLevelsName, v => ResolveKeyNameForLevel(ThisModData.TexLevelsDatabase[$"{v.originalDefClass.ToStringSafe()}_{v.originalDefName}"][v.textureLevelsName].Clone(), v.keyName, v, actionList, actionManagerList, apparel)) 
                 : new Dictionary<string, TextureLevels>();
+        }
+
+        private static Dictionary<string, TextureLevels> GetLevelsDictFromEpochRuntime(MultiTexEpoch epoch, List<TextureLevels> actionList, List<ActionManager> actionManagerList, Apparel apparel)
+        {
+            if (epoch.batches.NullOrEmpty())
+                return new Dictionary<string, TextureLevels>();
+
+            Dictionary<string, TextureLevels> result = new Dictionary<string, TextureLevels>();
+            foreach (MultiTexBatch batch in epoch.batches)
+            {
+                string typeOriginalDef = $"{batch.originalDefClass.ToStringSafe()}_{batch.originalDefName}";
+                TextureLevels source = ThisModData.TexLevelsDatabase[typeOriginalDef][batch.textureLevelsName];
+                TextureLevels level = source.CloneRuntime();
+                result.Add(batch.textureLevelsName, ResolveKeyNameForLevel(level, batch.keyName, batch, actionList, actionManagerList, apparel));
+            }
+            return result;
         }
 
         //处理defName所指定的MultiTexDef，
@@ -338,7 +462,8 @@ namespace NareisLib
                     string type_defName = def.originalDefClass.ToStringSafe() + "_" + def.originalDef;
                     if (ThisModData.TexLevelsDatabase.ContainsKey(type_defName) && ThisModData.TexLevelsDatabase[type_defName].ContainsKey(level.textureLevelsName))
                     {
-                        TextureLevels textureLevels = ThisModData.TexLevelsDatabase[type_defName][level.textureLevelsName].Clone();
+                        TextureLevels source = ThisModData.TexLevelsDatabase[type_defName][level.textureLevelsName];
+                        TextureLevels textureLevels = UseRuntimeTextureLevels ? source.CloneRuntime() : source.Clone();
                         textureLevels.keyName = keyName;
                         textureLevels.cachedBatch = batch;
                         textureLevels.cachedApparel = apparel;

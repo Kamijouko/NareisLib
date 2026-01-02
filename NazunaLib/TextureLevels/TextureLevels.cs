@@ -368,6 +368,29 @@ namespace NareisLib
             return result;
         }
 
+        //Runtime clone to avoid sharing mutable collections/state with def data.
+        public TextureLevels CloneRuntime()
+        {
+            TextureLevels result = Clone();
+            if (!result.subworkerClasses.NullOrEmpty())
+                result.subworkerClasses = new List<Type>(result.subworkerClasses);
+            else
+                result.subworkerClasses = new List<Type>();
+
+            //Reset runtime-only state.
+            result.node = null;
+            result.cachedBatch = null;
+            result.cachedApparel = null;
+            result.cacheGraphic = null;
+            result.keyName = "";
+            result.hediffPrefix = "";
+            result.hediffEnableWithJob = false;
+            result.jobPrefix = "";
+            result.exPath = "";
+            result.genderSuffix = "";
+            return result;
+        }
+
 
         //对当前Level应该渲染的贴图路径进行处理，并且将每个路径都对应一个GraphicData
         public void GetAllGraphicDatas(MultiTexDef def)
