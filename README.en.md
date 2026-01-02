@@ -1,32 +1,50 @@
 # NareisLib
 
-> RimWorld multi-layer rendering framework for complex character customization.
+> RimWorld multi-layer rendering framework for complex pawn customization.
 
 ## Overview
-NareisLib extends RimWorld's pawn renderer with a configurable multi-layer pipeline, letting mods draw custom textures on top of vanilla or Human Alien Race (HAR) assets without rewriting the core game logic.
+NareisLib extends RimWorld's pawn renderer with a configurable multi-layer pipeline. Mods can inject custom textures on top of
+vanilla assets or Human Alien Race (HAR) graphics without rewriting the game's rendering logic.
 
 ## Current Status
-Targeted for RimWorld 1.6; the library backports many concepts from 1.4/1.5 but new work should focus on 1.6 builds.
+Actively targeting RimWorld 1.6. Many concepts originated in 1.4/1.5 builds, but new development should focus on 1.6.
 
 ## Feature Highlights
-- **Layered rendering** – Define meshes on precise layers such as `BottomOverlay`, `Body`, `Hair`, `Hat`, and more for every facing direction, matching the `TextureRenderLayer` enum.
-- **MultiTexDef graphs** – Tie custom assets to vanilla defs, choose whether to keep the original textures, and list all additional layers from XML via `MultiTexDef`.
-- **Action-driven behavior** – Use `ActionDef`, `Behavior`, and `ActionManager` to swap textures dynamically per job, posture, or timer, including synchronized updates across linked body parts.
-- **Automatic comp injection** – Harmony patches attach `MultiRenderComp` to every pawn so custom render data is always available without manual Def edits.
+- **Layered rendering** – Define meshes for precise stages such as `BottomOverlay`, `Body`, `Hair`, `Hat`, and other
+  `TextureRenderLayer` enum values for every facing direction.
+- **MultiTexDef graphs** – Connect custom assets to vanilla defs, choose whether to retain the original textures, and list all
+  additional layers directly in XML.
+- **Action-driven behavior** – Use `ActionDef`, `Behavior`, and `ActionManager` to swap textures per job, posture, or timer,
+  including synchronized updates across linked body parts.
+- **Automatic comp injection** – Harmony patches attach `MultiRenderComp` to every pawn so custom render data is always
+  available without manual Def edits.
 
 ## Requirements
-RimWorld 1.6, Harmony, and Human Alien Race (HAR) with Extended Graphics support (as used by the framework).
+RimWorld 1.6, Harmony, and Human Alien Race (HAR) with Extended Graphics support.
 
 ## Repository Layout
-- `NazunaLib/` – C# source for the library, including rendering components, behavior logic, and Harmony patches.
-- `NazunaLib/Properties/` – Assembly metadata and compiler settings.
-- `PatchOperation_AddDefaultSubWorker.cs` – Utility patch for XML workflows.
+```
+NazunaLib.sln              Solution file configured for Rider/Visual Studio builds
+NazunaLib/
+├── Core/                  Action system, behavior state, and shared utilities
+├── PawnRendering/         Render node workers that bridge vanilla & HAR pipelines
+├── Rendering/             Multi-layer renderer, defs, caches, and mesh helpers
+│   └── Mesh/              Mesh pooling, draw data, and shared geometry
+├── Settings/              In-game debug page and mod configuration glue
+├── TextureLevels/         XML-driven layer definitions and conversion helpers
+├── Properties/            Assembly metadata and compiler settings
+└── NazunaLib.csproj       Project file targeting RimWorld 1.6 assemblies
+```
 
 ## Getting Started
-1. **Clone & build** – Build the `NazunaLib.csproj` against RimWorld 1.6 assemblies and copy the resulting DLL into your mod's `Assemblies/` folder.
-2. **Author MultiTexDef XML** – For each pawn body part (BodyDef, HeadDef, HairDef, Apparel, HandTypeDef), create `MultiTexDef` entries that map the target def to your texture folders and layered keys.
-3. **Configure behaviors** – Define `ActionDef` assets that enumerate `Behavior` entries per job. Use posture-specific folders and randomization flags to control when textures change, or link multiple `ActionManager` instances for synchronized parts.
-4. **Test in game** – Launch RimWorld with HAR and NareisLib, spawn the pawn(s), and verify that layers, overrides, and behaviors update as expected.
+1. **Clone & build** – Build `NazunaLib.csproj` (or open `NazunaLib.sln`) against RimWorld 1.6 assemblies and copy the resulting
+   DLL into your mod's `Assemblies/` folder.
+2. **Author MultiTexDef XML** – For each pawn body part (BodyDef, HeadDef, HairDef, Apparel, HandTypeDef), create `MultiTexDef`
+   entries that map the target def to your texture folders and layered keys.
+3. **Configure behaviors** – Define `ActionDef` assets that enumerate `Behavior` entries per job. Use posture-specific folders and
+   randomization flags to control when textures change, or link multiple `ActionManager` instances for synchronized parts.
+4. **Test in game** – Launch RimWorld with HAR and NareisLib, spawn the pawn(s), and verify that layers, overrides, and behaviors
+   update as expected.
 
 ### Minimal MultiTexDef Example
 ```xml
