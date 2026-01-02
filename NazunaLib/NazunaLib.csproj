@@ -371,6 +371,7 @@
   <ItemGroup>
     <Compile Include="Abandoned\DefaultNodeSubWorker.cs" />
     <Compile Include="Abandoned\PatchOperation_AddDefaultSubWorker.cs" />
+    <Compile Include="Compat\JobDriver_UseNewOutfitStand.cs" />
     <Compile Include="Core\ActionDef.cs" />
     <Compile Include="Core\ActionManager.cs" />
     <Compile Include="Core\Behavior.cs" />
@@ -415,8 +416,6 @@
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Patching\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

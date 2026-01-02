@@ -45,4 +45,23 @@ namespace NareisLib
             return true;
         }
     }
+
+    [HarmonyPatch]
+    internal static class AlienRace_OutfitStandHAR_PostExposeData_Patch
+    {
+        private static MethodBase TargetMethod()
+        {
+            Type compType = AccessTools.TypeByName("AlienRace.Comp_OutfitStandHAR");
+            return compType != null ? AccessTools.Method(compType, "PostExposeData") : null;
+        }
+
+        private static bool Prefix(ThingComp __instance)
+        {
+            if (__instance?.parent is Building_NewOutfitStand)
+            {
+                return false;
+            }
+            return true;
+        }
+    }
 }

@@ -15,5 +15,11 @@ namespace NareisLib
     {
         public string raceDefName;
         public Vector3 offset = Vector3.zero;
+        public string bodyTexPath;
+        public string bodyTexPathMale;
+        public string bodyTexPathFemale;
+        public string headTexPath;
+        public string headTexPathMale;
+        public string headTexPathFemale;
     }
 }

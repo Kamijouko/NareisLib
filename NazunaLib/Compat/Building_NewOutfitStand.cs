@@ -505,11 +505,17 @@ namespace NareisLib
 				List<Apparel> apparelList = this.innerContainer.InnerListForReading.OfType<Apparel>().ToList<Apparel>();
 				apparelList.SortBy((Apparel a) => a.def.apparel.LastLayer.drawOrder);
 				Dictionary<PawnRenderNodeTagDef, int> layerOffsets = new Dictionary<PawnRenderNodeTagDef, int>();
+				BodyTypeDef bodyTypeDef = this.BodyTypeDefForRendering ?? BodyTypeDefOf.Male;
 				foreach (Apparel apparel in apparelList)
 				{
-					ApparelLayerDef lastLayer = apparel.def.apparel.LastLayer;
+					ApparelProperties apparelProps = apparel.def != null ? apparel.def.apparel : null;
+					if (apparelProps == null || apparelProps.LastLayer == null)
+					{
+						continue;
+					}
+					ApparelLayerDef lastLayer = apparelProps.LastLayer;
 					bool isHeadgear = lastLayer == ApparelLayerDefOf.Overhead || lastLayer == ApparelLayerDefOf.EyeCover;
-					PawnRenderNodeTagDef parentTag = apparel.def.apparel.parentTagDef;
+					PawnRenderNodeTagDef parentTag = apparelProps.parentTagDef;
 					if (parentTag != null)
 					{
 						if (parentTag == PawnRenderNodeTagDefOf.ApparelHead)
@@ -525,7 +531,7 @@ namespace NareisLib
 					{
 						parentTag = isHeadgear ? PawnRenderNodeTagDefOf.ApparelHead : PawnRenderNodeTagDefOf.ApparelBody;
 					}
-					this.cachedApparelRenderInfoSkipHead = this.cachedApparelRenderInfoSkipHead || apparel.def.apparel.renderSkipFlags.NotNullAndContains(RenderSkipFlagDefOf.Head);
+					this.cachedApparelRenderInfoSkipHead = this.cachedApparelRenderInfoSkipHead || apparelProps.renderSkipFlags.NotNullAndContains(RenderSkipFlagDefOf.Head);
 					int layerIndex = layerOffsets.TryGetValue(parentTag, 0);
 					layerOffsets[parentTag] = layerIndex + 1;
 					float parentBaseLayer = GetNodeBaseLayer(renderTreeLayout, parentTag);
@@ -533,12 +539,12 @@ namespace NareisLib
 					float layer = ResolveVanillaApparelLayer(apparel, base.Rotation, absoluteBaseLayer) - parentBaseLayer;
 					Vector3 scale = Vector3.one;
 					Vector3 positionOffset = Vector3.zero;
-					if (apparel.RenderAsPack())
+					if (apparel.RenderAsPack() && apparelProps.wornGraphicData != null)
 					{
-						Vector2 beltScale = apparel.def.apparel.wornGraphicData.BeltScaleAt(base.Rotation, this.BodyTypeDefForRendering);
+						Vector2 beltScale = apparelProps.wornGraphicData.BeltScaleAt(base.Rotation, bodyTypeDef);
 						scale.x *= beltScale.x;
 						scale.z *= beltScale.y;
-						Vector2 beltOffset = apparel.def.apparel.wornGraphicData.BeltOffsetAt(base.Rotation, this.BodyTypeDefForRendering);
+						Vector2 beltOffset = apparelProps.wornGraphicData.BeltOffsetAt(base.Rotation, bodyTypeDef);
 						positionOffset.x += beltOffset.x;
 						positionOffset.z += beltOffset.y;
 					}
@@ -555,7 +561,7 @@ namespace NareisLib
 					}
 
 					ApparelGraphicRecord apparelGraphicRecord;
-					if (ApparelGraphicRecordGetter.TryGetGraphicApparel(apparel, this.BodyTypeDefForRendering, false, out apparelGraphicRecord))
+					if (ApparelGraphicRecordGetter.TryGetGraphicApparel(apparel, bodyTypeDef, false, out apparelGraphicRecord))
 					{
 						if (isHeadgear)
 						{
@@ -1116,6 +1122,7 @@ namespace NareisLib
 
 		private void UpdateAlienRaceGraphicOverrides()
 		{
+			TryApplyModExtensionGraphicOverrides();
 			ThingDef_AlienRace alienRace = GetEffectiveRaceDef() as ThingDef_AlienRace;
 			if (alienRace == null || alienRace.alienRace == null || alienRace.alienRace.graphicPaths == null)
 			{
@@ -1128,18 +1135,79 @@ namespace NareisLib
 			}
 			int savedIndex = this.HashOffset();
 			int shared = 0;
-			string bodyPath = alienRace.alienRace.graphicPaths.body.GetPath(null, ref shared, new int?(savedIndex), null);
 			Vector2 bodyDrawSize = this.IsJuvenileBodyType ? Building_NewOutfitStand.bodyChildDrawSize : Building_NewOutfitStand.bodyDrawSize;
-			if (!bodyPath.NullOrEmpty())
+			if (this.standBodyGraphicOverride == null)
 			{
-				this.standBodyGraphicOverride = CachedData.getInnerGraphic(new GraphicRequest(typeof(Graphic_Multi), bodyPath, ShaderDatabase.Cutout, bodyDrawSize, Color.white, Color.white, null, 0, null, string.Empty));
+				string bodyPath = alienRace.alienRace.graphicPaths.body.GetPath(null, ref shared, new int?(savedIndex), null);
+				if (!bodyPath.NullOrEmpty())
+				{
+					this.standBodyGraphicOverride = CachedData.getInnerGraphic(new GraphicRequest(typeof(Graphic_Multi), bodyPath, ShaderDatabase.Cutout, bodyDrawSize, Color.white, Color.white, null, 0, null, string.Empty));
+				}
 			}
-			string headPath = alienRace.alienRace.graphicPaths.head.GetPath(null, ref shared, new int?(savedIndex), null);
 			Vector2 headDrawSize = Building_NewOutfitStand.headDrawSize;
-			if (!headPath.NullOrEmpty())
+			if (this.standHeadGraphicOverride == null)
 			{
-				this.standHeadGraphicOverride = CachedData.getInnerGraphic(new GraphicRequest(typeof(Graphic_Multi), headPath, ShaderDatabase.Cutout, headDrawSize, Color.white, Color.white, null, 0, null, string.Empty));
+				string headPath = alienRace.alienRace.graphicPaths.head.GetPath(null, ref shared, new int?(savedIndex), null);
+				if (!headPath.NullOrEmpty())
+				{
+					this.standHeadGraphicOverride = CachedData.getInnerGraphic(new GraphicRequest(typeof(Graphic_Multi), headPath, ShaderDatabase.Cutout, headDrawSize, Color.white, Color.white, null, 0, null, string.Empty));
+				}
 			}
+		}
+
+		private void TryApplyModExtensionGraphicOverrides()
+		{
+			OutfitStandRenderPlanExtension modExtension = this.def.GetModExtension<OutfitStandRenderPlanExtension>();
+			if (modExtension == null || modExtension.raceOffsets.NullOrEmpty())
+			{
+				return;
+			}
+			ThingDef raceDef = GetEffectiveRaceDef();
+			if (raceDef == null)
+			{
+				return;
+			}
+			for (int i = 0; i < modExtension.raceOffsets.Count; i++)
+			{
+				OutfitStandRaceOffset offset = modExtension.raceOffsets[i];
+				if (offset == null || offset.raceDefName != raceDef.defName)
+				{
+					continue;
+				}
+				Gender gender = GetEffectiveGenderForRender();
+				string bodyPath = ResolveGenderedTexPath(offset.bodyTexPath, offset.bodyTexPathMale, offset.bodyTexPathFemale, gender);
+				string headPath = ResolveGenderedTexPath(offset.headTexPath, offset.headTexPathMale, offset.headTexPathFemale, gender);
+				Vector2 bodyDrawSize = this.IsJuvenileBodyType ? Building_NewOutfitStand.bodyChildDrawSize : Building_NewOutfitStand.bodyDrawSize;
+				if (!bodyPath.NullOrEmpty())
+				{
+					this.standBodyGraphicOverride = CachedData.getInnerGraphic(new GraphicRequest(typeof(Graphic_Multi), bodyPath, ShaderDatabase.Cutout, bodyDrawSize, Color.white, Color.white, null, 0, null, string.Empty));
+				}
+				if (!headPath.NullOrEmpty())
+				{
+					Vector2 headDrawSize = Building_NewOutfitStand.headDrawSize;
+					this.standHeadGraphicOverride = CachedData.getInnerGraphic(new GraphicRequest(typeof(Graphic_Multi), headPath, ShaderDatabase.Cutout, headDrawSize, Color.white, Color.white, null, 0, null, string.Empty));
+				}
+				return;
+			}
+		}
+
+		private static string ResolveGenderedTexPath(string basePath, string malePath, string femalePath, Gender gender)
+		{
+			if (gender == Gender.Female)
+			{
+				if (!femalePath.NullOrEmpty())
+				{
+					return femalePath;
+				}
+			}
+			else if (gender == Gender.Male)
+			{
+				if (!malePath.NullOrEmpty())
+				{
+					return malePath;
+				}
+			}
+			return basePath;
 		}
 
 		private static LifeStageDef GetLifeStageDefForRace(ThingDef raceDef, bool juvenile)
@@ -1824,27 +1892,6 @@ namespace NareisLib
 			}
 		}
 
-		private void DrawMergedApparel(List<Building_NewOutfitStand.CachedGraphicRenderInfo> vanilla, List<Building_NewOutfitStand.CachedMultiTexRenderInfo> multi, Vector3 drawLoc, Rot4 rot, Mesh vanillaMesh, float baseAltitude)
-		{
-			int vanillaIndex = 0;
-			int multiIndex = 0;
-			while (vanillaIndex < vanilla.Count || multiIndex < multi.Count)
-			{
-				float vanillaLayer = (vanillaIndex < vanilla.Count) ? vanilla[vanillaIndex].layer : float.MaxValue;
-				float multiLayer = (multiIndex < multi.Count) ? multi[multiIndex].layer : float.MaxValue;
-				if (multiLayer <= vanillaLayer)
-				{
-					DrawMultiTexEntry(multi[multiIndex], drawLoc, rot, baseAltitude, Vector3.zero, Vector3.one, multi[multiIndex].layer);
-					multiIndex++;
-				}
-				else
-				{
-					DrawVanillaEntry(vanilla[vanillaIndex], drawLoc, rot, vanillaMesh, baseAltitude, Vector3.zero, Vector3.one, vanilla[vanillaIndex].layer);
-					vanillaIndex++;
-				}
-			}
-		}
-
 		private void DrawVanillaEntry(Building_NewOutfitStand.CachedGraphicRenderInfo info, Vector3 drawLoc, Rot4 rot, Mesh mesh, float baseAltitude, Vector3 nodeOffset, Vector3 nodeScale, float layer)
 		{
 			Vector3 vector = drawLoc + nodeOffset;
@@ -1907,18 +1954,6 @@ namespace NareisLib
 			Graphics.DrawMesh(mesh, matrix4x, material, 0);
 		}
 
-		private void DrawMultiTexList(List<Building_NewOutfitStand.CachedMultiTexRenderInfo> list, Vector3 drawLoc, Rot4 rot, float baseAltitude)
-		{
-			if (list.NullOrEmpty())
-			{
-				return;
-			}
-			for (int i = 0; i < list.Count; i++)
-			{
-				DrawMultiTexEntry(list[i], drawLoc, rot, baseAltitude, Vector3.zero, Vector3.one, list[i].layer);
-			}
-		}
-
 		private bool TryApplyGenderSuffix(TextureLevels level)
 		{
 			if (!level.hasGender)
@@ -1963,7 +1998,13 @@ namespace NareisLib
 			FloatMenuOption floatMenuOption = new FloatMenuOption("SwapOutfit".Translate().CapitalizeFirst(), delegate
 			{
 				this.SetAllowHauling(false);
-				selPawn.jobs.TryTakeOrderedJob(JobMaker.MakeJob(JobDefOf.UseOutfitStand, this), new JobTag?(JobTag.Misc), false);
+				JobDef jobDef = Building_NewOutfitStand.UseNewOutfitStandJobDef;
+				if (jobDef == null)
+				{
+					Messages.Message("Missing job def: NareisLib_UseNewOutfitStand", MessageTypeDefOf.RejectInput, false);
+					return;
+				}
+				selPawn.jobs.TryTakeOrderedJob(JobMaker.MakeJob(jobDef, this), new JobTag?(JobTag.Misc), false);
 			}, MenuOptionPriority.Default, null, null, 0f, null, null, true, 0);
 			yield return FloatMenuUtility.DecoratePrioritizedTask(floatMenuOption, selPawn, this, "ReservedBy", null);
 			foreach (FloatMenuOption floatMenuOption2 in HaulSourceUtility.GetFloatMenuOptions(this, selPawn))
@@ -2277,7 +2318,13 @@ namespace NareisLib
 								return;
 							}
 							this.SetAllowHauling(false);
-							pawn.jobs.TryTakeOrderedJob(JobMaker.MakeJob(JobDefOf.UseOutfitStand, this), new JobTag?(JobTag.Misc), false);
+							JobDef jobDef = Building_NewOutfitStand.UseNewOutfitStandJobDef;
+							if (jobDef == null)
+							{
+								Messages.Message("Missing job def: NareisLib_UseNewOutfitStand", MessageTypeDefOf.RejectInput, false);
+								return;
+							}
+							pawn.jobs.TryTakeOrderedJob(JobMaker.MakeJob(jobDef, this), new JobTag?(JobTag.Misc), false);
 						}, null, null, null, true);
 					}
 				};
@@ -2465,6 +2512,20 @@ namespace NareisLib
 
 		private static Texture2D swapOutfitIcon;
 
+		private static JobDef cachedUseNewOutfitStandJobDef;
+
+		private static JobDef UseNewOutfitStandJobDef
+		{
+			get
+			{
+				if (cachedUseNewOutfitStandJobDef == null)
+				{
+					cachedUseNewOutfitStandJobDef = DefDatabase<JobDef>.GetNamedSilentFail("NareisLib_UseNewOutfitStand");
+				}
+				return cachedUseNewOutfitStandJobDef;
+			}
+		}
+
 		private static PawnRenderNodeTagDef rootNodeTagDef;
 
 		private static PawnRenderNodeTagDef RootNodeTagDef
@@ -2520,8 +2581,6 @@ namespace NareisLib
 		private Graphic_Multi standBodyGraphicOverride;
 
 		private Graphic_Multi standHeadGraphicOverride;
-
-		private Building_NewOutfitStand.CachedGraphicRenderInfo? cachedHeldWeaponGraphic;
 
 		private bool holdingWeaponCached;
 
