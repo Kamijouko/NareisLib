@@ -24,7 +24,7 @@ namespace NareisLib
 			Building_NewOutfitStand.bodyGraphic = (Graphic_Multi)GraphicDatabase.Get<Graphic_Multi>("Things/Building/OutfitStand/OutfitStand_Body", ShaderDatabase.Cutout, Building_NewOutfitStand.bodyDrawSize, Color.white);
 			Building_NewOutfitStand.bodyGraphicChild = (Graphic_Multi)GraphicDatabase.Get<Graphic_Multi>("Things/Building/OutfitStand/OutfitStand_BodyChild", ShaderDatabase.Cutout, Building_NewOutfitStand.bodyChildDrawSize, Color.white);
 			Building_NewOutfitStand.headGraphic = (Graphic_Multi)GraphicDatabase.Get<Graphic_Multi>("Things/Building/OutfitStand/OutfitStand_Head", ShaderDatabase.Cutout, Building_NewOutfitStand.headDrawSize, Color.white);
-			Building_NewOutfitStand.swapOutfitIcon = ContentFinder<Texture2D>.Get("UI/Commands/SwapOutfits", true);
+			Building_NewOutfitStand.swapOutfitIcon = ContentFinder<Texture2D>.Get("UI/Commands/SwapOutfits", false);
 		}
 
 		// (get) Token: 0x0600EAC7 RID: 60103 RVA: 0x00444AF7 File Offset: 0x00442CF7
@@ -418,6 +418,7 @@ namespace NareisLib
 			{
 				this.settings.CopyFrom(this.def.building.defaultStorageSettings);
 			}
+			this.selectedGender = GetDefaultGender();
 		}
 
 		public override void SpawnSetup(Map map, bool respawningAfterLoad)
@@ -429,6 +430,10 @@ namespace NareisLib
 				this.storageGroup.RemoveMember(this, true);
 				this.storageGroup = null;
 				this.settings.CopyFrom(storeSettings);
+			}
+			if (!respawningAfterLoad)
+			{
+				this.selectedGender = GetDefaultGender();
 			}
 			LongEventHandler.ExecuteWhenFinished(new Action(this.RecacheGraphics));
 		}
@@ -1037,6 +1042,54 @@ namespace NareisLib
 			return selectedGender;
 		}
 
+		private OutfitStandRenderPlanExtension GetRenderPlanExtension()
+		{
+			return this.def.GetModExtension<OutfitStandRenderPlanExtension>();
+		}
+
+		private Gender GetDefaultGender()
+		{
+			OutfitStandRenderPlanExtension modExtension = GetRenderPlanExtension();
+			return modExtension != null ? modExtension.defaultGender : Gender.Male;
+		}
+
+		private Texture2D GetRenderGizmoIcon(string iconPath)
+		{
+			if (iconPath.NullOrEmpty())
+			{
+				return null;
+			}
+			return ContentFinder<Texture2D>.Get(iconPath, false);
+		}
+
+		private Texture2D GetSwapOutfitIcon()
+		{
+			OutfitStandRenderPlanExtension modExtension = GetRenderPlanExtension();
+			string iconPath = modExtension != null ? modExtension.swapOutfitButtonIconPath : null;
+			Texture2D overrideIcon = GetRenderGizmoIcon(iconPath);
+			if (overrideIcon != null)
+			{
+				return overrideIcon;
+			}
+			if (Building_NewOutfitStand.swapOutfitIcon == null)
+			{
+				Building_NewOutfitStand.swapOutfitIcon = ContentFinder<Texture2D>.Get("UI/Commands/SwapOutfits", false);
+			}
+			return Building_NewOutfitStand.swapOutfitIcon ?? BaseContent.BadTex;
+		}
+
+		private Texture2D GetSwapAllApparelIcon()
+		{
+			OutfitStandRenderPlanExtension modExtension = GetRenderPlanExtension();
+			string iconPath = modExtension != null ? modExtension.swapAllApparelButtonIconPath : null;
+			Texture2D overrideIcon = GetRenderGizmoIcon(iconPath);
+			if (overrideIcon != null)
+			{
+				return overrideIcon;
+			}
+			return GetSwapOutfitIcon();
+		}
+
 		private Vector2 GetAlienBodyScale()
 		{
 			ThingDef_AlienRace alienRace = GetEffectiveRaceDef() as ThingDef_AlienRace;
@@ -1236,6 +1289,12 @@ namespace NareisLib
 				return Vector2.zero;
 			}
 			Gender gender = GetEffectiveGenderForRender();
+			LifeStageAge lifeStage = alienRace.race.lifeStageAges.NullOrEmpty() ? null : alienRace.race.lifeStageAges.FirstOrDefault((LifeStageAge lsa) => lsa.def.developmentalStage.Juvenile() == this.IsJuvenileBodyType);
+			LifeStageAgeAlien ageAlien = lifeStage as LifeStageAgeAlien;
+			if (ageAlien != null)
+			{
+				return (gender == Gender.Female) ? ageAlien.headFemaleOffset : ageAlien.headOffset;
+			}
 			AlienPartGenerator apg = alienRace.alienRace != null ? alienRace.alienRace.generalSettings.alienPartGenerator : null;
 			if (apg != null)
 			{
@@ -1244,12 +1303,6 @@ namespace NareisLib
 					return apg.headFemaleOffset.Equals(Vector2.negativeInfinity) ? apg.headOffset : apg.headFemaleOffset;
 				}
 				return apg.headOffset;
-			}
-			LifeStageAge lifeStage = alienRace.race.lifeStageAges.NullOrEmpty() ? null : alienRace.race.lifeStageAges.FirstOrDefault((LifeStageAge lsa) => lsa.def.developmentalStage.Juvenile() == this.IsJuvenileBodyType);
-			LifeStageAgeAlien ageAlien = lifeStage as LifeStageAgeAlien;
-			if (ageAlien != null)
-			{
-				return (gender == Gender.Female) ? ageAlien.headFemaleOffset : ageAlien.headOffset;
 			}
 			return Vector2.zero;
 		}
@@ -1262,17 +1315,20 @@ namespace NareisLib
 				return Vector3.zero;
 			}
 			Gender gender = GetEffectiveGenderForRender();
-			AlienPartGenerator apg = alienRace.alienRace != null ? alienRace.alienRace.generalSettings.alienPartGenerator : null;
 			AlienPartGenerator.DirectionalOffset directionalOffset = null;
-			if (apg != null)
+			LifeStageAge lifeStage = alienRace.race.lifeStageAges.NullOrEmpty() ? null : alienRace.race.lifeStageAges.FirstOrDefault((LifeStageAge lsa) => lsa.def.developmentalStage.Juvenile() == this.IsJuvenileBodyType);
+			LifeStageAgeAlien stageAgeAlien = lifeStage as LifeStageAgeAlien;
+			if (stageAgeAlien != null)
 			{
-				directionalOffset = (gender == Gender.Female) ? (apg.headFemaleOffsetDirectional ?? apg.headOffsetDirectional) : apg.headOffsetDirectional;
+				directionalOffset = (gender == Gender.Female) ? stageAgeAlien.headFemaleOffsetDirectional : stageAgeAlien.headOffsetDirectional;
 			}
 			if (directionalOffset == null)
 			{
-				LifeStageAge lifeStage = alienRace.race.lifeStageAges.NullOrEmpty() ? null : alienRace.race.lifeStageAges.FirstOrDefault((LifeStageAge lsa) => lsa.def.developmentalStage.Juvenile() == this.IsJuvenileBodyType);
-				LifeStageAgeAlien stageAgeAlien = lifeStage as LifeStageAgeAlien;
-				directionalOffset = (gender == Gender.Female) ? ((stageAgeAlien != null) ? stageAgeAlien.headFemaleOffsetDirectional : null) : ((stageAgeAlien != null) ? stageAgeAlien.headOffsetDirectional : null);
+				AlienPartGenerator apg = alienRace.alienRace != null ? alienRace.alienRace.generalSettings.alienPartGenerator : null;
+				if (apg != null)
+				{
+					directionalOffset = (gender == Gender.Female) ? (apg.headFemaleOffsetDirectional ?? apg.headOffsetDirectional) : apg.headOffsetDirectional;
+				}
 			}
 			if (directionalOffset == null)
 			{
@@ -1479,7 +1535,9 @@ namespace NareisLib
 
 		private Vector3 HeadOffsetAt(Rot4 rotation)
 		{
-			Vector2 headOffset = this.BodyTypeDefForRendering.headOffset + GetAlienHeadOffsetBase();
+			float bodySizeFactor = GetLifeStageBodySizeFactor();
+			Vector2 baseOffset = this.BodyTypeDefForRendering.headOffset * Mathf.Sqrt(bodySizeFactor);
+			Vector2 headOffset = baseOffset + GetAlienHeadOffsetBase();
 			Vector3 vector;
 			switch (rotation.AsInt)
 			{
@@ -1500,6 +1558,21 @@ namespace NareisLib
 				break;
 			}
 			return vector + GetAlienHeadOffsetDirectional(rotation);
+		}
+
+		private float GetLifeStageBodySizeFactor()
+		{
+			ThingDef raceDef = GetEffectiveRaceDef();
+			if (raceDef == null || raceDef.race == null || raceDef.race.lifeStageAges.NullOrEmpty())
+			{
+				return 1f;
+			}
+			LifeStageAge lifeStage = raceDef.race.lifeStageAges.FirstOrDefault((LifeStageAge lsa) => lsa.def.developmentalStage.Juvenile() == this.IsJuvenileBodyType);
+			if (lifeStage != null && lifeStage.def != null)
+			{
+				return lifeStage.def.bodySizeFactor;
+			}
+			return 1f;
 		}
 
 		private RenderTreeLayout GetRenderTreeLayout()
@@ -2296,7 +2369,7 @@ namespace NareisLib
 				{
 					defaultLabel = "SwapOutfitGizmo".Translate().CapitalizeFirst(),
 					defaultDesc = "SwapOutfitDesc".Translate() + "\n\n" + this.GetContentsString(),
-					icon = Building_NewOutfitStand.swapOutfitIcon,
+					icon = GetSwapOutfitIcon(),
 					Disabled = !this.innerContainer.Any,
 					disabledReason = ((!this.innerContainer.Any) ? "OutfitStandEmpty".Translate().CapitalizeFirst() : null),
 					action = delegate
@@ -2328,6 +2401,47 @@ namespace NareisLib
 						}, null, null, null, true);
 					}
 				};
+				yield return new Command_Action
+				{
+					defaultLabel = "NareisLib.OutfitStand.SwapAllApparelLabel".Translate().CapitalizeFirst(),
+					defaultDesc = "NareisLib.OutfitStand.SwapAllApparelDesc".Translate() + "\n\n" + this.GetContentsString(),
+					icon = GetSwapAllApparelIcon(),
+					Disabled = !this.innerContainer.Any,
+					disabledReason = ((!this.innerContainer.Any) ? "OutfitStandEmpty".Translate().CapitalizeFirst() : null),
+					action = delegate
+					{
+						Find.Targeter.BeginTargeting(TargetingParameters.ForColonist(), delegate(LocalTargetInfo t)
+						{
+							Pawn pawn;
+							if (!t.TryGetPawn(out pawn))
+							{
+								return;
+							}
+							if (pawn.Downed)
+							{
+								Messages.Message("IsIncapped".Translate(pawn.LabelShort, pawn), MessageTypeDefOf.RejectInput, false);
+								return;
+							}
+							if (pawn.apparel == null)
+							{
+								Messages.Message("NareisLib.OutfitStand.NoApparelTracker".Translate(pawn.LabelShort), MessageTypeDefOf.RejectInput, false);
+								return;
+							}
+							if (!pawn.CanReserveAndReach(this, PathEndMode.InteractionCell, Danger.Deadly, 1, -1, null, false))
+							{
+								return;
+							}
+							this.SetAllowHauling(false);
+							JobDef jobDef = Building_NewOutfitStand.UseNewOutfitStandExchangeAllJobDef;
+							if (jobDef == null)
+							{
+								Messages.Message("Missing job def: NareisLib_UseNewOutfitStand_ExchangeAll", MessageTypeDefOf.RejectInput, false);
+								return;
+							}
+							pawn.jobs.TryTakeOrderedJob(JobMaker.MakeJob(jobDef, this), new JobTag?(JobTag.Misc), false);
+						}, null, null, null, true);
+					}
+				};
 				yield return new Command_Toggle
 				{
 					defaultLabel = "CommandAllowRemovingApparel".Translate(),
@@ -2351,14 +2465,25 @@ namespace NareisLib
 
 		private IEnumerable<Gizmo> GetRenderSelectionGizmos()
 		{
+			OutfitStandRenderPlanExtension modExtension = GetRenderPlanExtension();
+			string defaultOption = "NareisLib.OutfitStand.DefaultOption".Translate();
+			ThingDef selectedRace = GetSelectedRaceDef();
+			string raceLabel = selectedRace != null ? selectedRace.LabelCap.ToString() : defaultOption;
+			string genderLabel = selectedGender.GetLabel().CapitalizeFirst();
+			string bodyLabel = GetSelectedBodyTypeDef().defName;
+			string headLabel = GetSelectedHeadTypeDef().defName;
+			string modelScaleLabel = this.modelScale.ToString("0.00");
+			string modelZLabel = this.modelZOffset.ToString("0.000");
+
 			yield return new Command_Action
 			{
-				defaultLabel = "Race: " + (GetSelectedRaceDef() != null ? GetSelectedRaceDef().LabelCap.ToString() : "Default"),
-				defaultDesc = "Select race for display.",
+				defaultLabel = "NareisLib.OutfitStand.SelectRaceLabel".Translate(raceLabel),
+				defaultDesc = "NareisLib.OutfitStand.SelectRaceDesc".Translate(),
+				icon = GetRenderGizmoIcon(modExtension != null ? modExtension.raceButtonIconPath : null),
 				action = delegate
 				{
 					List<FloatMenuOption> list = new List<FloatMenuOption>();
-					list.Add(new FloatMenuOption("Default", delegate
+					list.Add(new FloatMenuOption(defaultOption, delegate
 					{
 						selectedRaceDefName = "";
 						RecacheGraphics();
@@ -2378,17 +2503,18 @@ namespace NareisLib
 
 			yield return new Command_Action
 			{
-				defaultLabel = "Gender: " + selectedGender.ToString(),
-				defaultDesc = "Select gender for display.",
+				defaultLabel = "NareisLib.OutfitStand.SelectGenderLabel".Translate(genderLabel),
+				defaultDesc = "NareisLib.OutfitStand.SelectGenderDesc".Translate(),
+				icon = GetRenderGizmoIcon(modExtension != null ? modExtension.genderButtonIconPath : null),
 				action = delegate
 				{
 					List<FloatMenuOption> list = new List<FloatMenuOption>();
-					list.Add(new FloatMenuOption("Male", delegate
+					list.Add(new FloatMenuOption(Gender.Male.GetLabel().CapitalizeFirst(), delegate
 					{
 						selectedGender = Gender.Male;
 						RecacheGraphics();
 					}));
-					list.Add(new FloatMenuOption("Female", delegate
+					list.Add(new FloatMenuOption(Gender.Female.GetLabel().CapitalizeFirst(), delegate
 					{
 						selectedGender = Gender.Female;
 						RecacheGraphics();
@@ -2399,8 +2525,9 @@ namespace NareisLib
 
 			yield return new Command_Action
 			{
-				defaultLabel = "Body: " + GetSelectedBodyTypeDef().defName,
-				defaultDesc = "Select body type for display.",
+				defaultLabel = "NareisLib.OutfitStand.SelectBodyLabel".Translate(bodyLabel),
+				defaultDesc = "NareisLib.OutfitStand.SelectBodyDesc".Translate(),
+				icon = GetRenderGizmoIcon(modExtension != null ? modExtension.bodyButtonIconPath : null),
 				action = delegate
 				{
 					List<FloatMenuOption> list = new List<FloatMenuOption>();
@@ -2419,8 +2546,9 @@ namespace NareisLib
 
 			yield return new Command_Action
 			{
-				defaultLabel = "Head: " + GetSelectedHeadTypeDef().defName,
-				defaultDesc = "Select head type for display.",
+				defaultLabel = "NareisLib.OutfitStand.SelectHeadLabel".Translate(headLabel),
+				defaultDesc = "NareisLib.OutfitStand.SelectHeadDesc".Translate(),
+				icon = GetRenderGizmoIcon(modExtension != null ? modExtension.headButtonIconPath : null),
 				action = delegate
 				{
 					List<FloatMenuOption> list = new List<FloatMenuOption>();
@@ -2439,12 +2567,13 @@ namespace NareisLib
 
 			yield return new Command_Action
 			{
-				defaultLabel = "Model Scale: " + this.modelScale.ToString("0.00"),
-				defaultDesc = "Adjust stand model scale (excluding base).",
+				defaultLabel = "NareisLib.OutfitStand.ModelScaleLabel".Translate(modelScaleLabel),
+				defaultDesc = "NareisLib.OutfitStand.ModelScaleDesc".Translate(),
+				icon = GetRenderGizmoIcon(modExtension != null ? modExtension.modelScaleButtonIconPath : null),
 				action = delegate
 				{
 					int start = Mathf.RoundToInt(this.modelScale * 100f);
-					Find.WindowStack.Add(new Dialog_Slider((int val) => "Model Scale: " + (val / 100f).ToString("0.00"), 50, 200, delegate(int val)
+					Find.WindowStack.Add(new Dialog_Slider((int val) => "NareisLib.OutfitStand.ModelScaleLabel".Translate((val / 100f).ToString("0.00")), 50, 200, delegate(int val)
 					{
 						this.modelScale = val / 100f;
 					}, start, 1f));
@@ -2453,12 +2582,13 @@ namespace NareisLib
 
 			yield return new Command_Action
 			{
-				defaultLabel = "Model Z: " + this.modelZOffset.ToString("0.000"),
-				defaultDesc = "Adjust stand model Z offset (excluding base).",
+				defaultLabel = "NareisLib.OutfitStand.ModelZLabel".Translate(modelZLabel),
+				defaultDesc = "NareisLib.OutfitStand.ModelZDesc".Translate(),
+				icon = GetRenderGizmoIcon(modExtension != null ? modExtension.modelZButtonIconPath : null),
 				action = delegate
 				{
 					int start = Mathf.RoundToInt(this.modelZOffset * 1000f);
-					Find.WindowStack.Add(new Dialog_Slider((int val) => "Model Z: " + (val / 1000f).ToString("0.000"), -200, 200, delegate(int val)
+					Find.WindowStack.Add(new Dialog_Slider((int val) => "NareisLib.OutfitStand.ModelZLabel".Translate((val / 1000f).ToString("0.000")), -200, 200, delegate(int val)
 					{
 						this.modelZOffset = val / 1000f;
 					}, start, 1f));
@@ -2476,7 +2606,7 @@ namespace NareisLib
 			Scribe_Values.Look(ref this.selectedRaceDefName, "selectedRaceDefName", "");
 			Scribe_Values.Look(ref this.selectedBodyTypeDefName, "selectedBodyTypeDefName", "");
 			Scribe_Values.Look(ref this.selectedHeadTypeDefName, "selectedHeadTypeDefName", "");
-			Scribe_Values.Look(ref this.selectedGender, "selectedGender", Gender.Male);
+			Scribe_Values.Look(ref this.selectedGender, "selectedGender", GetDefaultGender());
 			Scribe_Values.Look(ref this.modelScale, "modelScale", 1f);
 			Scribe_Values.Look(ref this.modelZOffset, "modelZOffset", 0f);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
@@ -2513,6 +2643,7 @@ namespace NareisLib
 		private static Texture2D swapOutfitIcon;
 
 		private static JobDef cachedUseNewOutfitStandJobDef;
+		private static JobDef cachedUseNewOutfitStandExchangeAllJobDef;
 
 		private static JobDef UseNewOutfitStandJobDef
 		{
@@ -2523,6 +2654,18 @@ namespace NareisLib
 					cachedUseNewOutfitStandJobDef = DefDatabase<JobDef>.GetNamedSilentFail("NareisLib_UseNewOutfitStand");
 				}
 				return cachedUseNewOutfitStandJobDef;
+			}
+		}
+
+		private static JobDef UseNewOutfitStandExchangeAllJobDef
+		{
+			get
+			{
+				if (cachedUseNewOutfitStandExchangeAllJobDef == null)
+				{
+					cachedUseNewOutfitStandExchangeAllJobDef = DefDatabase<JobDef>.GetNamedSilentFail("NareisLib_UseNewOutfitStand_ExchangeAll");
+				}
+				return cachedUseNewOutfitStandExchangeAllJobDef;
 			}
 		}
 

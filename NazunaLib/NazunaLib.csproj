@@ -369,9 +369,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Abandoned\DefaultNodeSubWorker.cs" />
-    <Compile Include="Abandoned\PatchOperation_AddDefaultSubWorker.cs" />
     <Compile Include="Compat\JobDriver_UseNewOutfitStand.cs" />
+    <Compile Include="Compat\JobDriver_UseNewOutfitStand_ExchangeAll.cs" />
     <Compile Include="Core\ActionDef.cs" />
     <Compile Include="Core\ActionManager.cs" />
     <Compile Include="Core\Behavior.cs" />

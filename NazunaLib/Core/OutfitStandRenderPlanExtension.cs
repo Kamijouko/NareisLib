@@ -9,6 +9,15 @@ namespace NareisLib
         public string renderPlanDef;
         public Vector3 standOffset = Vector3.zero;
         public List<OutfitStandRaceOffset> raceOffsets;
+        public Gender defaultGender = Gender.Male;
+        public string raceButtonIconPath;
+        public string genderButtonIconPath;
+        public string bodyButtonIconPath;
+        public string headButtonIconPath;
+        public string swapOutfitButtonIconPath;
+        public string swapAllApparelButtonIconPath;
+        public string modelScaleButtonIconPath;
+        public string modelZButtonIconPath;
     }
 
     public class OutfitStandRaceOffset
