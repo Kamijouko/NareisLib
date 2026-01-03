@@ -2406,8 +2406,6 @@ namespace NareisLib
 					defaultLabel = "NareisLib.OutfitStand.SwapAllApparelLabel".Translate().CapitalizeFirst(),
 					defaultDesc = "NareisLib.OutfitStand.SwapAllApparelDesc".Translate() + "\n\n" + this.GetContentsString(),
 					icon = GetSwapAllApparelIcon(),
-					Disabled = !this.innerContainer.Any,
-					disabledReason = ((!this.innerContainer.Any) ? "OutfitStandEmpty".Translate().CapitalizeFirst() : null),
 					action = delegate
 					{
 						Find.Targeter.BeginTargeting(TargetingParameters.ForColonist(), delegate(LocalTargetInfo t)
@@ -2573,10 +2571,10 @@ namespace NareisLib
 				action = delegate
 				{
 					int start = Mathf.RoundToInt(this.modelScale * 100f);
-					Find.WindowStack.Add(new Dialog_Slider((int val) => "NareisLib.OutfitStand.ModelScaleLabel".Translate((val / 100f).ToString("0.00")), 50, 200, delegate(int val)
+					OpenSliderDialog((int val) => "NareisLib.OutfitStand.ModelScaleLabel".Translate((val / 100f).ToString("0.00")), 50, 200, delegate(int val)
 					{
 						this.modelScale = val / 100f;
-					}, start, 1f));
+					}, start);
 				}
 			};
 
@@ -2588,12 +2586,21 @@ namespace NareisLib
 				action = delegate
 				{
 					int start = Mathf.RoundToInt(this.modelZOffset * 1000f);
-					Find.WindowStack.Add(new Dialog_Slider((int val) => "NareisLib.OutfitStand.ModelZLabel".Translate((val / 1000f).ToString("0.000")), -200, 200, delegate(int val)
+					OpenSliderDialog((int val) => "NareisLib.OutfitStand.ModelZLabel".Translate((val / 1000f).ToString("0.000")), -1000, 1000, delegate(int val)
 					{
 						this.modelZOffset = val / 1000f;
-					}, start, 1f));
+					}, start);
 				}
 			};
+		}
+
+		private void OpenSliderDialog(Func<int, string> labelGetter, int min, int max, Action<int> onValueChanged, int start)
+		{
+			Dialog_Slider dialog = new Dialog_Slider(labelGetter, min, max, onValueChanged, start, 1f);
+			dialog.forcePause = false;
+			dialog.draggable = true;
+			dialog.preventCameraMotion = false;
+			Find.WindowStack.Add(dialog);
 		}
 
 		public override void ExposeData()
